@@ -11,7 +11,7 @@ function WorkoutCard({ label, option }: { label: string; option?: WorkoutOption 
           <p className="eyebrow">{label}</p>
           <h3>{option.title}</h3>
         </div>
-        <span className={`pill ${option.intensity === 'race' ? 'red' : option.intensity === 'opener' ? 'yellow' : option.intensity === 'rest' ? 'slate' : 'green'}`}>
+        <span className={`pill intensity-${option.intensity === 'z2' ? 'easy' : option.intensity}`}>
           {option.durationMin ? `${option.durationMin} min` : 'off'}
         </span>
       </div>

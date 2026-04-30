@@ -7,8 +7,10 @@ import defaultRaces from '../data/races.json'
 import { ActivityPanel } from './components/ActivityPanel'
 import { CalendarPanel } from './components/CalendarPanel'
 import { EventForms } from './components/EventForms'
+import { LegendPanel } from './components/LegendPanel'
 import { MetricCard } from './components/MetricCard'
 import { StatsPanel } from './components/StatsPanel'
+import { TodayPlanPanel } from './components/TodayPlanPanel'
 import { WorkoutPanel } from './components/WorkoutPanel'
 import type { Activity, BlockedDate, CurrentState, Race, Theme } from './domain/types'
 import { daysBetween } from './engine/calendarEngine'
@@ -55,18 +57,18 @@ export default function App() {
           <h1>Fixed-race endurance control</h1>
           <p>Race calendar first. Recovery consequences visible. Aerobic work protected.</p>
         </div>
-        <button className="theme-toggle" type="button" onClick={() => setTheme((value) => value === 'dark' ? 'light' : 'dark')}>
-          {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+        <button className="theme-toggle icon-button" type="button" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} onClick={() => setTheme((value) => value === 'dark' ? 'light' : 'dark')}>
+          <span aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span>
         </button>
       </section>
 
       <section className="grid metrics-grid">
-        <MetricCard label="Today" value={formatLabel(decision.mode)} detail={decision.reasons[0]} tone={statusTone} />
-        <MetricCard label="Next Race" value={nextRace?.name ?? 'None'} detail={nextRaceDetail} tone="blue" />
-        <MetricCard label="Latest Race Cost" value={`${latestCost.score} / ${latestCost.band}`} detail={latestCost.activity?.name ?? 'No race activity loaded'} tone={latestCost.band === 'Extreme' ? 'red' : latestCost.band === 'High' ? 'yellow' : 'green'} />
-        <MetricCard label="Recovery" value={`${state.recovery_status ?? 'unknown'}`.toUpperCase()} detail={`RHR ${state.resting_hr_14d_avg ?? 'n/a'} · HRV ${state.hrv_14d_avg ?? 'n/a'} · Sleep ${state.sleep_hours_14d_avg ?? 'n/a'}h`} tone={statusTone} />
-        <MetricCard label="Workout" value={recommendation.primary.title} detail={`${recommendation.primary.durationMin || 'Off'} min · ${recommendation.primary.hrCap ? `HR ≤ ${recommendation.primary.hrCap}` : recommendation.primary.intensity}`} tone="green" />
-        <MetricCard label="Race Density" value={`${stats.racesNext7d} / 7d`} detail={`${stats.racesNext30d} races in next 30 days · ${stats.fixedRaceCount} fixed loaded`} tone={stats.racesNext7d > 2 ? 'red' : stats.racesNext7d > 1 ? 'yellow' : 'slate'} />
+        <MetricCard label="Today" value={formatLabel(decision.mode)} detail={decision.reasons[0]} tone={statusTone} tooltip="Primary operating mode for today. Damage Control means protect freshness around a fixed race, not chase fitness today." />
+        <MetricCard label="Next Race" value={nextRace?.name ?? 'None'} detail={nextRaceDetail} tone="blue" tooltip="The next fixed event driving the plan. Fixed races are not blocked unless injury or illness is present." />
+        <MetricCard label="Latest Race Cost" value={`${latestCost.score} / ${latestCost.band}`} detail={latestCost.activity?.name ?? 'No race activity loaded'} tone={latestCost.band === 'Extreme' ? 'red' : latestCost.band === 'High' ? 'yellow' : 'green'} tooltip="Race cost estimates recovery burden on a 0–100 scale: low 0–39, medium 40–59, high 60–79, extreme 80+." />
+        <MetricCard label="Recovery" value={`${state.recovery_status ?? 'unknown'}`.toUpperCase()} detail={`RHR ${state.resting_hr_14d_avg ?? 'n/a'} · HRV ${state.hrv_14d_avg ?? 'n/a'} · Sleep ${state.sleep_hours_14d_avg ?? 'n/a'}h`} tone={statusTone} tooltip="Recovery state combines available fatigue signals and latest race cost. RED means no intensity unless a fixed race forces damage control." />
+        <MetricCard label="Workout" value={recommendation.primary.title} detail={`${recommendation.primary.durationMin || 'Off'} min · ${recommendation.primary.hrCap ? `HR ≤ ${recommendation.primary.hrCap}` : recommendation.primary.intensity}`} tone="green" tooltip="Suggested work if you insist on doing something. Caps are ceilings, not targets." />
+        <MetricCard label="Race Density" value={`${stats.racesNext7d} / 7d`} detail={`${stats.racesNext30d} races in next 30 days · ${stats.fixedRaceCount} fixed loaded`} tone={stats.racesNext7d > 2 ? 'red' : stats.racesNext7d > 1 ? 'yellow' : 'slate'} tooltip="Race density counts fixed events in upcoming windows. Higher density reduces safe training space and raises recovery risk." />
       </section>
 
       <section className="briefing panel">
@@ -87,6 +89,8 @@ export default function App() {
         </div>
       </section>
 
+      <TodayPlanPanel decision={decision} recommendation={recommendation} nextRaceName={nextRace?.name} />
+      <LegendPanel />
       <WorkoutPanel recommendation={recommendation} />
       <StatsPanel stats={stats} />
 

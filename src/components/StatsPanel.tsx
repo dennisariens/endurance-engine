@@ -2,16 +2,21 @@ import type { DashboardStats } from '../engine/statsEngine'
 
 type Props = { stats: DashboardStats }
 
-function Bars({ data, max, suffix = '' }: { data: Array<{ label: string; value?: number; count?: number }>; max?: number; suffix?: string }) {
+function toneFor(value: number, variant?: 'cost' | 'pressure') {
+  if (variant === 'pressure') return value >= 5 ? 'fill-extreme' : value >= 3 ? 'fill-high' : value >= 2 ? 'fill-medium' : 'fill-low'
+  return value >= 80 ? 'fill-extreme' : value >= 60 ? 'fill-high' : value >= 40 ? 'fill-medium' : 'fill-low'
+}
+
+function Bars({ data, max, suffix = '', variant }: { data: Array<{ label: string; value?: number; count?: number }>; max?: number; suffix?: string; variant?: 'cost' | 'pressure' }) {
   const peak = max ?? Math.max(1, ...data.map((item) => item.value ?? item.count ?? 0))
   return (
     <div className="bars">
       {data.map((item) => {
         const value = item.value ?? item.count ?? 0
         return (
-          <div className="bar-row" key={item.label}>
+          <div className="bar-row" key={item.label} title={`${item.label}: ${value}${suffix}`}>
             <span>{item.label}</span>
-            <div className="bar-track"><div className="bar-fill" style={{ width: `${Math.max(4, (value / peak) * 100)}%` }} /></div>
+            <div className="bar-track"><div className={`bar-fill ${toneFor(value, variant)}`} style={{ width: `${Math.max(4, (value / peak) * 100)}%` }} /></div>
             <strong>{value}{suffix}</strong>
           </div>
         )
@@ -38,11 +43,13 @@ export function StatsPanel({ stats }: Props) {
       <div className="stats-grid">
         <div>
           <h3>Race density</h3>
-          <Bars data={stats.weeklyRaceDensity} />
+          <p className="chart-note">More races = less room for training load.</p>
+          <Bars data={stats.weeklyRaceDensity} variant="pressure" />
         </div>
         <div>
           <h3>Recent race cost</h3>
-          <Bars data={stats.raceCostSeries} max={100} />
+          <p className="chart-note">0–39 low · 40–59 medium · 60–79 high · 80+ extreme.</p>
+          <Bars data={stats.raceCostSeries} max={100} variant="cost" />
         </div>
       </div>
       <div className="mix-row">
