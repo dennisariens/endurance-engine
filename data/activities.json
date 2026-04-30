@@ -1,0 +1,56 @@
+[
+  {
+    "id": "activity-20260428-zrl",
+    "source": "intervals",
+    "date": "2026-04-28",
+    "name": "Zwift Racing League: Legends Route",
+    "type": "VirtualRide",
+    "durationSec": 4771,
+    "distanceM": 50512,
+    "load": 105,
+    "avgHr": 154,
+    "maxHr": 181,
+    "raceCost": 82,
+    "raceCostBand": "Extreme"
+  },
+  {
+    "id": "activity-20260426-ecro-liege",
+    "source": "intervals",
+    "date": "2026-04-26",
+    "name": "ECRO World Tour | Chasing Liege",
+    "type": "VirtualRide",
+    "durationSec": 6547,
+    "distanceM": 69783,
+    "load": 125,
+    "avgHr": 158,
+    "maxHr": 181,
+    "raceCost": 92,
+    "raceCostBand": "Extreme"
+  },
+  {
+    "id": "activity-20260422-ecro-wallonne",
+    "source": "intervals",
+    "date": "2026-04-22",
+    "name": "ECRO World Tour | Chasing Wallonne",
+    "type": "VirtualRide",
+    "durationSec": 2460,
+    "distanceM": 28000,
+    "load": 58,
+    "avgHr": 165,
+    "maxHr": 181,
+    "raceCost": 65,
+    "raceCostBand": "High"
+  },
+  {
+    "id": "activity-20260429-base-run",
+    "source": "intervals",
+    "date": "2026-04-29",
+    "name": "Amsterdam - Base",
+    "type": "Run",
+    "durationSec": 3485,
+    "distanceM": 10619,
+    "load": 60,
+    "avgHr": 159,
+    "maxHr": 178
+  }
+]

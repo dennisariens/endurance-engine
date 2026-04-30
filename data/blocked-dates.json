@@ -1,0 +1,10 @@
+[
+  {
+    "id": "block-example",
+    "startDate": "2026-05-02",
+    "endDate": "2026-05-02",
+    "reason": "recovery",
+    "blocksRace": false,
+    "notes": "Auto-suggested recovery window after Chasing Frankfurt."
+  }
+]
