@@ -12,7 +12,7 @@ export function CalendarPanel({ races, blockedDates, today, onDeleteRace }: Cale
   const nextRaces = [...races]
     .filter((race) => daysBetween(today, race.date) >= 0)
     .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, 16)
+    .slice(0, 8)
 
   return (
     <section className="panel calendar-panel">
@@ -21,7 +21,7 @@ export function CalendarPanel({ races, blockedDates, today, onDeleteRace }: Cale
           <p className="eyebrow">Calendar</p>
           <h2>Fixed race queue</h2>
         </div>
-        <span className="pill blue">{races.length} races</span>
+        <span className="pill blue">next {nextRaces.length} / {races.length}</span>
       </div>
 
       <div className="race-list">

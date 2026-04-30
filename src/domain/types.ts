@@ -1,6 +1,8 @@
 export type Status = 'Green' | 'Yellow' | 'Red' | 'InjuryIllness'
 export type Mode = 'Build' | 'Race' | 'DamageControl' | 'RecoveryOptimization' | 'RaceBlock'
 export type TodayAction = 'Race' | 'Z2' | 'Recovery' | 'Rest'
+export type Theme = 'dark' | 'light'
+export type WorkoutDiscipline = 'bike' | 'run' | 'bike-run' | 'off'
 
 export type Race = {
   id: string
@@ -63,6 +65,30 @@ export type CurrentState = {
   resting_hr_14d_avg?: number | null
   hrv_14d_avg?: number | null
   sleep_hours_14d_avg?: number | null
+  run_lthr?: number | null
+  cycle_lthr?: number | null
+  run_aet?: number | null
+  cycle_aet?: number | null
+}
+
+export type WorkoutOption = {
+  discipline: WorkoutDiscipline
+  title: string
+  durationMin: number
+  intensity: 'rest' | 'easy' | 'z2' | 'opener' | 'race'
+  hrCap?: number
+  powerCap?: number
+  purpose: string
+  steps: string[]
+  cautions: string[]
+}
+
+export type WorkoutRecommendation = {
+  primary: WorkoutOption
+  bike?: WorkoutOption
+  run?: WorkoutOption
+  goalReminder: string
+  longTermBias: string
 }
 
 export type RaceBlock = {
