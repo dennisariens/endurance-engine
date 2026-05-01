@@ -89,7 +89,7 @@ p { color: var(--muted); font-size: 16px; line-height: 1.5; }
 .briefing li { margin-bottom: 8px; }
 .switch-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 
-.workout-panel, .stats-panel, .legend-panel, .today-plan { margin-bottom: 16px; }
+.workout-panel, .stats-panel, .legend-panel, .today-plan, .decision-history, .methodology-panel { margin-bottom: 16px; }
 .goal-callout {
   border: 1px solid rgba(56, 189, 248, .28);
   background: rgba(56, 189, 248, .08);
@@ -272,6 +272,38 @@ button.ghost, .theme-toggle { background: transparent; color: var(--muted); bord
 .avoid-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .why-box { margin-top: 16px; color: var(--soft-text); }
 .why-box summary { cursor: pointer; font-weight: 800; }
+.save-state { margin: 6px 0 0; font-size: 13px; color: var(--accent); font-weight: 800; }
+.override-box {
+  border: 1px solid var(--border-soft);
+  background: var(--bg-row);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.override-box label { display: block; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+.override-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.history-list { display: grid; gap: 10px; }
+.history-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: start;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-row);
+  border-radius: 16px;
+  padding: 14px;
+}
+.history-row p { margin: 4px 0 0; font-size: 14px; }
+.history-meta { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.note { color: var(--soft-text); }
+.method-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.method-grid > div {
+  border: 1px solid var(--border-soft);
+  background: var(--bg-row);
+  border-radius: 16px;
+  padding: 14px;
+}
+.method-grid p { margin: 0; font-size: 14px; }
 .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .legend-grid p, .chart-note { margin: 6px 0 12px; font-size: 14px; }
 .panel-header.compact { margin-bottom: 12px; }
@@ -302,7 +334,8 @@ button.ghost, .theme-toggle { background: transparent; color: var(--muted); bord
   .metrics-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .briefing { grid-template-columns: 1fr; }
   .switch-row { justify-content: flex-start; }
-  .two-col, .workout-grid, .stats-grid, .legend-grid, .plan-grid { grid-template-columns: 1fr; }
+  .two-col, .workout-grid, .stats-grid, .legend-grid, .plan-grid, .method-grid, .history-row { grid-template-columns: 1fr; }
+  .history-meta { justify-content: flex-start; }
 }
 
 @media (max-width: 760px) {

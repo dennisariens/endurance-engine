@@ -91,6 +91,25 @@ export type WorkoutRecommendation = {
   longTermBias: string
 }
 
+
+export type DecisionLogAction = 'accepted' | 'rested' | 'overridden'
+
+export type DecisionLogEntry = {
+  id: string
+  date: string
+  loggedAt: string
+  action: DecisionLogAction
+  mode: Mode
+  status: Status
+  workoutTitle: string
+  durationMin: number
+  hrCap?: number
+  powerCap?: number
+  reason: string
+  note?: string
+  nextRaceName?: string
+}
+
 export type RaceBlock = {
   active: boolean
   racesWithin72h: number

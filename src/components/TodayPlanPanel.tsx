@@ -1,15 +1,20 @@
-import type { DailyDecision, WorkoutRecommendation } from '../domain/types'
+import { useState } from 'react'
+import type { DailyDecision, DecisionLogAction, WorkoutRecommendation } from '../domain/types'
 import { InfoTooltip } from './InfoTooltip'
 
 type Props = {
   decision: DailyDecision
   recommendation: WorkoutRecommendation
   nextRaceName?: string
+  latestAction?: DecisionLogAction
+  onLogDecision: (action: DecisionLogAction, note?: string) => void
 }
 
 const formatLabel = (value: string) => value.replace(/([A-Z])/g, ' $1').trim()
 
-export function TodayPlanPanel({ decision, recommendation, nextRaceName }: Props) {
+export function TodayPlanPanel({ decision, recommendation, nextRaceName, latestAction, onLogDecision }: Props) {
+  const [overrideOpen, setOverrideOpen] = useState(false)
+  const [overrideNote, setOverrideNote] = useState('')
   const avoid = decision.mode === 'DamageControl' || decision.status === 'Red'
     ? ['Intensity', 'Strength', 'Fasting', 'Weight-cutting']
     : ['Grey-zone junk', 'Unplanned race efforts']
@@ -20,13 +25,28 @@ export function TodayPlanPanel({ decision, recommendation, nextRaceName }: Props
         <div>
           <p className="eyebrow">Today’s plan</p>
           <h2>{formatLabel(decision.mode)} · {recommendation.primary.title}</h2>
+          {latestAction && <p className="save-state">Logged today: {latestAction}</p>}
         </div>
         <div className="plan-actions">
-          <button type="button">Accept plan</button>
-          <button className="ghost" type="button">Mark rest</button>
-          <button className="ghost" type="button">Override</button>
+          <button type="button" onClick={() => onLogDecision('accepted')}>Accept plan</button>
+          <button className="ghost" type="button" onClick={() => onLogDecision('rested', 'Marked as full rest instead of optional movement.')}>Mark rest</button>
+          <button className="ghost" type="button" onClick={() => setOverrideOpen((value) => !value)}>Override</button>
         </div>
       </div>
+      {overrideOpen && (
+        <form className="override-box" onSubmit={(event) => {
+          event.preventDefault()
+          onLogDecision('overridden', overrideNote || 'Override logged without note.')
+          setOverrideNote('')
+          setOverrideOpen(false)
+        }}>
+          <label>Override reason</label>
+          <div className="override-row">
+            <input value={overrideNote} onChange={(event) => setOverrideNote(event.target.value)} placeholder="Why are you ignoring the machine today?" />
+            <button type="submit">Save override</button>
+          </div>
+        </form>
+      )}
       <div className="plan-grid">
         <div>
           <span className="field-label">Do</span>

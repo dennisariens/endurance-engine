@@ -6,13 +6,15 @@ import defaultState from '../data/current-state.json'
 import defaultRaces from '../data/races.json'
 import { ActivityPanel } from './components/ActivityPanel'
 import { CalendarPanel } from './components/CalendarPanel'
+import { DecisionHistoryPanel } from './components/DecisionHistoryPanel'
 import { EventForms } from './components/EventForms'
 import { LegendPanel } from './components/LegendPanel'
+import { MethodologyPanel } from './components/MethodologyPanel'
 import { MetricCard } from './components/MetricCard'
 import { StatsPanel } from './components/StatsPanel'
 import { TodayPlanPanel } from './components/TodayPlanPanel'
 import { WorkoutPanel } from './components/WorkoutPanel'
-import type { Activity, BlockedDate, CurrentState, Race, Theme } from './domain/types'
+import type { Activity, BlockedDate, CurrentState, DecisionLogAction, DecisionLogEntry, Race, Theme } from './domain/types'
 import { daysBetween } from './engine/calendarEngine'
 import { makeDailyDecision } from './engine/decisionEngine'
 import { getLatestRaceCost } from './engine/raceCostEngine'
@@ -27,12 +29,14 @@ export default function App() {
   const [races, setRaces] = useState<Race[]>(() => loadLocal('aerion:races', defaultRaces as Race[]))
   const [activities, setActivities] = useState<Activity[]>(() => loadLocal('aerion:activities', defaultActivities as Activity[]))
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>(() => loadLocal('aerion:blocked', defaultBlockedDates as BlockedDate[]))
+  const [decisionLog, setDecisionLog] = useState<DecisionLogEntry[]>(() => loadLocal('aerion:decision-log', [] as DecisionLogEntry[]))
   const [theme, setTheme] = useState<Theme>(() => loadLocal('aerion:theme', 'dark' as Theme))
   const [state] = useState<CurrentState>(defaultState as CurrentState)
 
   useEffect(() => saveLocal('aerion:races', races), [races])
   useEffect(() => saveLocal('aerion:activities', activities), [activities])
   useEffect(() => saveLocal('aerion:blocked', blockedDates), [blockedDates])
+  useEffect(() => saveLocal('aerion:decision-log', decisionLog), [decisionLog])
   useEffect(() => saveLocal('aerion:theme', theme), [theme])
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -48,6 +52,25 @@ export default function App() {
     : 'No future race loaded'
 
   const statusTone = decision.status === 'Red' ? 'red' : decision.status === 'Yellow' ? 'yellow' : decision.status === 'InjuryIllness' ? 'purple' : 'green'
+  const latestDecisionAction = decisionLog.find((entry) => entry.date === today)?.action
+  const logDecision = (action: DecisionLogAction, note?: string) => {
+    const entry: DecisionLogEntry = {
+      id: crypto.randomUUID(),
+      date: today,
+      loggedAt: new Date().toISOString(),
+      action,
+      mode: decision.mode,
+      status: decision.status,
+      workoutTitle: action === 'rested' ? 'Full rest' : recommendation.primary.title,
+      durationMin: action === 'rested' ? 0 : recommendation.primary.durationMin,
+      hrCap: action === 'rested' ? undefined : recommendation.primary.hrCap,
+      powerCap: action === 'rested' ? undefined : recommendation.primary.powerCap,
+      reason: decision.reasons.slice(0, 2).join(' · '),
+      note,
+      nextRaceName: nextRace?.name,
+    }
+    setDecisionLog((items) => [entry, ...items.filter((item) => item.date !== today)])
+  }
 
   return (
     <main className="app">
@@ -89,8 +112,16 @@ export default function App() {
         </div>
       </section>
 
-      <TodayPlanPanel decision={decision} recommendation={recommendation} nextRaceName={nextRace?.name} />
+      <TodayPlanPanel
+        decision={decision}
+        recommendation={recommendation}
+        nextRaceName={nextRace?.name}
+        latestAction={latestDecisionAction}
+        onLogDecision={logDecision}
+      />
       <LegendPanel />
+      <DecisionHistoryPanel entries={decisionLog} onClear={() => setDecisionLog([])} />
+      <MethodologyPanel state={state} activityCount={activities.length} raceCount={races.length} />
       <WorkoutPanel recommendation={recommendation} />
       <StatsPanel stats={stats} />
 
