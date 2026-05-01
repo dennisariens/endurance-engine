@@ -62,6 +62,7 @@ export function normalizeIntervalsWellness(rows: IntervalsWellnessSummary[]): Pa
     resting_hr_14d_avg: numberValue(latest.restingHR) ?? numberValue(latest.resting_hr),
     hrv_14d_avg: numberValue(latest.hrv) ?? numberValue(latest.hrv_rmssd),
     sleep_hours_14d_avg: sleepHours,
+    vo2max: numberValue(latest.vo2max) ?? numberValue(latest.vo2_max) ?? numberValue(latest.vo2Max),
   }
 }
 

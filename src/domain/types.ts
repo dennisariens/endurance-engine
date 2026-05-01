@@ -65,6 +65,7 @@ export type CurrentState = {
   resting_hr_14d_avg?: number | null
   hrv_14d_avg?: number | null
   sleep_hours_14d_avg?: number | null
+  vo2max?: number | null
   run_lthr?: number | null
   cycle_lthr?: number | null
   run_aet?: number | null

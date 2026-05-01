@@ -85,8 +85,8 @@ describe('normalizeIntervalsEvents', () => {
 describe('normalizeIntervalsWellness', () => {
   it('uses the latest wellness row for current state freshness signals', () => {
     const state = normalizeIntervalsWellness([
-      { id: '2026-04-29', restingHR: 50, hrv: 45, sleepSecs: 25200 },
-      { id: '2026-04-30', restingHR: 48, hrv: 51, sleepSecs: 28800 },
+      { id: '2026-04-29', restingHR: 50, hrv: 45, sleepSecs: 25200, vo2max: 56 },
+      { id: '2026-04-30', restingHR: 48, hrv: 51, sleepSecs: 28800, vo2max: 58 },
     ])
 
     expect(state).toMatchObject({
@@ -94,6 +94,7 @@ describe('normalizeIntervalsWellness', () => {
       resting_hr_14d_avg: 48,
       hrv_14d_avg: 51,
       sleep_hours_14d_avg: 8,
+      vo2max: 58,
     })
   })
 })

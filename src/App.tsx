@@ -7,6 +7,7 @@ import defaultRaces from '../data/races.json'
 import { ActivityPanel } from './components/ActivityPanel'
 import { BaselineZonesPanel } from './components/BaselineZonesPanel'
 import { CalendarPanel } from './components/CalendarPanel'
+import { CostReadinessPanel } from './components/CostReadinessPanel'
 import { DataControlsPanel, type AerionLocalSnapshot } from './components/DataControlsPanel'
 import { DecisionHistoryPanel } from './components/DecisionHistoryPanel'
 import { EventForms } from './components/EventForms'
@@ -185,6 +186,7 @@ export default function App() {
         onLogDecision={logDecision}
       />
       <Next72PlanPanel plan={next72Plan} />
+      <CostReadinessPanel latestRaceActivity={latestCost.activity} state={state} />
       <OperationalLogPanel items={timeline} />
       <LegendPanel />
       <DecisionHistoryPanel entries={decisionLog} onClear={() => setDecisionLog([])} />
