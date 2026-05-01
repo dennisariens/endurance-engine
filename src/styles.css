@@ -89,7 +89,7 @@ p { color: var(--muted); font-size: 16px; line-height: 1.5; }
 .briefing li { margin-bottom: 8px; }
 .switch-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 
-.workout-panel, .stats-panel, .legend-panel, .today-plan, .decision-history, .methodology-panel, .sync-panel, .operational-log, .data-controls { margin-bottom: 16px; }
+.workout-panel, .stats-panel, .legend-panel, .today-plan, .decision-history, .methodology-panel, .baseline-zones-panel, .sync-panel, .operational-log, .data-controls { margin-bottom: 16px; }
 .goal-callout {
   border: 1px solid rgba(56, 189, 248, .28);
   background: rgba(56, 189, 248, .08);
@@ -337,6 +337,32 @@ button.danger { border-color: rgba(239, 68, 68, .45); color: #fca5a5; }
   padding: 14px;
 }
 .method-grid p { margin: 0; font-size: 14px; }
+.baseline-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.baseline-section, .baseline-tile {
+  border: 1px solid var(--border-soft);
+  background: var(--bg-row);
+  border-radius: 16px;
+  padding: 14px;
+}
+.athlete-baseline { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.athlete-baseline .field-label { grid-column: 1 / -1; }
+.baseline-value-row strong { display: block; font-size: 20px; letter-spacing: -.03em; }
+.baseline-value-row span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+.baseline-cap-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.baseline-tile strong { display: block; font-size: 22px; letter-spacing: -.04em; margin-bottom: 4px; }
+.baseline-tile p { margin: 0 0 10px; font-size: 13px; }
+.ftp-section, .zone-policy, .pending-zones { grid-column: 1 / -1; }
+.ftp-zone-list { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.ftp-zone-row {
+  border: 1px solid var(--border-soft);
+  background: rgba(56, 189, 248, .06);
+  border-radius: 14px;
+  padding: 12px;
+}
+.ftp-zone-row strong { display: block; margin-bottom: 4px; }
+.ftp-zone-row span { color: var(--soft-text); font-weight: 800; }
+.pending-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.pending-zones p { margin: 0 0 12px; font-size: 14px; }
 .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .legend-grid p, .chart-note { margin: 6px 0 12px; font-size: 14px; }
 .panel-header.compact { margin-bottom: 12px; }
@@ -367,7 +393,7 @@ button.danger { border-color: rgba(239, 68, 68, .45); color: #fca5a5; }
   .metrics-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .briefing { grid-template-columns: 1fr; }
   .switch-row { justify-content: flex-start; }
-  .two-col, .workout-grid, .stats-grid, .legend-grid, .plan-grid, .method-grid, .history-row, .timeline-row, .activity-form-row { grid-template-columns: 1fr; }
+  .two-col, .workout-grid, .stats-grid, .legend-grid, .plan-grid, .method-grid, .baseline-grid, .baseline-cap-grid, .ftp-zone-list, .history-row, .timeline-row, .activity-form-row { grid-template-columns: 1fr; }
   .history-meta { justify-content: flex-start; }
 }
 

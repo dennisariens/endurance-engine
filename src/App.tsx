@@ -5,6 +5,7 @@ import defaultBlockedDates from '../data/blocked-dates.json'
 import defaultState from '../data/current-state.json'
 import defaultRaces from '../data/races.json'
 import { ActivityPanel } from './components/ActivityPanel'
+import { BaselineZonesPanel } from './components/BaselineZonesPanel'
 import { CalendarPanel } from './components/CalendarPanel'
 import { DataControlsPanel, type AerionLocalSnapshot } from './components/DataControlsPanel'
 import { DecisionHistoryPanel } from './components/DecisionHistoryPanel'
@@ -184,6 +185,7 @@ export default function App() {
       <LegendPanel />
       <DecisionHistoryPanel entries={decisionLog} onClear={() => setDecisionLog([])} />
       <MethodologyPanel state={state} activityCount={activities.length} raceCount={races.length} />
+      <BaselineZonesPanel />
       <WorkoutPanel recommendation={recommendation} />
       <StatsPanel stats={stats} />
 
