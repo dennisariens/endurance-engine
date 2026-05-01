@@ -13,6 +13,7 @@ import { EventForms } from './components/EventForms'
 import { LegendPanel } from './components/LegendPanel'
 import { MethodologyPanel } from './components/MethodologyPanel'
 import { MetricCard } from './components/MetricCard'
+import { Next72PlanPanel } from './components/Next72PlanPanel'
 import { OperationalLogPanel } from './components/OperationalLogPanel'
 import { StatsPanel } from './components/StatsPanel'
 import { SyncStatusPanel } from './components/SyncStatusPanel'
@@ -22,6 +23,7 @@ import type { Activity, BlockedDate, CurrentState, DecisionLogAction, DecisionLo
 import { daysBetween } from './engine/calendarEngine'
 import { makeDailyDecision } from './engine/decisionEngine'
 import { getLatestRaceCost } from './engine/raceCostEngine'
+import { buildNext72hPlan } from './engine/recoveryPlanEngine'
 import { buildDashboardStats } from './engine/statsEngine'
 import { buildOperationalTimeline, getLocalIsoDate, mergeActivitiesById, mergeRacesById } from './engine/timelineEngine'
 import { makeWorkoutRecommendation } from './engine/workoutEngine'
@@ -86,6 +88,7 @@ export default function App() {
   const decision = useMemo(() => makeDailyDecision({ today, races, activities, state }), [races, activities, state])
   const latestCost = useMemo(() => getLatestRaceCost(activities), [activities])
   const recommendation = useMemo(() => makeWorkoutRecommendation({ decision, state }), [decision, state])
+  const next72Plan = useMemo(() => buildNext72hPlan({ decision, state }), [decision, state])
   const stats = useMemo(() => buildDashboardStats({ today, races, activities }), [races, activities])
   const timeline = useMemo(() => buildOperationalTimeline({ today, races, activities, decisions: decisionLog }), [races, activities, decisionLog])
   const nextRace = decision.nextRace
@@ -181,6 +184,7 @@ export default function App() {
         latestAction={latestDecisionAction}
         onLogDecision={logDecision}
       />
+      <Next72PlanPanel plan={next72Plan} />
       <OperationalLogPanel items={timeline} />
       <LegendPanel />
       <DecisionHistoryPanel entries={decisionLog} onClear={() => setDecisionLog([])} />
