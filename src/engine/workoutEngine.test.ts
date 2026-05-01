@@ -28,7 +28,7 @@ describe('workoutEngine', () => {
   it('biases build days toward low-HR run durability', () => {
     const recommendation = makeWorkoutRecommendation({ decision: baseDecision, state })
     expect(recommendation.primary.discipline).toBe('run')
-    expect(recommendation.primary.hrCap).toBeLessThanOrEqual(148)
+    expect(recommendation.primary.hrCap).toBe(150)
   })
 
   it('uses bike recovery as primary during damage control', () => {

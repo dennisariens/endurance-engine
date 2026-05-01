@@ -19,7 +19,7 @@ export function MethodologyPanel({ state, activityCount, raceCount }: Props) {
         </div>
         <div>
           <span className="field-label">Caps</span>
-          <p>HR caps derive from AeT/LTHR when available, otherwise conservative max-HR fallback. eFTP sets easy power ceiling.</p>
+          <p>HR caps derive from AeT/LTHR when available, otherwise AERION uses conservative provisional zones from baseline config. HR caps are ceilings, not targets. eFTP sets easy power ceiling.</p>
         </div>
         <div>
           <span className="field-label">Race cost</span>

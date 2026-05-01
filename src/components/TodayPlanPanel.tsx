@@ -55,8 +55,8 @@ export function TodayPlanPanel({ decision, recommendation, nextRaceName, latestA
         </div>
         <div>
           <span className="field-label">Caps</span>
-          <strong>{recommendation.primary.hrCap ? `HR ≤ ${recommendation.primary.hrCap}` : 'No cap needed'}</strong>
-          <p>{recommendation.primary.powerCap ? `Power ≤ ${recommendation.primary.powerCap} W. ` : ''}Caps are ceilings, not targets.</p>
+          <strong>{recommendation.primary.hrCap ? `HR ≤ ${recommendation.primary.hrCap} · Provisional zones` : 'No cap needed'}</strong>
+          <p>{recommendation.primary.powerCap ? `Power ≤ ${recommendation.primary.powerCap} W. ` : ''}Caps are ceilings, not targets. HR zones are provisional until LTHR/AeT/drift tests exist.</p>
         </div>
         <div>
           <span className="field-label">Why</span>

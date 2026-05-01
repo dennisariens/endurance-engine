@@ -36,7 +36,7 @@ export function DecisionHistoryPanel({ entries, onClear }: Props) {
               <div className="history-meta">
                 <span className={`pill ${actionTone[entry.action]}`}>{entry.action}</span>
                 <span className="pill slate">{entry.status}</span>
-                {entry.hrCap && <span className="pill blue">HR ≤ {entry.hrCap}</span>}
+                {entry.hrCap && <span className="pill blue">HR ≤ {entry.hrCap} · Provisional zones</span>}
               </div>
             </article>
           ))}

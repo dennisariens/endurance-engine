@@ -17,7 +17,7 @@ function WorkoutCard({ label, option }: { label: string; option?: WorkoutOption 
       </div>
       <p>{option.purpose}</p>
       <div className="workout-caps">
-        {option.hrCap && <span className="pill blue">HR ≤ {option.hrCap}</span>}
+        {option.hrCap && <span className="pill blue">HR ≤ {option.hrCap} · Provisional zones</span>}
         {option.powerCap && <span className="pill cyan">Power ≤ {option.powerCap} W</span>}
         <span className="pill slate">{option.intensity}</span>
       </div>

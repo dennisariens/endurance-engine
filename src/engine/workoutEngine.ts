@@ -1,3 +1,4 @@
+import { baselineConfig } from '../config/baselineConfig'
 import type { CurrentState, DailyDecision, WorkoutOption, WorkoutRecommendation } from '../domain/types'
 
 function estimateAerobicCap(state: CurrentState, discipline: 'bike' | 'run'): number {
@@ -5,9 +6,9 @@ function estimateAerobicCap(state: CurrentState, discipline: 'bike' | 'run'): nu
   if (aet) return aet
   const lthr = discipline === 'bike' ? state.cycle_lthr : state.run_lthr
   if (lthr) return Math.round(lthr * 0.88)
-  const maxHr = discipline === 'bike' ? state.cycle_max_hr_6m : state.run_max_hr_6m
-  if (maxHr) return Math.round(maxHr * 0.74)
-  return 145
+  return discipline === 'bike'
+    ? baselineConfig.cycling.easy_cap_bpm
+    : baselineConfig.running.easy_cap_bpm
 }
 
 function capBelow(decision: DailyDecision, estimatedCap: number): number {
