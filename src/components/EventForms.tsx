@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Activity, BlockedDate, Race } from '../domain/types'
+import { getLocalIsoDate } from '../engine/timelineEngine'
 
 type EventFormsProps = {
   onAddRace: (race: Race) => void
@@ -7,11 +8,20 @@ type EventFormsProps = {
   onAddBlock: (block: BlockedDate) => void
 }
 
+const yesterday = () => {
+  const date = new Date()
+  date.setDate(date.getDate() - 1)
+  return getLocalIsoDate(date)
+}
+
 export function EventForms({ onAddRace, onAddActivity, onAddBlock }: EventFormsProps) {
   const [raceName, setRaceName] = useState('')
   const [raceDate, setRaceDate] = useState('')
   const [activityName, setActivityName] = useState('')
-  const [activityDate, setActivityDate] = useState('')
+  const [activityDate, setActivityDate] = useState(yesterday())
+  const [activityType, setActivityType] = useState('Ride')
+  const [activityMinutes, setActivityMinutes] = useState('45')
+  const [activityLoad, setActivityLoad] = useState('35')
   const [blockDate, setBlockDate] = useState('')
   const [blockReason, setBlockReason] = useState<BlockedDate['reason']>('travel')
 
@@ -20,7 +30,7 @@ export function EventForms({ onAddRace, onAddActivity, onAddBlock }: EventFormsP
       <div className="panel-header">
         <div>
           <p className="eyebrow">Control</p>
-          <h2>Add race / activity / block</h2>
+          <h2>Add race / actual activity / block</h2>
         </div>
       </div>
 
@@ -41,14 +51,34 @@ export function EventForms({ onAddRace, onAddActivity, onAddBlock }: EventFormsP
       <form onSubmit={(event) => {
         event.preventDefault()
         if (!activityName || !activityDate) return
-        onAddActivity({ id: crypto.randomUUID(), source: 'manual', date: activityDate, name: activityName, type: 'Manual', raceCost: 30, raceCostBand: 'Low' })
+        const minutes = Number(activityMinutes)
+        const load = Number(activityLoad)
+        onAddActivity({
+          id: crypto.randomUUID(),
+          source: 'manual',
+          date: activityDate,
+          name: activityName,
+          type: activityType,
+          durationSec: Number.isFinite(minutes) ? minutes * 60 : undefined,
+          load: Number.isFinite(load) ? load : undefined,
+        })
         setActivityName('')
       }}>
-        <label>Activity</label>
-        <div className="form-row">
+        <label>Actual activity — use this when you ignored the recommendation but did work anyway</label>
+        <div className="form-row activity-form-row">
           <input value={activityDate} onChange={(event) => setActivityDate(event.target.value)} type="date" />
-          <input value={activityName} onChange={(event) => setActivityName(event.target.value)} placeholder="Activity name" />
-          <button>Add activity</button>
+          <input value={activityName} onChange={(event) => setActivityName(event.target.value)} placeholder="e.g. Sort-like ride" />
+          <select value={activityType} onChange={(event) => setActivityType(event.target.value)}>
+            <option value="Ride">Ride</option>
+            <option value="VirtualRide">VirtualRide</option>
+            <option value="Run">Run</option>
+            <option value="Strength">Strength</option>
+            <option value="Walk">Walk</option>
+            <option value="Manual">Manual</option>
+          </select>
+          <input value={activityMinutes} onChange={(event) => setActivityMinutes(event.target.value)} inputMode="numeric" placeholder="min" />
+          <input value={activityLoad} onChange={(event) => setActivityLoad(event.target.value)} inputMode="numeric" placeholder="load" />
+          <button>Add actual</button>
         </div>
       </form>
 

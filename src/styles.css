@@ -89,7 +89,7 @@ p { color: var(--muted); font-size: 16px; line-height: 1.5; }
 .briefing li { margin-bottom: 8px; }
 .switch-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 
-.workout-panel, .stats-panel, .legend-panel, .today-plan, .decision-history, .methodology-panel { margin-bottom: 16px; }
+.workout-panel, .stats-panel, .legend-panel, .today-plan, .decision-history, .methodology-panel, .sync-panel, .operational-log { margin-bottom: 16px; }
 .goal-callout {
   border: 1px solid rgba(56, 189, 248, .28);
   background: rgba(56, 189, 248, .08);
@@ -145,6 +145,25 @@ p { color: var(--muted); font-size: 16px; line-height: 1.5; }
   background: var(--bg-row);
 }
 .activity-row { grid-template-columns: 1fr auto; }
+.timeline-list { display: grid; gap: 10px; }
+.timeline-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: var(--bg-row);
+}
+.timeline-row p { margin: 3px 0 0; font-size: 13px; }
+.date-tile.small { width: 50px; height: 54px; }
+.date-tile.small strong { font-size: 19px; }
+.sync-meta, .activity-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.sync-panel p { margin: 0 0 12px; }
+.calendar-subsection { margin: 0 0 18px; padding-bottom: 18px; border-bottom: 1px solid var(--border-soft); }
+.calendar-subsection .eyebrow { margin-bottom: 8px; }
+.activity-form-row { grid-template-columns: 145px 1fr 140px 80px 80px auto; }
 .race-main strong, .activity-row strong { display: block; }
 .race-main p, .activity-row p { margin: 3px 0 0; font-size: 13px; }
 .date-tile {
@@ -334,7 +353,7 @@ button.ghost, .theme-toggle { background: transparent; color: var(--muted); bord
   .metrics-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .briefing { grid-template-columns: 1fr; }
   .switch-row { justify-content: flex-start; }
-  .two-col, .workout-grid, .stats-grid, .legend-grid, .plan-grid, .method-grid, .history-row { grid-template-columns: 1fr; }
+  .two-col, .workout-grid, .stats-grid, .legend-grid, .plan-grid, .method-grid, .history-row, .timeline-row, .activity-form-row { grid-template-columns: 1fr; }
   .history-meta { justify-content: flex-start; }
 }
 

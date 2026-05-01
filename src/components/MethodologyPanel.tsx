@@ -27,7 +27,7 @@ export function MethodologyPanel({ state, activityCount, raceCount }: Props) {
         </div>
         <div>
           <span className="field-label">Limitations</span>
-          <p>No live sync in this build. Intervals integration will read API key from environment only.</p>
+          <p>Opening sync runs through the local Vite server when `INTERVALS_ICU_API_KEY` is present. The browser never receives the key. Without it, AERION uses fixture + manual data.</p>
         </div>
       </div>
     </section>

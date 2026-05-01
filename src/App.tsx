@@ -11,7 +11,9 @@ import { EventForms } from './components/EventForms'
 import { LegendPanel } from './components/LegendPanel'
 import { MethodologyPanel } from './components/MethodologyPanel'
 import { MetricCard } from './components/MetricCard'
+import { OperationalLogPanel } from './components/OperationalLogPanel'
 import { StatsPanel } from './components/StatsPanel'
+import { SyncStatusPanel } from './components/SyncStatusPanel'
 import { TodayPlanPanel } from './components/TodayPlanPanel'
 import { WorkoutPanel } from './components/WorkoutPanel'
 import type { Activity, BlockedDate, CurrentState, DecisionLogAction, DecisionLogEntry, Race, Theme } from './domain/types'
@@ -19,33 +21,70 @@ import { daysBetween } from './engine/calendarEngine'
 import { makeDailyDecision } from './engine/decisionEngine'
 import { getLatestRaceCost } from './engine/raceCostEngine'
 import { buildDashboardStats } from './engine/statsEngine'
+import { buildOperationalTimeline, getLocalIsoDate, mergeActivitiesById } from './engine/timelineEngine'
 import { makeWorkoutRecommendation } from './engine/workoutEngine'
+import { fetchOpeningSync, type SyncStatus } from './lib/dataSync'
 import { loadLocal, saveLocal } from './lib/storage'
 
-const today = '2026-04-30'
+const today = getLocalIsoDate()
 const formatLabel = (value: string) => value.replace(/([A-Z])/g, ' $1').trim()
+const yesterdayActual: Activity = {
+  id: 'manual-20260430-sort-like-activity',
+  source: 'manual',
+  date: '2026-04-30',
+  name: 'Sort-like activity',
+  type: 'Ride',
+}
+
+function withKnownActuals(activities: Activity[]): Activity[] {
+  if (activities.some((activity) => activity.id === yesterdayActual.id || (activity.date === yesterdayActual.date && activity.name.toLowerCase().includes('sort')))) return activities
+  return [yesterdayActual, ...activities]
+}
 
 export default function App() {
   const [races, setRaces] = useState<Race[]>(() => loadLocal('aerion:races', defaultRaces as Race[]))
-  const [activities, setActivities] = useState<Activity[]>(() => loadLocal('aerion:activities', defaultActivities as Activity[]))
+  const [activities, setActivities] = useState<Activity[]>(() => withKnownActuals(loadLocal('aerion:activities', defaultActivities as Activity[])))
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>(() => loadLocal('aerion:blocked', defaultBlockedDates as BlockedDate[]))
   const [decisionLog, setDecisionLog] = useState<DecisionLogEntry[]>(() => loadLocal('aerion:decision-log', [] as DecisionLogEntry[]))
   const [theme, setTheme] = useState<Theme>(() => loadLocal('aerion:theme', 'dark' as Theme))
-  const [state] = useState<CurrentState>(defaultState as CurrentState)
+  const [state, setState] = useState<CurrentState>(() => loadLocal('aerion:current-state', defaultState as CurrentState))
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>({ state: 'idle', message: 'Opening sync not started yet.' })
 
   useEffect(() => saveLocal('aerion:races', races), [races])
   useEffect(() => saveLocal('aerion:activities', activities), [activities])
   useEffect(() => saveLocal('aerion:blocked', blockedDates), [blockedDates])
   useEffect(() => saveLocal('aerion:decision-log', decisionLog), [decisionLog])
+  useEffect(() => saveLocal('aerion:current-state', state), [state])
   useEffect(() => saveLocal('aerion:theme', theme), [theme])
   useEffect(() => {
     document.documentElement.dataset.theme = theme
   }, [theme])
 
+  useEffect(() => {
+    let cancelled = false
+    setSyncStatus({ state: 'syncing', message: 'Checking Intervals.icu through the local dev server.' })
+    fetchOpeningSync()
+      .then((payload) => {
+        if (cancelled) return
+        if (payload.ok && payload.activities) {
+          setActivities((current) => withKnownActuals(mergeActivitiesById({ current, incoming: payload.activities ?? [] })))
+          if (payload.state) setState((current) => ({ ...current, ...payload.state }))
+          setSyncStatus({ state: 'fresh', message: payload.message, lastSyncedAt: payload.syncedAt, activityCount: payload.activities.length })
+          return
+        }
+        setSyncStatus({ state: payload.source === 'unavailable' ? 'offline' : 'error', message: payload.message, lastSyncedAt: payload.syncedAt })
+      })
+      .catch((error) => {
+        if (!cancelled) setSyncStatus({ state: 'offline', message: `No opening sync available: ${error instanceof Error ? error.message : 'unknown error'}` })
+      })
+    return () => { cancelled = true }
+  }, [])
+
   const decision = useMemo(() => makeDailyDecision({ today, races, activities, state }), [races, activities, state])
   const latestCost = useMemo(() => getLatestRaceCost(activities), [activities])
   const recommendation = useMemo(() => makeWorkoutRecommendation({ decision, state }), [decision, state])
   const stats = useMemo(() => buildDashboardStats({ today, races, activities }), [races, activities])
+  const timeline = useMemo(() => buildOperationalTimeline({ today, races, activities, decisions: decisionLog }), [races, activities, decisionLog])
   const nextRace = decision.nextRace
   const nextRaceDetail = nextRace
     ? `${nextRace.date} · ${nextRace.distanceKm ?? 'TBD'} km · ${nextRace.elevationM ?? 'TBD'} m · Class ${nextRace.class ?? 'TBD'}`
@@ -78,12 +117,14 @@ export default function App() {
         <div>
           <p className="eyebrow">AERION · local MVP</p>
           <h1>Fixed-race endurance control</h1>
-          <p>Race calendar first. Recovery consequences visible. Aerobic work protected.</p>
+          <p>Race calendar first. Recovery consequences visible. Actual work beats button clicks.</p>
         </div>
         <button className="theme-toggle icon-button" type="button" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} onClick={() => setTheme((value) => value === 'dark' ? 'light' : 'dark')}>
           <span aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span>
         </button>
       </section>
+
+      <SyncStatusPanel status={syncStatus} today={today} />
 
       <section className="grid metrics-grid">
         <MetricCard label="Today" value={formatLabel(decision.mode)} detail={decision.reasons[0]} tone={statusTone} tooltip="Primary operating mode for today. Damage Control means protect freshness around a fixed race, not chase fitness today." />
@@ -119,6 +160,7 @@ export default function App() {
         latestAction={latestDecisionAction}
         onLogDecision={logDecision}
       />
+      <OperationalLogPanel items={timeline} />
       <LegendPanel />
       <DecisionHistoryPanel entries={decisionLog} onClear={() => setDecisionLog([])} />
       <MethodologyPanel state={state} activityCount={activities.length} raceCount={races.length} />
@@ -126,11 +168,11 @@ export default function App() {
       <StatsPanel stats={stats} />
 
       <div className="two-col">
-        <CalendarPanel races={races} blockedDates={blockedDates} today={today} onDeleteRace={(id) => setRaces((items) => items.filter((item) => item.id !== id))} />
+        <CalendarPanel races={races} activities={activities} blockedDates={blockedDates} today={today} onDeleteRace={(id) => setRaces((items) => items.filter((item) => item.id !== id))} />
         <div className="stack">
           <EventForms
             onAddRace={(race) => setRaces((items) => [...items, race].sort((a, b) => a.date.localeCompare(b.date)))}
-            onAddActivity={(activity) => setActivities((items) => [...items, activity])}
+            onAddActivity={(activity) => setActivities((items) => mergeActivitiesById({ current: items, incoming: [activity] }))}
             onAddBlock={(block) => setBlockedDates((items) => [...items, block])}
           />
           <ActivityPanel activities={activities} />

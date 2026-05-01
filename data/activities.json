@@ -1,5 +1,12 @@
 [
   {
+    "id": "manual-20260430-sort-like-activity",
+    "source": "manual",
+    "date": "2026-04-30",
+    "name": "Sort-like activity",
+    "type": "Ride"
+  },
+  {
     "id": "activity-20260428-zrl",
     "source": "intervals",
     "date": "2026-04-28",
