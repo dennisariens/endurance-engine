@@ -5,6 +5,7 @@
   "description": "Local-first fixed-race endurance decision dashboard.",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5174",
+    "start:aerion": "./scripts/start-aerion.sh",
     "build": "tsc && vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

@@ -20,6 +20,7 @@ export function SyncStatusPanel({ status, today }: Props) {
       <div className="sync-meta">
         {status.lastSyncedAt && <span className="pill slate">last sync {new Date(status.lastSyncedAt).toLocaleString()}</span>}
         {typeof status.activityCount === 'number' && <span className="pill blue">{status.activityCount} activities loaded</span>}
+        {typeof status.raceCount === 'number' && <span className="pill red">{status.raceCount} races loaded</span>}
       </div>
     </section>
   )

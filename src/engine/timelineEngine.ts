@@ -1,7 +1,7 @@
 import type { Activity, DecisionLogEntry, Race } from '../domain/types'
 
 export type TimelineKind = 'race' | 'actual' | 'decision'
-export type TimelineStatus = 'scheduled' | 'actual-no-plan-click' | 'completed-after-acceptance' | 'decision-only' | 'override' | 'rested'
+export type TimelineStatus = 'scheduled' | 'race-completed' | 'actual-no-plan-click' | 'completed-after-acceptance' | 'decision-only' | 'override' | 'rested'
 
 export type TimelineItem = {
   id: string
@@ -28,6 +28,18 @@ export function mergeActivitiesById(input: { current: Activity[]; incoming: Acti
   return [...byId.values()].sort((a, b) => b.date.localeCompare(a.date))
 }
 
+export function mergeRacesById(input: { current: Race[]; incoming: Race[] }): Race[] {
+  const byId = new Map<string, Race>()
+  for (const race of input.current) byId.set(race.id, race)
+  for (const race of input.incoming) byId.set(race.id, race)
+  return [...byId.values()].sort((a, b) => a.date.localeCompare(b.date))
+}
+
+export function isRaceLikeActivity(activity: Activity): boolean {
+  return typeof activity.raceCost === 'number'
+    || /\brace\b|racing|zwift racing league|ecro|criterium|crit\b|tt\b|time trial|gran fondo|stage/i.test(`${activity.name} ${activity.type}`)
+}
+
 export function buildOperationalTimeline(input: { today: string; races: Race[]; activities: Activity[]; decisions: DecisionLogEntry[] }): TimelineItem[] {
   const decisionByDate = new Map(input.decisions.map((decision) => [decision.date, decision]))
   const activityDates = new Set(input.activities.map((activity) => activity.date))
@@ -49,14 +61,15 @@ export function buildOperationalTimeline(input: { today: string; races: Race[]; 
 
   for (const activity of input.activities) {
     const decision = decisionByDate.get(activity.date)
+    const raceLike = isRaceLikeActivity(activity)
     items.push({
-      id: `activity:${activity.id}`,
+      id: `${raceLike ? 'race-activity' : 'activity'}:${activity.id}`,
       date: activity.date,
-      kind: 'actual',
-      status: decision?.action === 'accepted' ? 'completed-after-acceptance' : 'actual-no-plan-click',
+      kind: raceLike ? 'race' : 'actual',
+      status: raceLike ? 'race-completed' : decision?.action === 'accepted' ? 'completed-after-acceptance' : 'actual-no-plan-click',
       label: activity.name,
-      detail: `${activity.type} · ${formatDuration(activity.durationSec)} · load ${activity.load ?? 'n/a'}`,
-      tone: decision?.action === 'accepted' ? 'green' : 'yellow',
+      detail: `${raceLike ? 'Race activity' : activity.type} · ${formatDuration(activity.durationSec)} · load ${activity.load ?? 'n/a'}`,
+      tone: raceLike ? 'red' : decision?.action === 'accepted' ? 'green' : 'yellow',
       source: activity.source,
     })
   }

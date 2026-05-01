@@ -6,6 +6,7 @@ type Props = {
 
 const statusLabel: Record<TimelineItem['status'], string> = {
   scheduled: 'scheduled',
+  'race-completed': 'race completed',
   'actual-no-plan-click': 'actual / no click',
   'completed-after-acceptance': 'accepted + done',
   'decision-only': 'planned only',

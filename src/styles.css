@@ -89,7 +89,7 @@ p { color: var(--muted); font-size: 16px; line-height: 1.5; }
 .briefing li { margin-bottom: 8px; }
 .switch-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 
-.workout-panel, .stats-panel, .legend-panel, .today-plan, .decision-history, .methodology-panel, .sync-panel, .operational-log { margin-bottom: 16px; }
+.workout-panel, .stats-panel, .legend-panel, .today-plan, .decision-history, .methodology-panel, .sync-panel, .operational-log, .data-controls { margin-bottom: 16px; }
 .goal-callout {
   border: 1px solid rgba(56, 189, 248, .28);
   background: rgba(56, 189, 248, .08);
@@ -226,6 +226,20 @@ button {
   cursor: pointer;
 }
 button.ghost, .theme-toggle { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+button.danger { border-color: rgba(239, 68, 68, .45); color: #fca5a5; }
+.button-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.file-button {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 12px;
+  padding: 11px 14px;
+  color: var(--button-text);
+  background: var(--accent);
+  font-weight: 800;
+  cursor: pointer;
+}
+.file-button input { display: none; }
+.data-controls p { margin-top: 0; }
 .theme-toggle { white-space: nowrap; margin-top: 4px; }
 .icon-button {
   width: 46px;

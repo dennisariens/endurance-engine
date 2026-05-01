@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeIntervalsActivities, normalizeIntervalsWellness } from './intervalsSyncEngine'
+import { normalizeIntervalsActivities, normalizeIntervalsEvents, normalizeIntervalsWellness } from './intervalsSyncEngine'
 
 describe('normalizeIntervalsActivities', () => {
   it('maps Intervals summaries to AERION activities', () => {
@@ -32,6 +32,52 @@ describe('normalizeIntervalsActivities', () => {
       maxHr: 176,
       normalizedPower: 222,
       avgPower: 201,
+    })
+  })
+
+  it('keeps race-like Intervals activities available as completed race logs', () => {
+    const activities = normalizeIntervalsActivities([
+      {
+        id: 'zrl-1',
+        name: 'Zwift Racing League - Stage 2',
+        type: 'VirtualRide',
+        start_date_local: '2026-05-01T19:00:00',
+        moving_time: 3120,
+        icu_training_load: 87,
+      },
+    ])
+
+    expect(activities[0]).toMatchObject({
+      id: 'intervals-zrl-1',
+      date: '2026-05-01',
+      name: 'Zwift Racing League - Stage 2',
+      type: 'VirtualRide',
+    })
+  })
+})
+
+describe('normalizeIntervalsEvents', () => {
+  it('maps Intervals future events to fixed races without exposing credentials', () => {
+    const races = normalizeIntervalsEvents([
+      {
+        id: 'event-1',
+        name: 'ECRO Series Race',
+        start_date_local: '2026-05-07T20:00:00',
+        type: 'Ride',
+        distance: 41000,
+        total_elevation_gain: 380,
+      },
+    ])
+
+    expect(races[0]).toMatchObject({
+      id: 'intervals-event-event-1',
+      date: '2026-05-07',
+      name: 'ECRO Series Race',
+      discipline: 'cycling',
+      priority: 'fixed',
+      mandatory: true,
+      distanceKm: 41,
+      elevationM: 380,
     })
   })
 })

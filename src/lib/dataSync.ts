@@ -1,10 +1,11 @@
-import type { Activity, CurrentState } from '../domain/types'
+import type { Activity, CurrentState, Race } from '../domain/types'
 
 export type SyncStatus = {
   state: 'idle' | 'syncing' | 'fresh' | 'offline' | 'error'
   message: string
   lastSyncedAt?: string
   activityCount?: number
+  raceCount?: number
 }
 
 export type SyncPayload = {
@@ -13,6 +14,7 @@ export type SyncPayload = {
   message: string
   syncedAt?: string
   activities?: Activity[]
+  races?: Race[]
   state?: Partial<CurrentState>
 }
 

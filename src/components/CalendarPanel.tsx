@@ -1,5 +1,6 @@
 import type { Activity, BlockedDate, Race } from '../domain/types'
 import { daysBetween } from '../engine/calendarEngine'
+import { isRaceLikeActivity } from '../engine/timelineEngine'
 
 type CalendarPanelProps = {
   races: Race[]
@@ -49,9 +50,10 @@ export function CalendarPanel({ races, activities, blockedDates, today, onDelete
       <div className="calendar-subsection">
         <p className="eyebrow">Recent activities on record</p>
         <div className="activity-chips">
-          {recentActivities.length === 0 ? <p>No recent activities loaded.</p> : recentActivities.map((activity) => (
-            <span className="pill yellow" key={activity.id}>{activity.date} · {activity.type} · {activity.name}</span>
-          ))}
+          {recentActivities.length === 0 ? <p>No recent activities loaded.</p> : recentActivities.map((activity) => {
+            const raceLike = isRaceLikeActivity(activity)
+            return <span className={`pill ${raceLike ? 'red' : 'yellow'}`} key={activity.id}>{activity.date} · {raceLike ? 'RACE' : activity.type} · {activity.name}</span>
+          })}
         </div>
       </div>
 

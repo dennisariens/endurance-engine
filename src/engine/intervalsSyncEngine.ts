@@ -1,7 +1,8 @@
-import type { Activity, CurrentState } from '../domain/types'
+import type { Activity, CurrentState, Race } from '../domain/types'
 
 export type IntervalsActivitySummary = Record<string, unknown>
 export type IntervalsWellnessSummary = Record<string, unknown>
+export type IntervalsEventSummary = Record<string, unknown>
 
 export function normalizeIntervalsActivities(rows: IntervalsActivitySummary[]): Activity[] {
   return rows.map((row) => {
@@ -24,6 +25,30 @@ export function normalizeIntervalsActivities(rows: IntervalsActivitySummary[]): 
   }).filter((activity) => activity.date)
 }
 
+export function normalizeIntervalsEvents(rows: IntervalsEventSummary[]): Race[] {
+  return rows
+    .map((row) => {
+      const id = stringValue(row.id) ?? stringValue(row.event_id) ?? cryptoSafeId(row)
+      const date = (stringValue(row.start_date_local) ?? stringValue(row.start_date) ?? stringValue(row.date) ?? '').slice(0, 10)
+      const type = stringValue(row.type) ?? stringValue(row.sport) ?? ''
+      const name = stringValue(row.name) ?? stringValue(row.title) ?? 'Intervals race'
+      return {
+        id: `intervals-event-${id}`,
+        date,
+        name,
+        series: stringValue(row.series) ?? 'Intervals.icu',
+        discipline: disciplineFromType(type),
+        format: 'other' as const,
+        priority: 'fixed' as const,
+        mandatory: true,
+        distanceKm: kmValue(row.distance) ?? numberValue(row.distance_km),
+        elevationM: numberValue(row.total_elevation_gain) ?? numberValue(row.elevation) ?? numberValue(row.elevation_m),
+        notes: 'Synced Intervals event',
+      }
+    })
+    .filter((race) => race.date && isRaceLikeEvent(race.name))
+}
+
 export function normalizeIntervalsWellness(rows: IntervalsWellnessSummary[]): Partial<CurrentState> {
   const latest = [...rows]
     .filter((row) => stringValue(row.id) || stringValue(row.date))
@@ -38,6 +63,23 @@ export function normalizeIntervalsWellness(rows: IntervalsWellnessSummary[]): Pa
     hrv_14d_avg: numberValue(latest.hrv) ?? numberValue(latest.hrv_rmssd),
     sleep_hours_14d_avg: sleepHours,
   }
+}
+
+function disciplineFromType(type: string): Race['discipline'] {
+  if (/run/i.test(type)) return 'running'
+  if (/tri/i.test(type)) return 'triathlon'
+  if (/ride|bike|cycling/i.test(type)) return 'cycling'
+  return 'other'
+}
+
+function isRaceLikeEvent(name: string): boolean {
+  return /race|racing|ecro|zwift racing league|criterium|crit|tt\b|time trial|gran fondo|stage/i.test(name)
+}
+
+function kmValue(value: unknown): number | undefined {
+  const meters = numberValue(value)
+  if (meters === undefined) return undefined
+  return meters > 1000 ? Number((meters / 1000).toFixed(1)) : meters
 }
 
 function numberValue(value: unknown): number | undefined {
@@ -55,6 +97,6 @@ function stringValue(value: unknown): string | undefined {
   return undefined
 }
 
-function cryptoSafeId(row: IntervalsActivitySummary): string {
+function cryptoSafeId(row: IntervalsActivitySummary | IntervalsEventSummary): string {
   return [stringValue(row.start_date_local), stringValue(row.name), stringValue(row.type)].filter(Boolean).join('-') || `activity-${Date.now()}`
 }

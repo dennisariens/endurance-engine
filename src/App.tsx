@@ -6,6 +6,7 @@ import defaultState from '../data/current-state.json'
 import defaultRaces from '../data/races.json'
 import { ActivityPanel } from './components/ActivityPanel'
 import { CalendarPanel } from './components/CalendarPanel'
+import { DataControlsPanel, type AerionLocalSnapshot } from './components/DataControlsPanel'
 import { DecisionHistoryPanel } from './components/DecisionHistoryPanel'
 import { EventForms } from './components/EventForms'
 import { LegendPanel } from './components/LegendPanel'
@@ -21,7 +22,7 @@ import { daysBetween } from './engine/calendarEngine'
 import { makeDailyDecision } from './engine/decisionEngine'
 import { getLatestRaceCost } from './engine/raceCostEngine'
 import { buildDashboardStats } from './engine/statsEngine'
-import { buildOperationalTimeline, getLocalIsoDate, mergeActivitiesById } from './engine/timelineEngine'
+import { buildOperationalTimeline, getLocalIsoDate, mergeActivitiesById, mergeRacesById } from './engine/timelineEngine'
 import { makeWorkoutRecommendation } from './engine/workoutEngine'
 import { fetchOpeningSync, type SyncStatus } from './lib/dataSync'
 import { loadLocal, saveLocal } from './lib/storage'
@@ -68,8 +69,9 @@ export default function App() {
         if (cancelled) return
         if (payload.ok && payload.activities) {
           setActivities((current) => withKnownActuals(mergeActivitiesById({ current, incoming: payload.activities ?? [] })))
+          if (payload.races?.length) setRaces((current) => mergeRacesById({ current, incoming: payload.races ?? [] }))
           if (payload.state) setState((current) => ({ ...current, ...payload.state }))
-          setSyncStatus({ state: 'fresh', message: payload.message, lastSyncedAt: payload.syncedAt, activityCount: payload.activities.length })
+          setSyncStatus({ state: 'fresh', message: payload.message, lastSyncedAt: payload.syncedAt, activityCount: payload.activities.length, raceCount: payload.races?.length ?? 0 })
           return
         }
         setSyncStatus({ state: payload.source === 'unavailable' ? 'offline' : 'error', message: payload.message, lastSyncedAt: payload.syncedAt })
@@ -109,6 +111,24 @@ export default function App() {
       nextRaceName: nextRace?.name,
     }
     setDecisionLog((items) => [entry, ...items.filter((item) => item.date !== today)])
+  }
+
+  const importSnapshot = (snapshot: AerionLocalSnapshot) => {
+    setRaces(snapshot.races)
+    setActivities(withKnownActuals(snapshot.activities))
+    setBlockedDates(snapshot.blockedDates)
+    setDecisionLog(snapshot.decisionLog)
+    setState(snapshot.currentState)
+    setTheme(snapshot.theme)
+  }
+
+  const resetLocalData = () => {
+    setRaces(defaultRaces as Race[])
+    setActivities(withKnownActuals(defaultActivities as Activity[]))
+    setBlockedDates(defaultBlockedDates as BlockedDate[])
+    setDecisionLog([])
+    setState(defaultState as CurrentState)
+    setTheme('dark')
   }
 
   return (
@@ -174,6 +194,11 @@ export default function App() {
             onAddRace={(race) => setRaces((items) => [...items, race].sort((a, b) => a.date.localeCompare(b.date)))}
             onAddActivity={(activity) => setActivities((items) => mergeActivitiesById({ current: items, incoming: [activity] }))}
             onAddBlock={(block) => setBlockedDates((items) => [...items, block])}
+          />
+          <DataControlsPanel
+            snapshot={{ races, activities, blockedDates, decisionLog, currentState: state, theme }}
+            onImport={importSnapshot}
+            onResetLocalData={resetLocalData}
           />
           <ActivityPanel activities={activities} />
         </div>

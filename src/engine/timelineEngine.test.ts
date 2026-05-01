@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Activity, DecisionLogEntry, Race } from '../domain/types'
-import { buildOperationalTimeline, getLocalIsoDate, mergeActivitiesById } from './timelineEngine'
+import { buildOperationalTimeline, getLocalIsoDate, isRaceLikeActivity, mergeActivitiesById, mergeRacesById } from './timelineEngine'
 
 const activity = (overrides: Partial<Activity>): Activity => ({
   id: 'activity-1',
@@ -53,6 +53,25 @@ describe('mergeActivitiesById', () => {
   })
 })
 
+describe('mergeRacesById', () => {
+  it('updates synced races without losing manual calendar races', () => {
+    const merged = mergeRacesById({
+      current: [race({ id: 'manual-race', name: 'Manual race' }), race({ id: 'synced-race', name: 'Old synced race' })],
+      incoming: [race({ id: 'synced-race', name: 'Updated synced race' })],
+    })
+
+    expect(merged.map((item) => item.id)).toEqual(['manual-race', 'synced-race'])
+    expect(merged.find((item) => item.id === 'synced-race')?.name).toBe('Updated synced race')
+  })
+})
+
+describe('isRaceLikeActivity', () => {
+  it('detects race activities even when they come in as normal Intervals activities', () => {
+    expect(isRaceLikeActivity(activity({ name: 'Zwift Racing League - Stage 2', type: 'VirtualRide' }))).toBe(true)
+    expect(isRaceLikeActivity(activity({ name: 'Easy endurance ride', type: 'Ride' }))).toBe(false)
+  })
+})
+
 describe('buildOperationalTimeline', () => {
   it('shows actual activity even when the recommendation was not accepted', () => {
     const timeline = buildOperationalTimeline({
@@ -77,5 +96,15 @@ describe('buildOperationalTimeline', () => {
 
     expect(timeline[0]).toMatchObject({ kind: 'actual', status: 'completed-after-acceptance' })
   })
-}
-)
+
+  it('logs race-like activities as completed race entries, not generic actuals', () => {
+    const timeline = buildOperationalTimeline({
+      today: '2026-05-01',
+      races: [],
+      activities: [activity({ date: '2026-05-01', name: 'ECRO Zwift Race', type: 'VirtualRide', load: 91 })],
+      decisions: [],
+    })
+
+    expect(timeline[0]).toMatchObject({ kind: 'race', status: 'race-completed', label: 'ECRO Zwift Race', source: 'intervals' })
+  })
+})
