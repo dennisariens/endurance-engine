@@ -4,7 +4,10 @@ export const baselineConfig = {
   recovery: {
     resting_hr_14d_avg: 49.4,
     hrv_14d_avg: 49.2,
+    hrv_trend: 'unknown',
     sleep_hours_14d_avg: 7.9,
+    sleep_score: null,
+    recovery_score: null,
   },
   running: {
     max_hr_6m: 200,
