@@ -12,6 +12,7 @@ import { CostReadinessPanel } from './components/CostReadinessPanel'
 import { DataControlsPanel, type AerionLocalSnapshot } from './components/DataControlsPanel'
 import { DecisionHistoryPanel } from './components/DecisionHistoryPanel'
 import { EventForms } from './components/EventForms'
+import { GoalControlPanel } from './components/GoalControlPanel'
 import { LegendPanel } from './components/LegendPanel'
 import { MethodologyPanel } from './components/MethodologyPanel'
 import { MetricCard } from './components/MetricCard'
@@ -53,6 +54,7 @@ function withKnownActuals(activities: Activity[]): Activity[] {
 export default function App() {
   const [races, setRaces] = useState<Race[]>(() => loadLocal('aerion:races', defaultRaces as Race[]))
   const [goals, setGoals] = useState<Goal[]>(() => loadLocal('aerion:goals', defaultGoals as Goal[]))
+  const [activeGoalId, setActiveGoalId] = useState<string | undefined>(() => loadLocal('aerion:active-goal-id', (defaultGoals as Goal[])[0]?.id))
   const [activities, setActivities] = useState<Activity[]>(() => withKnownActuals(loadLocal('aerion:activities', defaultActivities as Activity[])))
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>(() => loadLocal('aerion:blocked', defaultBlockedDates as BlockedDate[]))
   const [decisionLog, setDecisionLog] = useState<DecisionLogEntry[]>(() => loadLocal('aerion:decision-log', [] as DecisionLogEntry[]))
@@ -62,6 +64,7 @@ export default function App() {
 
   useEffect(() => saveLocal('aerion:races', races), [races])
   useEffect(() => saveLocal('aerion:goals', goals), [goals])
+  useEffect(() => saveLocal('aerion:active-goal-id', activeGoalId), [activeGoalId])
   useEffect(() => saveLocal('aerion:activities', activities), [activities])
   useEffect(() => saveLocal('aerion:blocked', blockedDates), [blockedDates])
   useEffect(() => saveLocal('aerion:decision-log', decisionLog), [decisionLog])
@@ -70,6 +73,14 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme
   }, [theme])
+
+  useEffect(() => {
+    if (!goals.length) {
+      setActiveGoalId(undefined)
+      return
+    }
+    if (!activeGoalId || !goals.some((goal) => goal.id === activeGoalId)) setActiveGoalId(goals[0].id)
+  }, [activeGoalId, goals])
 
   useEffect(() => {
     let cancelled = false
@@ -98,7 +109,7 @@ export default function App() {
   const next72Plan = useMemo(() => buildNext72hPlan({ decision, state }), [decision, state])
   const stats = useMemo(() => buildDashboardStats({ today, races, activities }), [races, activities])
   const timeline = useMemo(() => buildOperationalTimeline({ today, races, activities, decisions: decisionLog }), [races, activities, decisionLog])
-  const activeGoal = useMemo(() => goals[0], [goals])
+  const activeGoal = useMemo(() => goals.find((goal) => goal.id === activeGoalId) ?? goals[0], [activeGoalId, goals])
   const goalReadiness = useMemo(() => activeGoal ? evaluateGoalReadiness({ goal: activeGoal, today, activities, races, state }) : undefined, [activeGoal, activities, races, state])
   const pathToGoal = useMemo(() => activeGoal && goalReadiness ? buildPathToGoal({ goal: activeGoal, today, readinessScore: goalReadiness.overallReadiness, state, activities, races }) : undefined, [activeGoal, goalReadiness, state, activities, races])
   const nextRace = decision.nextRace
@@ -130,6 +141,7 @@ export default function App() {
   const importSnapshot = (snapshot: AerionLocalSnapshot) => {
     setRaces(snapshot.races)
     setGoals(snapshot.goals)
+    setActiveGoalId(snapshot.goals[0]?.id)
     setActivities(withKnownActuals(snapshot.activities))
     setBlockedDates(snapshot.blockedDates)
     setDecisionLog(snapshot.decisionLog)
@@ -140,6 +152,7 @@ export default function App() {
   const resetLocalData = () => {
     setRaces(defaultRaces as Race[])
     setGoals(defaultGoals as Goal[])
+    setActiveGoalId((defaultGoals as Goal[])[0]?.id)
     setActivities(withKnownActuals(defaultActivities as Activity[]))
     setBlockedDates(defaultBlockedDates as BlockedDate[])
     setDecisionLog([])
@@ -198,6 +211,13 @@ export default function App() {
       />
       <Next72PlanPanel plan={next72Plan} />
       <PathToGoalPanel readiness={goalReadiness} path={pathToGoal} />
+      <GoalControlPanel
+        goals={goals}
+        activeGoalId={activeGoal?.id}
+        onSelectGoal={setActiveGoalId}
+        onUpdateGoal={(goal) => setGoals((items) => items.map((item) => item.id === goal.id ? goal : item))}
+        onDeleteGoal={(goalId) => setGoals((items) => items.filter((item) => item.id !== goalId))}
+      />
       <CostReadinessPanel latestRaceActivity={latestCost.activity} state={state} />
       <OperationalLogPanel items={timeline} />
       <LegendPanel />
