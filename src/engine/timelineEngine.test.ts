@@ -51,6 +51,24 @@ describe('mergeActivitiesById', () => {
     expect(merged.map((item) => item.id)).toEqual(['manual-1', 'synced-1'])
     expect(merged.find((item) => item.id === 'synced-1')?.name).toBe('Updated from Intervals')
   })
+
+  it('dedupes fixture and synced copies of the same activity by activity facts, preserving race cost context', () => {
+    const merged = mergeActivitiesById({
+      current: [
+        activity({ id: 'activity-20260428-zrl', date: '2026-04-28', name: 'Zwift Racing League: Legends Route', type: 'VirtualRide', durationSec: 4771, load: 105, raceCost: 82 }),
+      ],
+      incoming: [
+        activity({ id: 'intervals-i143815167', date: '2026-04-28', name: 'Zwift - Race: Zwift Racing League: Legends Route - Open Shamrock League Division 1 (A)', type: 'VirtualRide', durationSec: 4771, load: 105 }),
+      ],
+    })
+
+    expect(merged).toHaveLength(1)
+    expect(merged[0]).toMatchObject({
+      id: 'intervals-i143815167',
+      name: 'Zwift - Race: Zwift Racing League: Legends Route - Open Shamrock League Division 1 (A)',
+      raceCost: 82,
+    })
+  })
 })
 
 describe('mergeRacesById', () => {
@@ -106,5 +124,22 @@ describe('buildOperationalTimeline', () => {
     })
 
     expect(timeline[0]).toMatchObject({ kind: 'race', status: 'race-completed', label: 'ECRO Zwift Race', source: 'intervals' })
+  })
+
+  it('does not duplicate a planned race when a race-like actual exists for that race date', () => {
+    const timeline = buildOperationalTimeline({
+      today: '2026-05-01',
+      races: [race({ id: 'planned-ecro', date: '2026-05-01', name: 'ECRO Race Night' })],
+      activities: [activity({ id: 'actual-ecro', date: '2026-05-01', name: 'ECRO Zwift Race', type: 'VirtualRide', load: 91 })],
+      decisions: [],
+    })
+
+    expect(timeline).toHaveLength(1)
+    expect(timeline[0]).toMatchObject({
+      id: 'race-activity:actual-ecro',
+      kind: 'race',
+      status: 'race-completed',
+      label: 'ECRO Zwift Race',
+    })
   })
 })

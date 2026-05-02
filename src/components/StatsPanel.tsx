@@ -11,10 +11,10 @@ function Bars({ data, max, suffix = '', variant }: { data: Array<{ label: string
   const peak = max ?? Math.max(1, ...data.map((item) => item.value ?? item.count ?? 0))
   return (
     <div className="bars">
-      {data.map((item) => {
+      {data.map((item, index) => {
         const value = item.value ?? item.count ?? 0
         return (
-          <div className="bar-row" key={item.label} title={`${item.label}: ${value}${suffix}`}>
+          <div className="bar-row" key={`${item.label}-${index}`} title={`${item.label}: ${value}${suffix}`}>
             <span>{item.label}</span>
             <div className="bar-track"><div className={`bar-fill ${toneFor(value, variant)}`} style={{ width: `${Math.max(4, (value / peak) * 100)}%` }} /></div>
             <strong>{value}{suffix}</strong>

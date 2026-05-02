@@ -23,8 +23,26 @@ export function getLocalIsoDate(date = new Date()): string {
 
 export function mergeActivitiesById(input: { current: Activity[]; incoming: Activity[] }): Activity[] {
   const byId = new Map<string, Activity>()
-  for (const activity of input.current) byId.set(activity.id, activity)
-  for (const activity of input.incoming) byId.set(activity.id, activity)
+  const idBySemanticKey = new Map<string, string>()
+
+  const upsert = (activity: Activity) => {
+    const semanticKey = getActivitySemanticKey(activity)
+    const matchedId = semanticKey ? idBySemanticKey.get(semanticKey) : undefined
+    if (semanticKey && matchedId && matchedId !== activity.id) {
+      const matched = byId.get(matchedId)
+      byId.delete(matchedId)
+      byId.set(activity.id, mergeActivityFacts(matched, activity))
+      idBySemanticKey.set(semanticKey, activity.id)
+      return
+    }
+
+    const existing = byId.get(activity.id)
+    byId.set(activity.id, mergeActivityFacts(existing, activity))
+    if (semanticKey) idBySemanticKey.set(semanticKey, activity.id)
+  }
+
+  for (const activity of input.current) upsert(activity)
+  for (const activity of input.incoming) upsert(activity)
   return [...byId.values()].sort((a, b) => b.date.localeCompare(a.date))
 }
 
@@ -40,13 +58,32 @@ export function isRaceLikeActivity(activity: Activity): boolean {
     || /\brace\b|racing|zwift racing league|ecro|criterium|crit\b|tt\b|time trial|gran fondo|stage/i.test(`${activity.name} ${activity.type}`)
 }
 
+function getActivitySemanticKey(activity: Activity): string | undefined {
+  if (activity.source === 'manual') return undefined
+  if (!activity.date || !activity.type || !activity.durationSec) return undefined
+  const durationBucket = Math.round(activity.durationSec / 5) * 5
+  const loadBucket = typeof activity.load === 'number' ? Math.round(activity.load) : 'no-load'
+  return [activity.date, activity.type.toLowerCase(), durationBucket, loadBucket].join('|')
+}
+
+function mergeActivityFacts(existing: Activity | undefined, incoming: Activity): Activity {
+  if (!existing) return incoming
+  return {
+    ...existing,
+    ...incoming,
+    raceCost: incoming.raceCost ?? existing.raceCost,
+  }
+}
+
 export function buildOperationalTimeline(input: { today: string; races: Race[]; activities: Activity[]; decisions: DecisionLogEntry[] }): TimelineItem[] {
   const decisionByDate = new Map(input.decisions.map((decision) => [decision.date, decision]))
   const activityDates = new Set(input.activities.map((activity) => activity.date))
+  const completedRaceActivityDates = new Set(input.activities.filter(isRaceLikeActivity).map((activity) => activity.date))
   const items: TimelineItem[] = []
 
   for (const race of input.races) {
     if (race.date < input.today) continue
+    if (race.date <= input.today && completedRaceActivityDates.has(race.date)) continue
     items.push({
       id: `race:${race.id}`,
       date: race.date,
