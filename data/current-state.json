@@ -28,6 +28,11 @@
   "hrv_14d_avg": 49.2,
   "sleep_hours_14d_avg": 7.9,
   "vo2max": null,
+  "garmin_body_battery": null,
+  "garmin_stress_avg": null,
+  "garmin_training_readiness": null,
+  "garmin_sleep_score": null,
+  "garmin_hrv_status": null,
   "future_ecro_races_loaded": 60,
   "notes": ""
 }

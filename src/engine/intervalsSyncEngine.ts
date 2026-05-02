@@ -63,6 +63,11 @@ export function normalizeIntervalsWellness(rows: IntervalsWellnessSummary[]): Pa
     hrv_14d_avg: numberValue(latest.hrv) ?? numberValue(latest.hrv_rmssd),
     sleep_hours_14d_avg: sleepHours,
     vo2max: numberValue(latest.vo2max) ?? numberValue(latest.vo2_max) ?? numberValue(latest.vo2Max),
+    garmin_body_battery: numberValue(latest.bodyBattery) ?? numberValue(latest.body_battery) ?? numberValue(latest.bodyBatteryCharged),
+    garmin_stress_avg: numberValue(latest.stressAvg) ?? numberValue(latest.stress_avg) ?? numberValue(latest.averageStress),
+    garmin_training_readiness: numberValue(latest.trainingReadiness) ?? numberValue(latest.training_readiness) ?? numberValue(latest.trainingReadinessScore),
+    garmin_sleep_score: numberValue(latest.sleepScore) ?? numberValue(latest.sleep_score),
+    garmin_hrv_status: stringValue(latest.hrvStatus) ?? stringValue(latest.hrv_status),
   }
 }
 

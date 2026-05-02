@@ -66,6 +66,11 @@ export type CurrentState = {
   hrv_14d_avg?: number | null
   sleep_hours_14d_avg?: number | null
   vo2max?: number | null
+  garmin_body_battery?: number | null
+  garmin_stress_avg?: number | null
+  garmin_training_readiness?: number | null
+  garmin_sleep_score?: number | null
+  garmin_hrv_status?: string | null
   run_lthr?: number | null
   cycle_lthr?: number | null
   run_aet?: number | null
