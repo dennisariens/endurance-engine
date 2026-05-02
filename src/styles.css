@@ -89,7 +89,7 @@ p { color: var(--muted); font-size: 16px; line-height: 1.5; }
 .briefing li { margin-bottom: 8px; }
 .switch-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 
-.workout-panel, .stats-panel, .legend-panel, .today-plan, .next72-panel, .cost-readiness-panel, .decision-history, .methodology-panel, .baseline-zones-panel, .sync-panel, .operational-log, .data-controls { margin-bottom: 16px; }
+.workout-panel, .stats-panel, .legend-panel, .today-plan, .next72-panel, .path-panel, .cost-readiness-panel, .decision-history, .methodology-panel, .baseline-zones-panel, .sync-panel, .operational-log, .data-controls { margin-bottom: 16px; }
 .goal-callout {
   border: 1px solid rgba(56, 189, 248, .28);
   background: rgba(56, 189, 248, .08);
@@ -164,6 +164,7 @@ p { color: var(--muted); font-size: 16px; line-height: 1.5; }
 .calendar-subsection { margin: 0 0 18px; padding-bottom: 18px; border-bottom: 1px solid var(--border-soft); }
 .calendar-subsection .eyebrow { margin-bottom: 8px; }
 .activity-form-row { grid-template-columns: 145px 1fr 140px 80px 80px auto; }
+.goal-form-row { grid-template-columns: 145px 1fr 150px 135px 125px auto; }
 .race-main strong, .activity-row strong { display: block; }
 .race-main p, .activity-row p { margin: 3px 0 0; font-size: 13px; }
 .date-tile {
@@ -324,6 +325,25 @@ button.danger { border-color: rgba(239, 68, 68, .45); color: #fca5a5; }
 .next72-card.tone-green { border-color: rgba(34, 197, 94, .34); }
 .next72-card.tone-blue { border-color: rgba(56, 189, 248, .34); }
 .next72-card.tone-purple { border-color: rgba(168, 85, 247, .38); }
+.path-score { text-align: right; display: grid; gap: 8px; justify-items: end; }
+.path-score strong { font-size: 42px; letter-spacing: -.06em; line-height: .9; }
+.path-grid, .scenario-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+.path-card, .scenario-card, .path-columns > div, .dimension-row {
+  border: 1px solid var(--border-soft);
+  background: var(--bg-row);
+  border-radius: 16px;
+  padding: 14px;
+}
+.path-card.highlight { border-color: rgba(56, 189, 248, .38); }
+.path-card strong, .scenario-card strong { display: block; font-size: 18px; margin-bottom: 6px; }
+.path-card p, .scenario-card p { margin: 4px 0 0; font-size: 14px; }
+.path-columns { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+.path-columns ul { color: var(--soft-text); padding-left: 18px; margin: 8px 0 0; }
+.path-columns li { margin: 5px 0; }
+.dimension-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.dimension-row span { display: block; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.dimension-row strong { display: block; font-size: 22px; margin: 4px 0; }
+.dimension-row p { margin: 0; font-size: 13px; }
 .cost-readiness-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(360px, .9fr); gap: 14px; }
 .cost-breakdown-section, .readiness-section {
   border: 1px solid var(--border-soft);
@@ -440,7 +460,7 @@ button.danger { border-color: rgba(239, 68, 68, .45); color: #fca5a5; }
   .metrics-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .briefing { grid-template-columns: 1fr; }
   .switch-row { justify-content: flex-start; }
-  .two-col, .workout-grid, .stats-grid, .legend-grid, .plan-grid, .next72-grid, .cost-readiness-grid, .readiness-grid, .method-grid, .baseline-grid, .baseline-cap-grid, .ftp-zone-list, .history-row, .timeline-row, .activity-form-row { grid-template-columns: 1fr; }
+  .two-col, .workout-grid, .stats-grid, .legend-grid, .plan-grid, .next72-grid, .path-grid, .path-columns, .scenario-grid, .dimension-grid, .cost-readiness-grid, .readiness-grid, .method-grid, .baseline-grid, .baseline-cap-grid, .ftp-zone-list, .history-row, .timeline-row, .activity-form-row, .goal-form-row { grid-template-columns: 1fr; }
   .history-meta { justify-content: flex-start; }
 }
 

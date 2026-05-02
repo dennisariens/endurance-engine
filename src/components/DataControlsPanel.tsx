@@ -1,9 +1,10 @@
-import type { Activity, BlockedDate, CurrentState, DecisionLogEntry, Race, Theme } from '../domain/types'
+import type { Activity, BlockedDate, CurrentState, DecisionLogEntry, Goal, Race, Theme } from '../domain/types'
 
 export type AerionLocalSnapshot = {
   exportedAt: string
   version: 1
   races: Race[]
+  goals: Goal[]
   activities: Activity[]
   blockedDates: BlockedDate[]
   decisionLog: DecisionLogEntry[]
@@ -34,7 +35,7 @@ export function DataControlsPanel({ snapshot, onImport, onResetLocalData }: Prop
   const importData = async (file?: File) => {
     if (!file) return
     const parsed = JSON.parse(await file.text()) as AerionLocalSnapshot
-    if (parsed.version !== 1 || !Array.isArray(parsed.races) || !Array.isArray(parsed.activities)) {
+    if (parsed.version !== 1 || !Array.isArray(parsed.races) || !Array.isArray(parsed.activities) || !Array.isArray(parsed.goals)) {
       throw new Error('Invalid AERION backup file')
     }
     onImport(parsed)

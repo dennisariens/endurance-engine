@@ -1,0 +1,22 @@
+[
+  {
+    "id": "goal-im-lanzarote",
+    "name": "Ironman Lanzarote",
+    "type": "candidate-event",
+    "discipline": "triathlon",
+    "status": "candidate",
+    "targetDate": "2026-10-01",
+    "description": "Build readiness for a long-distance triathlon without committing before evidence supports it.",
+    "priority": "high"
+  },
+  {
+    "id": "goal-low-hr-running",
+    "name": "Improve low-HR running pace",
+    "type": "floating-goal",
+    "discipline": "running",
+    "status": "draft",
+    "description": "Increase aerobic running pace while keeping HR drift and recovery cost low.",
+    "targetMetric": "pace at aerobic HR",
+    "priority": "medium"
+  }
+]

@@ -4,6 +4,10 @@ export type TodayAction = 'Race' | 'Z2' | 'Recovery' | 'Rest'
 export type Theme = 'dark' | 'light'
 export type WorkoutDiscipline = 'bike' | 'run' | 'bike-run' | 'off'
 
+export type GoalType = 'fixed-date-race' | 'floating-goal' | 'candidate-event' | 'committed-race' | 'mandatory-race' | 'key-performance-goal'
+export type GoalStatus = 'draft' | 'candidate' | 'committed' | 'key-event' | 'mandatory'
+export type GoalDiscipline = 'cycling' | 'running' | 'triathlon' | 'endurance' | 'other'
+
 export type Race = {
   id: string
   date: string
@@ -19,6 +23,20 @@ export type Race = {
   class?: number | null
   distanceKm?: number | null
   elevationM?: number | null
+  notes?: string
+}
+
+export type Goal = {
+  id: string
+  name: string
+  type: GoalType
+  discipline: GoalDiscipline
+  status: GoalStatus
+  targetDate?: string | null
+  description?: string
+  targetMetric?: string
+  targetValue?: string
+  priority?: 'low' | 'medium' | 'high'
   notes?: string
 }
 
