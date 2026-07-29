@@ -30,6 +30,7 @@ import { SyncStatusPanel } from './components/SyncStatusPanel'
 import { TodayPlanPanel } from './components/TodayPlanPanel'
 import { WorkoutPanel } from './components/WorkoutPanel'
 import { buildIntegrationHealth } from './data/integrationHealth'
+import { dedupeSyncedActivities, mergeRacesByStableId } from './data/integrations/dedupe'
 import { parseGarminRecoveryFixture, normalizeGarminRecoveryState } from './data/integrations/garminRecoveryAdapter'
 import { normalizeStravaActivityProofs, type StravaActivityProof } from './data/integrations/stravaActivityProofAdapter'
 import type { AccountSettings, Activity, BlockedDate, CoachScenarioId, CurrentState, DecisionLogAction, DecisionLogEntry, Goal, GoalConversationEntry, Race, Theme, VisualizationSettings } from './domain/types'
@@ -45,7 +46,7 @@ import { buildNext72hPlan } from './engine/recoveryPlanEngine'
 import { buildMorningReadinessVerdict } from './engine/morningReadinessEngine'
 import { buildScenarioSimulation, type ScenarioOutcome } from './engine/scenarioSimulationEngine'
 import { buildDashboardStats } from './engine/statsEngine'
-import { buildOperationalTimeline, getLocalIsoDate, mergeActivitiesById, mergeRacesById } from './engine/timelineEngine'
+import { buildOperationalTimeline, getLocalIsoDate } from './engine/timelineEngine'
 import { makeWorkoutRecommendation } from './engine/workoutEngine'
 import { fetchOpeningSync, type SyncStatus } from './lib/dataSync'
 import { loadLocal, saveLocal } from './lib/storage'
@@ -116,8 +117,8 @@ export default function App() {
     try {
       const payload = await fetchOpeningSync()
       if (payload.ok && payload.activities) {
-        setActivities((current) => mergeActivitiesById({ current, incoming: payload.activities ?? [] }))
-        if (payload.races?.length) setRaces((current) => mergeRacesById({ current, incoming: payload.races ?? [] }))
+        setActivities((current) => dedupeSyncedActivities([...current, ...payload.activities ?? []]))
+        if (payload.races?.length) setRaces((current) => mergeRacesByStableId(current, payload.races ?? []))
         if (payload.state) setState((current) => ({ ...current, ...payload.state }))
         setSyncStatus({ state: 'fresh', message: payload.message, lastSyncedAt: payload.syncedAt, activityCount: payload.activities.length, raceCount: payload.races?.length ?? 0 })
         return { source: 'Intervals', records: payload.activities.length + (payload.races?.length ?? 0), latestDate: payload.syncedAt?.slice(0, 10), message: payload.message }
@@ -137,8 +138,8 @@ export default function App() {
       .then((payload) => {
         if (cancelled) return
         if (payload.ok && payload.activities) {
-          setActivities((current) => mergeActivitiesById({ current, incoming: payload.activities ?? [] }))
-          if (payload.races?.length) setRaces((current) => mergeRacesById({ current, incoming: payload.races ?? [] }))
+          setActivities((current) => dedupeSyncedActivities([...current, ...payload.activities ?? []]))
+          if (payload.races?.length) setRaces((current) => mergeRacesByStableId(current, payload.races ?? []))
           if (payload.state) setState((current) => ({ ...current, ...payload.state }))
           setSyncStatus({ state: 'fresh', message: payload.message, lastSyncedAt: payload.syncedAt, activityCount: payload.activities.length, raceCount: payload.races?.length ?? 0 })
           return
@@ -266,7 +267,7 @@ export default function App() {
     const rows = Array.isArray(parsed) ? parsed : Array.isArray(parsed.activities) ? parsed.activities : []
     const imported = normalizeStravaActivityProofs(rows)
     if (!imported.length) throw new Error('No Strava activities found')
-    setActivities((current) => mergeActivitiesById({ current, incoming: imported }))
+    setActivities((current) => dedupeSyncedActivities([...current, ...imported]))
     const sortedDates = imported.map((activity) => activity.date).sort()
     const latestDate = sortedDates[sortedDates.length - 1]
     return { source: 'Strava', records: imported.length, latestDate, message: `Imported Strava activity proof from ${file.name}` }
@@ -331,7 +332,7 @@ export default function App() {
         onImportStravaActivities={importStravaActivities}
         onExportLocalData={exportLocalData}
         onImportLocalData={importLocalData}
-        onAddActivities={(incoming) => setActivities((items) => mergeActivitiesById({ current: items, incoming }))}
+        onAddActivities={(incoming) => setActivities((items) => dedupeSyncedActivities([...items, ...incoming]))}
       />
       <details className="expert-layer">
         <summary>Expert cockpit / debug layer</summary>
@@ -385,7 +386,7 @@ export default function App() {
           <div className="two-col">
             <CalendarPanel races={races} activities={activities} blockedDates={blockedDates} today={today} onDeleteRace={(id) => setRaces((items) => items.filter((item) => item.id !== id))} />
             <div className="stack">
-              <EventForms onAddRace={(race) => setRaces((items) => [...items, race].sort((a, b) => a.date.localeCompare(b.date)))} onAddGoal={(goal) => setGoals((items) => [goal, ...items.filter((item) => item.id !== goal.id)])} onAddActivity={(activity) => setActivities((items) => mergeActivitiesById({ current: items, incoming: [activity] }))} onAddBlock={(block) => setBlockedDates((items) => [...items, block])} />
+              <EventForms onAddRace={(race) => setRaces((items) => mergeRacesByStableId(items, [race]))} onAddGoal={(goal) => setGoals((items) => [goal, ...items.filter((item) => item.id !== goal.id)])} onAddActivity={(activity) => setActivities((items) => dedupeSyncedActivities([...items, activity]))} onAddBlock={(block) => setBlockedDates((items) => [...items, block])} />
               <DataControlsPanel snapshot={{ races, goals, goalConversation, activities, blockedDates, decisionLog, currentState: state, theme, account, visualization }} onImport={importSnapshot} onResetLocalData={resetLocalData} />
               <ActivityPanel activities={activities} />
             </div>
