@@ -33,6 +33,7 @@ import { buildIntegrationHealth } from './data/integrationHealth'
 import { dedupeSyncedActivities, mergeRacesByStableId } from './data/integrations/dedupe'
 import { parseGarminRecoveryFixture, normalizeGarminRecoveryState } from './data/integrations/garminRecoveryAdapter'
 import { normalizeStravaActivityProofs, type StravaActivityProof } from './data/integrations/stravaActivityProofAdapter'
+import { buildFreshnessReport } from './data/freshness'
 import type { AccountSettings, Activity, BlockedDate, CoachScenarioId, CurrentState, DecisionLogAction, DecisionLogEntry, Goal, GoalConversationEntry, Race, Theme, VisualizationSettings } from './domain/types'
 import { daysBetween } from './engine/calendarEngine'
 import { buildActualOverride } from './engine/actualOverrideEngine'
@@ -164,7 +165,8 @@ export default function App() {
   const selectedScenarioId = coachActionLoop.selectedScenario?.id
   const stats = useMemo(() => buildDashboardStats({ today, races, activities }), [races, activities])
   const timeline = useMemo(() => buildOperationalTimeline({ today, races, activities, decisions: decisionLog }), [races, activities, decisionLog])
-  const integrations = useMemo(() => buildIntegrationHealth({ activities, state, syncStatus }), [activities, state, syncStatus])
+  const freshness = useMemo(() => buildFreshnessReport({ today, state, activities, races, syncedAt: syncStatus.lastSyncedAt }), [state, activities, races, syncStatus.lastSyncedAt])
+  const integrations = useMemo(() => buildIntegrationHealth({ activities, state, syncStatus, freshness }), [activities, state, syncStatus, freshness])
   const activeGoal = useMemo(() => goals.find((goal) => goal.id === activeGoalId) ?? goals[0], [activeGoalId, goals])
   const goalReadiness = useMemo(() => activeGoal ? evaluateGoalReadiness({ goal: activeGoal, today, activities, races, state }) : undefined, [activeGoal, activities, races, state])
   const pathToGoal = useMemo(() => activeGoal && goalReadiness ? buildPathToGoal({ goal: activeGoal, today, readinessScore: goalReadiness.overallReadiness, state, activities, races }) : undefined, [activeGoal, goalReadiness, state, activities, races])

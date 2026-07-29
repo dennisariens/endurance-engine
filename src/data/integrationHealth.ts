@@ -1,4 +1,5 @@
 import type { Activity, ActivitySource, CurrentState } from '../domain/types'
+import type { FreshnessReport } from './freshness'
 import type { SyncStatus } from '../lib/dataSync'
 
 export type IntegrationId = 'intervals' | 'garmin' | 'strava' | 'manual'
@@ -20,8 +21,14 @@ function countSource(activities: Activity[], source: ActivitySource): number {
   return activities.filter((activity) => activity.source === source).length
 }
 
-export function buildIntegrationHealth(input: { activities: Activity[]; state: CurrentState; syncStatus: SyncStatus }): IntegrationHealth[] {
-  const { activities, state, syncStatus } = input
+function freshnessDetail(freshness: FreshnessReport | undefined, source: FreshnessReport['signals'][number]['source']): string | undefined {
+  const signal = freshness?.signals.find((item) => item.source === source)
+  if (!signal || signal.status === 'fresh') return undefined
+  return signal.message
+}
+
+export function buildIntegrationHealth(input: { activities: Activity[]; state: CurrentState; syncStatus: SyncStatus; freshness?: FreshnessReport }): IntegrationHealth[] {
+  const { activities, state, syncStatus, freshness } = input
   const intervalCount = countSource(activities, 'intervals')
   const garminSignals = [
     state.garmin_body_battery,
@@ -49,9 +56,9 @@ export function buildIntegrationHealth(input: { activities: Activity[]; state: C
       priority: 'training-load',
       lastSyncedAt: syncStatus.lastSyncedAt,
       recordCount: intervalCount || syncStatus.activityCount,
-      detail: syncStatus.state === 'fresh'
+      detail: freshnessDetail(freshness, 'sync') ?? (syncStatus.state === 'fresh'
         ? 'Training load, recent activities, wellness, and race events through AERION Core.'
-        : syncStatus.message,
+        : syncStatus.message),
       nextAction: syncStatus.state === 'fresh' ? 'Keep as primary training analytics source.' : 'Check local server credentials and opening sync.',
     },
     {
@@ -60,9 +67,9 @@ export function buildIntegrationHealth(input: { activities: Activity[]; state: C
       state: garminSignals > 0 ? 'connected' : 'not-connected',
       priority: 'recovery-truth',
       recordCount: garminSignals || undefined,
-      detail: garminSignals > 0
+      detail: freshnessDetail(freshness, 'current-state') ?? (garminSignals > 0
         ? `${garminSignals} readiness signals available in normalized state.`
-        : 'Adapter interface pending. Recovery fields exist; ingestion is not wired yet.',
+        : 'Adapter interface pending. Recovery fields exist; ingestion is not wired yet.'),
       nextAction: 'Add Garmin recovery snapshot adapter behind the server boundary.',
     },
     {
@@ -71,9 +78,9 @@ export function buildIntegrationHealth(input: { activities: Activity[]; state: C
       state: stravaCount > 0 ? 'connected' : 'not-connected',
       priority: 'activity-proof',
       recordCount: stravaCount || undefined,
-      detail: stravaCount > 0
+      detail: freshnessDetail(freshness, 'activities') ?? (stravaCount > 0
         ? 'Strava activities are present as proof/enrichment source.'
-        : 'OAuth/import adapter pending. Use for activity proof, routes, and external links — not recovery truth.',
+        : 'OAuth/import adapter pending. Use for activity proof, routes, and external links — not recovery truth.'),
       nextAction: 'Add Strava OAuth/import adapter after source deduplication rules are in place.',
     },
     {
