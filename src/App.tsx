@@ -73,25 +73,13 @@ function addDays(date: string, days: number): string {
 }
 const yesterday = addDays(today, -1)
 const formatLabel = (value: string) => value.replace(/([A-Z])/g, ' $1').trim()
-const yesterdayActual: Activity = {
-  id: 'manual-20260430-sort-like-activity',
-  source: 'manual',
-  date: '2026-04-30',
-  name: 'Sort-like activity',
-  type: 'Ride',
-}
-
-function withKnownActuals(activities: Activity[]): Activity[] {
-  if (activities.some((activity) => activity.id === yesterdayActual.id || (activity.date === yesterdayActual.date && activity.name.toLowerCase().includes('sort')))) return activities
-  return [yesterdayActual, ...activities]
-}
 
 export default function App() {
   const [races, setRaces] = useState<Race[]>(() => loadLocal('aerion:races', defaultRaces as Race[]))
   const [goals, setGoals] = useState<Goal[]>(() => loadLocal('aerion:goals', defaultGoals as Goal[]))
   const [goalConversation, setGoalConversation] = useState<GoalConversationEntry[]>(() => loadLocal('aerion:goal-conversation', [] as GoalConversationEntry[]))
   const [activeGoalId, setActiveGoalId] = useState<string | undefined>(() => loadLocal('aerion:active-goal-id', (defaultGoals as Goal[])[0]?.id))
-  const [activities, setActivities] = useState<Activity[]>(() => withKnownActuals(loadLocal('aerion:activities', defaultActivities as Activity[])))
+  const [activities, setActivities] = useState<Activity[]>(() => loadLocal('aerion:activities', defaultActivities as Activity[]))
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>(() => loadLocal('aerion:blocked', defaultBlockedDates as BlockedDate[]))
   const [decisionLog, setDecisionLog] = useState<DecisionLogEntry[]>(() => loadLocal('aerion:decision-log', [] as DecisionLogEntry[]))
   const [theme, setTheme] = useState<Theme>(() => loadLocal('aerion:theme', 'dark' as Theme))
@@ -128,7 +116,7 @@ export default function App() {
     try {
       const payload = await fetchOpeningSync()
       if (payload.ok && payload.activities) {
-        setActivities((current) => withKnownActuals(mergeActivitiesById({ current, incoming: payload.activities ?? [] })))
+        setActivities((current) => mergeActivitiesById({ current, incoming: payload.activities ?? [] }))
         if (payload.races?.length) setRaces((current) => mergeRacesById({ current, incoming: payload.races ?? [] }))
         if (payload.state) setState((current) => ({ ...current, ...payload.state }))
         setSyncStatus({ state: 'fresh', message: payload.message, lastSyncedAt: payload.syncedAt, activityCount: payload.activities.length, raceCount: payload.races?.length ?? 0 })
@@ -149,7 +137,7 @@ export default function App() {
       .then((payload) => {
         if (cancelled) return
         if (payload.ok && payload.activities) {
-          setActivities((current) => withKnownActuals(mergeActivitiesById({ current, incoming: payload.activities ?? [] })))
+          setActivities((current) => mergeActivitiesById({ current, incoming: payload.activities ?? [] }))
           if (payload.races?.length) setRaces((current) => mergeRacesById({ current, incoming: payload.races ?? [] }))
           if (payload.state) setState((current) => ({ ...current, ...payload.state }))
           setSyncStatus({ state: 'fresh', message: payload.message, lastSyncedAt: payload.syncedAt, activityCount: payload.activities.length, raceCount: payload.races?.length ?? 0 })
@@ -236,7 +224,7 @@ export default function App() {
     setGoals(snapshot.goals)
     setGoalConversation(snapshot.goalConversation ?? [])
     setActiveGoalId(snapshot.goals[0]?.id)
-    setActivities(withKnownActuals(snapshot.activities))
+    setActivities(snapshot.activities)
     setBlockedDates(snapshot.blockedDates)
     setDecisionLog(snapshot.decisionLog)
     setState(snapshot.currentState)
@@ -278,7 +266,7 @@ export default function App() {
     const rows = Array.isArray(parsed) ? parsed : Array.isArray(parsed.activities) ? parsed.activities : []
     const imported = normalizeStravaActivityProofs(rows)
     if (!imported.length) throw new Error('No Strava activities found')
-    setActivities((current) => withKnownActuals(mergeActivitiesById({ current, incoming: imported })))
+    setActivities((current) => mergeActivitiesById({ current, incoming: imported }))
     const sortedDates = imported.map((activity) => activity.date).sort()
     const latestDate = sortedDates[sortedDates.length - 1]
     return { source: 'Strava', records: imported.length, latestDate, message: `Imported Strava activity proof from ${file.name}` }
@@ -289,7 +277,7 @@ export default function App() {
     setGoals(defaultGoals as Goal[])
     setGoalConversation([])
     setActiveGoalId((defaultGoals as Goal[])[0]?.id)
-    setActivities(withKnownActuals(defaultActivities as Activity[]))
+    setActivities(defaultActivities as Activity[])
     setBlockedDates(defaultBlockedDates as BlockedDate[])
     setDecisionLog([])
     setState(defaultState as CurrentState)
@@ -343,7 +331,7 @@ export default function App() {
         onImportStravaActivities={importStravaActivities}
         onExportLocalData={exportLocalData}
         onImportLocalData={importLocalData}
-        onAddActivities={(incoming) => setActivities((items) => withKnownActuals(mergeActivitiesById({ current: items, incoming })))}
+        onAddActivities={(incoming) => setActivities((items) => mergeActivitiesById({ current: items, incoming }))}
       />
       <details className="expert-layer">
         <summary>Expert cockpit / debug layer</summary>
