@@ -1,4 +1,7 @@
 import type { Activity, CurrentState, DecisionLogEntry, Goal, Race } from '../domain/types'
+import { buildEvidenceRecords, type EvidenceRecord } from '../data/evidence'
+import { buildFreshnessReport, type FreshnessReport } from '../data/freshness'
+import { buildCanonicalAthleteState, type CanonicalAthleteState } from '../state/canonicalAthleteState'
 import { buildActualOverride } from './actualOverrideEngine'
 import { buildCoachBriefing } from './coachBriefingEngine'
 import { buildDailyBriefing, type DailyBriefing, type PlannedCalendarEvent } from './dailyBriefingEngine'
@@ -19,6 +22,8 @@ export type AerionBriefingContextInput = {
   state: CurrentState
   decisionLog?: DecisionLogEntry[]
   calendarEvents?: PlannedCalendarEvent[]
+  syncedAt?: string
+  athleteId?: string
   source?: AerionBriefingContext['source']
 }
 
@@ -37,6 +42,9 @@ export type AerionBriefingContext = {
     tone: string
   }
   control: {
+    athleteState: CanonicalAthleteState
+    evidence: EvidenceRecord[]
+    freshness: FreshnessReport
     morningReadiness: MorningReadinessVerdict
     next72Plan: Next72Plan
     goalReadiness?: GoalReadinessResult
@@ -53,7 +61,12 @@ function addDays(date: string, days: number): string {
 
 export function buildAerionBriefingContext(input: AerionBriefingContextInput): AerionBriefingContext {
   const timezone = input.timezone ?? 'Europe/Amsterdam'
+  const generatedAt = new Date().toISOString()
+  const athleteId = input.athleteId ?? 'dennis'
   const decisionLog = input.decisionLog ?? []
+  const freshness = buildFreshnessReport({ today: input.date, state: input.state, activities: input.activities, races: input.races, syncedAt: input.syncedAt })
+  const evidence = buildEvidenceRecords({ athleteId, generatedAt, state: input.state, activities: input.activities, races: input.races, goals: input.goals, freshness })
+  const athleteState = buildCanonicalAthleteState({ athleteId, today: input.date, generatedAt, state: input.state, activities: input.activities, races: input.races, goals: input.goals, freshness, evidence })
   const decision = makeDailyDecision({ today: input.date, races: input.races, activities: input.activities, state: input.state })
   const recommendation = makeWorkoutRecommendation({ decision, state: input.state })
   const actualOverride = buildActualOverride({ today: input.date, activities: input.activities, decisionLog, recommendation })
@@ -79,7 +92,7 @@ export function buildAerionBriefingContext(input: AerionBriefingContextInput): A
   const stats = buildDashboardStats({ today: input.date, races: input.races, activities: input.activities })
 
   return {
-    generatedAt: new Date().toISOString(),
+    generatedAt,
     date: input.date,
     timezone,
     source: input.source ?? 'local-fixture',
@@ -94,6 +107,9 @@ export function buildAerionBriefingContext(input: AerionBriefingContextInput): A
       tone: coachBriefing.tone,
     },
     control: {
+      athleteState,
+      evidence,
+      freshness,
       morningReadiness,
       next72Plan,
       goalReadiness,

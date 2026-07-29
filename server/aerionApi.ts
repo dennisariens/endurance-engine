@@ -108,6 +108,7 @@ export async function buildBriefingPayload({ date, timezone = 'Europe/Amsterdam'
     races: useLive && sync.races?.length ? sync.races : defaultRaces as Race[],
     goals: defaultGoals as Goal[],
     state: useLive ? { ...defaultState as CurrentState, ...sync.state } : defaultState as CurrentState,
+    syncedAt: sync.syncedAt,
     source: useLive ? 'local-live' : 'local-fixture',
   })
   return { ok: true, sync: { source: sync.source, message: sync.message, syncedAt: sync.syncedAt }, ...payload }

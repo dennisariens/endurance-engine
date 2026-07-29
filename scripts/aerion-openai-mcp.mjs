@@ -65,6 +65,31 @@ async function getAerionContext({ date } = {}) {
   }
 }
 
+async function getAthleteState(args = {}) {
+  const context = await getAerionContext(args)
+  if (!context.ok) return context
+  return {
+    ok: true,
+    source: context.source,
+    generatedAt: context.generatedAt,
+    date: context.date,
+    athleteState: context.control?.athleteState,
+    evidenceSummary: context.control?.athleteState?.evidenceSummary,
+  }
+}
+
+async function getDataFreshness(args = {}) {
+  const context = await getAerionContext(args)
+  if (!context.ok) return context
+  return {
+    ok: true,
+    source: context.source,
+    generatedAt: context.generatedAt,
+    date: context.date,
+    freshness: context.control?.freshness,
+  }
+}
+
 function contextToPrompt(context) {
   return `You are AERION, Dennis Ariens' local-first endurance control system. Use the shared local /api/briefing context below. Be concise, consequence-aware, and advisory. Never pretend missing Garmin/Strava/Intervals data is present.\n\nAERION context:\n${JSON.stringify(context, null, 2)}`
 }
@@ -133,6 +158,26 @@ const tools = [
       },
     },
   },
+  {
+    name: 'get_athlete_state',
+    description: 'Return the CanonicalAthleteState v2 draft from the shared local AERION briefing service.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        date: { type: 'string', description: 'ISO date to anchor the state, e.g. 2026-07-29.' },
+      },
+    },
+  },
+  {
+    name: 'get_data_freshness',
+    description: 'Return AERION source freshness and stale-data semantics from the shared local briefing service.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        date: { type: 'string', description: 'ISO date to anchor freshness calculation.' },
+      },
+    },
+  },
 ]
 
 async function handle(message) {
@@ -156,6 +201,10 @@ async function handle(message) {
       const args = params?.arguments || {}
       const result = name === 'get_aerion_context'
         ? await getAerionContext(args)
+        : name === 'get_athlete_state'
+          ? await getAthleteState(args)
+          : name === 'get_data_freshness'
+            ? await getDataFreshness(args)
         : name === 'ask_aerion_openai'
           ? await askOpenAI(args)
           : null
