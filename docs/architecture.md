@@ -85,6 +85,12 @@ git checkout -b refactor/v2-foundation
 chore: baseline aerion v2 foundation start
 ```
 
+- Created local baseline tag on that checkpoint:
+
+```text
+v1-local-control -> 54f22e6
+```
+
 ## Rationale
 
 The repo had substantial modified/untracked source work from prior AERION phases. The safe baseline preserves the working product state before foundation refactors, while excluding generated release binaries.
