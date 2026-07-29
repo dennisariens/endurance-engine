@@ -2,13 +2,13 @@
 
 Last updated: 2026-07-29  
 Branch: `refactor/v2-foundation`  
-Scope executed: Phase 0 + Phase 1 only
+Scope executed: Phase 0 + Phase 1 + Phase 2 draft
 
 ## Direction
 
 AERION is Dennis Ariens' local-first endurance control system: a race-control layer above Intervals.icu/Garmin/Strava-style data, not a generic fitness dashboard.
 
-The v2 direction is to stabilize the foundation before adding larger intelligence layers. This pass deliberately does **not** build CanonicalAthleteState, Trajectory Engine, or Learning Engine yet.
+The v2 direction is to stabilize the foundation before adding larger intelligence layers. This pass introduced a derived CanonicalAthleteState v2 draft, but deliberately does **not** build Trajectory Engine or Learning Engine yet.
 
 ## Product invariants
 
@@ -37,8 +37,12 @@ AERION
 │
 ├─ src/data/*.ts
 │  ├─ freshness semantics
+│  ├─ canonical evidence records
 │  ├─ integration health
 │  └─ health normalization
+│
+├─ src/state/*.ts
+│  └─ CanonicalAthleteState v2 draft builder
 │
 ├─ src/data/integrations/*.ts
 │  ├─ Intervals normalization
@@ -226,6 +230,124 @@ refactor: route mcp context through shared briefing api
 
 # Local API services
 
+# Phase 2 — Canonical Athlete State draft
+
+## 1. EvidenceRecord introduced
+
+Added:
+
+```text
+src/data/evidence.ts
+src/data/evidence.test.ts
+```
+
+The evidence layer now normalizes current runtime inputs into traceable records for:
+
+- activities;
+- current recovery/readiness state;
+- races;
+- goals;
+- freshness report.
+
+Each record carries:
+
+- source;
+- kind;
+- observed/received timestamps;
+- quality;
+- confidence;
+- provenance.
+
+This is the first canonical evidence path. It is still in-memory/derived, not yet persisted to SQLite.
+
+Commit:
+
+```text
+feat: add canonical evidence records
+```
+
+## 2. CanonicalAthleteState v2 draft introduced
+
+Added:
+
+```text
+src/state/canonicalAthleteState.ts
+src/state/canonicalAthleteState.test.ts
+```
+
+The state builder derives one typed athlete-state interpretation from:
+
+- current state;
+- activities;
+- races;
+- goals;
+- freshness;
+- evidence records.
+
+Current state version:
+
+```text
+canonical-athlete-state-v2-draft-1
+```
+
+The draft includes:
+
+- freshness;
+- recovery status/confidence/missing signals;
+- fatigue load summary;
+- fitness proxy values;
+- health block status;
+- behaviour proxy values;
+- active goal state;
+- deterministic constraints;
+- evidence summary and warnings.
+
+Commit:
+
+```text
+feat: introduce canonical athlete state draft
+```
+
+## 3. Shared context exposure
+
+`buildAerionBriefingContext()` now includes:
+
+```text
+control.athleteState
+control.evidence
+control.freshness
+```
+
+The local briefing API and MCP bridge therefore consume the same generated state output.
+
+MCP tools added:
+
+```text
+get_athlete_state
+get_data_freshness
+```
+
+Commit:
+
+```text
+feat: expose canonical athlete state in shared context
+```
+
+## Phase 2 deferrals
+
+This is a Phase 2 draft, not the final v2 state boundary.
+
+Deferred deliberately:
+
+- persisted Evidence Store;
+- SQLite state snapshots;
+- replacing all engines with CanonicalAthleteState input;
+- Trajectory Engine;
+- Learning Engine;
+- visible Mission Control redesign.
+
+---
+
 ## `fetchIntervalsContext()`
 
 Location:
@@ -393,29 +515,23 @@ npm run build
 
 ---
 
-# Proposed Phase 2
+# Proposed next phase after Phase 2 draft
 
-Phase 2 should be a state-boundary refactor, not a new dashboard pass.
+The Phase 2 draft introduced the typed state boundary. The next phase should harden and adopt it, not add new dashboards.
 
 Recommended sequence:
 
-1. Introduce `CanonicalAthleteState` as a derived, typed state object.
-2. Create `buildCanonicalAthleteState()` from:
-   - local fixture/current state
-   - synced activities
-   - races
-   - goals
-   - freshness report
-   - integration health
+1. Add persisted state snapshots and localStorage schema versioning.
+2. Add adapter-to-evidence contract tests for Intervals/Garmin/Strava/manual inputs.
 3. Move `App.tsx` orchestration into hooks:
    - `useAerionState()`
    - `useOpeningSync()`
    - `useAerionDerivedState()`
    - `useAerionImports()`
-4. Make engines consume canonical state gradually.
+4. Make engines consume CanonicalAthleteState gradually.
 5. Add freshness-aware confidence to coach briefing and scenario simulation.
-6. Add migration-safe localStorage versioning.
-7. Only after that: Trajectory Engine.
+6. Add MCP response metadata: state generation time, engine version, evidence IDs.
+7. Only after those adoption steps: Trajectory Engine.
 8. Only after trajectory history is stable: Learning Engine.
 
 ---
