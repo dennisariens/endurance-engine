@@ -18,6 +18,25 @@ export function Next72PlanPanel({ plan }: Props) {
         </span>
       </div>
 
+      {plan.recalculation && (
+        <div className="forward-recalc">
+          <span className="field-label">Forward recalculation</span>
+          <strong>{plan.recalculation.status.replace(/-/g, ' ')}</strong>
+          <p>{plan.recalculation.summary}</p>
+          <p>{plan.recalculation.tomorrowAdjustment}</p>
+          <span className="pill yellow">Impact {plan.recalculation.impactRange.low}–{plan.recalculation.impactRange.high}h</span>
+        </div>
+      )}
+
+      {plan.morningReadiness && (
+        <div className="forward-recalc">
+          <span className="field-label">Morning readiness applied</span>
+          <strong>{plan.morningReadiness.verdict}</strong>
+          <p>{plan.morningReadiness.summary}</p>
+          <span className="pill yellow">{plan.morningReadiness.forwardState}</span>
+        </div>
+      )}
+
       <div className="next72-grid">
         {plan.blocks.map((block) => (
           <article className={`next72-card tone-${block.tone}`} key={`${block.horizon}-${block.date}`}>

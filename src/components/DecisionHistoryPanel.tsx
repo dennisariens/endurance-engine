@@ -9,6 +9,10 @@ const actionTone: Record<DecisionLogEntry['action'], string> = {
   accepted: 'green',
   rested: 'blue',
   overridden: 'red',
+  'scenario-race': 'yellow',
+  'scenario-rest': 'green',
+  'scenario-easy': 'blue',
+  'scenario-ignore': 'red',
 }
 
 export function DecisionHistoryPanel({ entries, onClear }: Props) {

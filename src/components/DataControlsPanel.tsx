@@ -1,15 +1,18 @@
-import type { Activity, BlockedDate, CurrentState, DecisionLogEntry, Goal, Race, Theme } from '../domain/types'
+import type { AccountSettings, Activity, BlockedDate, CurrentState, DecisionLogEntry, Goal, GoalConversationEntry, Race, Theme, VisualizationSettings } from '../domain/types'
 
 export type AerionLocalSnapshot = {
   exportedAt: string
   version: 1
   races: Race[]
   goals: Goal[]
+  goalConversation?: GoalConversationEntry[]
   activities: Activity[]
   blockedDates: BlockedDate[]
   decisionLog: DecisionLogEntry[]
   currentState: CurrentState
   theme: Theme
+  account?: AccountSettings
+  visualization?: VisualizationSettings
 }
 
 type Props = {
@@ -38,6 +41,7 @@ export function DataControlsPanel({ snapshot, onImport, onResetLocalData }: Prop
     if (parsed.version !== 1 || !Array.isArray(parsed.races) || !Array.isArray(parsed.activities) || !Array.isArray(parsed.goals)) {
       throw new Error('Invalid AERION backup file')
     }
+    parsed.goalConversation ??= []
     onImport(parsed)
   }
 

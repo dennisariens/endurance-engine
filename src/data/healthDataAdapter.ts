@@ -19,6 +19,7 @@ export type RawHealthSample = {
   trainingReadiness?: number | null
   hrvStatus?: string | null
   recoveryScore?: number | null
+  vo2max?: number | null
 }
 
 export type NormalizedHealthMetrics = {
@@ -34,6 +35,7 @@ export type NormalizedHealthMetrics = {
   trainingReadiness?: number | null
   hrvStatus?: string | null
   recoveryScore?: number | null
+  vo2max?: number | null
   sources: HealthDataSource[]
 }
 
@@ -86,6 +88,7 @@ export function normalizeHealthData(samples: RawHealthSample[]): NormalizedHealt
     trainingReadiness: firstAvailable(ordered, (sample) => sample.trainingReadiness),
     hrvStatus: firstAvailable(ordered, (sample) => sample.hrvStatus),
     recoveryScore: firstAvailable(ordered, (sample) => sample.recoveryScore),
+    vo2max: firstAvailable(ordered, (sample) => sample.vo2max),
     sources: [...new Set(ordered.map((sample) => sample.source))],
   }
 
@@ -109,5 +112,6 @@ export function mergeHealthIntoCurrentState(current: CurrentState, metrics: Norm
     garmin_training_readiness: metrics.trainingReadiness ?? current.garmin_training_readiness,
     garmin_sleep_score: metrics.sleepScore ?? current.garmin_sleep_score,
     garmin_hrv_status: metrics.hrvStatus ?? current.garmin_hrv_status,
+    vo2max: metrics.vo2max ?? current.vo2max,
   }
 }

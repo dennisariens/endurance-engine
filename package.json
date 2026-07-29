@@ -1,27 +1,35 @@
 {
   "name": "endurance-engine",
+  "productName": "AERION",
   "version": "0.0.1",
   "private": true,
   "description": "Local-first fixed-race endurance decision dashboard.",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5174",
     "start:aerion": "./scripts/start-aerion.sh",
+    "briefing:context": "node ./scripts/aerion-briefing-context.mjs",
+    "mcp:aerion-openai": "node ./scripts/aerion-openai-mcp.mjs",
+    "desktop:dev": "npm run build && electron .",
+    "desktop:package": "npm run build && electron-packager . AERION --platform=darwin --arch=arm64 --out=release --overwrite --app-bundle-id=ai.colddesert.aerion --app-category-type=public.app-category.healthcare-fitness --ignore='^/release($|/)' --ignore='^/[.]git($|/)' && cp build/icon.icns release/AERION-darwin-arm64/AERION.app/Contents/Resources/electron.icns && touch release/AERION-darwin-arm64/AERION.app",
     "build": "tsc && vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "typescript": "latest",
+    "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
     "recharts": "latest",
-    "lucide-react": "latest"
+    "typescript": "latest",
+    "vite": "latest"
   },
   "devDependencies": {
-    "vitest": "latest",
+    "@electron/packager": "^20.0.1",
     "@types/react": "latest",
-    "@types/react-dom": "latest"
+    "@types/react-dom": "latest",
+    "electron": "^42.3.3",
+    "vitest": "latest"
   }
 }

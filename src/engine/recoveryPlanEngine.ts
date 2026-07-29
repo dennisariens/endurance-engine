@@ -1,4 +1,6 @@
 import type { CurrentState, DailyDecision, RaceCostBand } from '../domain/types'
+import type { ActualOverride } from './actualOverrideEngine'
+import type { MorningReadinessVerdict } from './morningReadinessEngine'
 
 export type Next72PlanBlock = {
   horizon: 'Today' | '+24h' | '+48h' | '+72h'
@@ -10,10 +12,26 @@ export type Next72PlanBlock = {
   tone: 'green' | 'yellow' | 'red' | 'purple' | 'blue'
 }
 
+export type ForwardRecalculation = {
+  source: ActualOverride['authoritativeSource']
+  status: ActualOverride['status']
+  summary: string
+  tomorrowAdjustment: string
+  impactRange: { low: number; high: number }
+}
+
+export type CarriedMorningReadiness = {
+  verdict: MorningReadinessVerdict['verdict']
+  forwardState: MorningReadinessVerdict['forwardState']
+  summary: string
+}
+
 export type Next72Plan = {
   summary: string
   risk: RaceCostBand | 'InjuryIllness'
   blocks: Next72PlanBlock[]
+  recalculation?: ForwardRecalculation
+  morningReadiness?: CarriedMorningReadiness
 }
 
 const horizons: Next72PlanBlock['horizon'][] = ['Today', '+24h', '+48h', '+72h']
@@ -137,11 +155,107 @@ function buildPlan(decision: DailyDecision, state: CurrentState): Next72Plan {
   }
 }
 
-export function buildNext72hPlan(input: { decision: DailyDecision; state: CurrentState }): Next72Plan {
-  const { decision, state } = input
-  if (decision.status === 'InjuryIllness' || state.injury_present || state.illness_present) return injuryIllnessPlan(decision)
-  if (decision.today === 'Race') return raceDayPlan(decision, state)
-  if (isHighDebt(state) || decision.status === 'Red') return highDebtPlan(decision, state)
-  if (decision.mode === 'DamageControl' || decision.raceBlock.active || (decision.daysUntilNextRace ?? 99) <= 3) return raceProximityPlan(decision, state)
-  return buildPlan(decision, state)
+function withMorningReadiness(plan: Next72Plan, decision: DailyDecision, morningReadiness?: MorningReadinessVerdict): Next72Plan {
+  if (!morningReadiness) return plan
+
+  const carried: CarriedMorningReadiness = {
+    verdict: morningReadiness.verdict,
+    forwardState: morningReadiness.forwardState,
+    summary: morningReadiness.headline,
+  }
+
+  if (morningReadiness.forwardState === 'clear') {
+    return { ...plan, morningReadiness: carried }
+  }
+
+  if (morningReadiness.forwardState === 'extend') {
+    return {
+      ...plan,
+      morningReadiness: carried,
+      summary: `${plan.summary} Morning readiness applied: recovery-first restriction carried into the next 24h.`,
+      blocks: plan.blocks.map((block, index) => {
+        if (index > 1) return block
+        return {
+          ...block,
+          action: 'Morning readiness recovery',
+          allowedWork: ['Rest', 'Walk 20–30 min', 'Mobility 8–10 min', 'Z1 only if readiness improves'],
+          hardLimits: [...new Set([capLimit(decision), 'No intensity', 'No strength', 'No fasting', ...block.hardLimits.filter((limit) => limit.startsWith('HR ≤'))])],
+          why: morningReadiness.primaryAction,
+          tone: 'red',
+        }
+      }),
+    }
+  }
+
+  return {
+    ...plan,
+    morningReadiness: carried,
+    summary: `${plan.summary} Morning readiness applied: optional work is held until readiness improves.`,
+    blocks: plan.blocks.map((block, index) => {
+      if (index > 1) return block
+      return {
+        ...block,
+        action: 'Readiness-held easy work',
+        allowedWork: ['Easy spin', 'Walk 20–30 min', 'Mobility'],
+        hardLimits: [...new Set([capLimit(decision), 'No intensity', 'No strength', 'No grey-zone work'])],
+        why: morningReadiness.primaryAction,
+        tone: 'yellow',
+      }
+    }),
+  }
+}
+
+function withActualRecalculation(plan: Next72Plan, actualOverride?: ActualOverride): Next72Plan {
+  if (!actualOverride || actualOverride.authoritativeSource !== 'completed-activity') return plan
+
+  const impactRange = actualOverride.severity === 'red'
+    ? { low: 24, high: 72 }
+    : actualOverride.severity === 'yellow'
+      ? { low: 12, high: 36 }
+      : { low: 0, high: 18 }
+  const tomorrowAdjustment = actualOverride.severity === 'red'
+    ? 'Tomorrow recalculates as recovery-first: no intensity, no strength, audit morning readiness before any optional movement.'
+    : actualOverride.severity === 'yellow'
+      ? 'Tomorrow recalculates with reduced optional work: short easy movement only if morning readiness confirms it.'
+      : 'Tomorrow can stay flexible: completed work broadly fits the low-cost plan, pending morning readiness.'
+
+  return {
+    ...plan,
+    summary: `${plan.summary} Actual completed work is authoritative for the forward plan.`,
+    recalculation: {
+      source: actualOverride.authoritativeSource,
+      status: actualOverride.status,
+      summary: actualOverride.deltaSummary,
+      tomorrowAdjustment,
+      impactRange,
+    },
+    blocks: plan.blocks.map((block, index) => {
+      if (index !== 1) return block
+      return {
+        ...block,
+        action: actualOverride.severity === 'red' ? 'Actual-load recovery audit' : actualOverride.severity === 'yellow' ? 'Reduced-load reassessment' : 'Readiness confirmation',
+        allowedWork: actualOverride.severity === 'red' ? ['Rest', 'Walk 20–30 min', 'Z1 spin only if morning readiness improves'] : block.allowedWork,
+        hardLimits: [...new Set([...block.hardLimits, 'Actual completed work overrides logged intent', actualOverride.severity === 'green' ? 'Morning readiness check before progression' : 'No intensity until actual-load cost clears'])],
+        why: tomorrowAdjustment,
+        tone: actualOverride.severity === 'red' ? 'red' : actualOverride.severity === 'yellow' ? 'yellow' : block.tone,
+      }
+    }),
+  }
+}
+
+export function buildNext72hPlan(input: { decision: DailyDecision; state: CurrentState; actualOverride?: ActualOverride; morningReadiness?: MorningReadinessVerdict }): Next72Plan {
+  const { decision, state, actualOverride, morningReadiness } = input
+  const basePlan = decision.status === 'InjuryIllness' || state.injury_present || state.illness_present
+    ? injuryIllnessPlan(decision)
+    : decision.today === 'Race'
+      ? raceDayPlan(decision, state)
+      : isHighDebt(state) || decision.status === 'Red'
+        ? highDebtPlan(decision, state)
+        : decision.mode === 'DamageControl' || decision.raceBlock.active || (decision.daysUntilNextRace ?? 99) <= 3
+          ? raceProximityPlan(decision, state)
+          : buildPlan(decision, state)
+  const readinessPlan = actualOverride?.authoritativeSource === 'completed-activity'
+    ? basePlan
+    : withMorningReadiness(basePlan, decision, morningReadiness)
+  return withActualRecalculation(readinessPlan, actualOverride)
 }

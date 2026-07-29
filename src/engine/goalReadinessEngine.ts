@@ -221,7 +221,7 @@ export function evaluateGoalReadiness(input: Input): GoalReadinessResult {
     scenarios: {
       currentTrend: { label: 'Current trend', outcome: currentOutcome, risk: currentRisk },
       recommendedPlan: { label: 'Recommended path', outcome: finish >= 55 ? 'finish likely; strong finish possible' : 'finish becomes more realistic with base work', risk: 'lower fatigue risk if recovery constraints are respected' },
-      overload: { label: 'Overload / non-compliance', outcome: 'fitness may rise briefly but durability becomes less predictable', risk: 'high fatigue and recovery-debt risk' },
+      overload: { label: 'Overload / overreaching', outcome: 'fitness may rise briefly but durability becomes less predictable', risk: 'high fatigue and recovery-debt risk' },
     },
     limitingFactors: limitingFactors.length ? limitingFactors : ['More goal-specific data required before naming a limiter'],
     mainLimiter,

@@ -2,11 +2,16 @@ export type Status = 'Green' | 'Yellow' | 'Red' | 'InjuryIllness'
 export type Mode = 'Build' | 'Race' | 'DamageControl' | 'RecoveryOptimization' | 'RaceBlock'
 export type TodayAction = 'Race' | 'Z2' | 'Recovery' | 'Rest'
 export type Theme = 'dark' | 'light'
+export type AccountStatus = 'local' | 'signed-in'
+export type ChartFocus = 'all' | 'load' | 'race-cost' | 'recovery' | 'goal'
 export type WorkoutDiscipline = 'bike' | 'run' | 'bike-run' | 'off'
+export type ActivitySource = 'intervals' | 'garmin' | 'strava' | 'manual'
+export type TrainingStatus = 'productive' | 'maintaining' | 'overreaching' | 'detraining' | 'fresh' | 'recovery' | 'unknown'
 
 export type GoalType = 'fixed-date-race' | 'floating-goal' | 'candidate-event' | 'committed-race' | 'mandatory-race' | 'key-performance-goal'
 export type GoalStatus = 'draft' | 'candidate' | 'committed' | 'key-event' | 'mandatory'
 export type GoalDiscipline = 'cycling' | 'running' | 'triathlon' | 'endurance' | 'other'
+export type GoalConversationKind = 'answer' | 'constraint' | 'note' | 'decision'
 
 export type Race = {
   id: string
@@ -40,9 +45,31 @@ export type Goal = {
   notes?: string
 }
 
+export type GoalConversationEntry = {
+  id: string
+  goalId: string
+  createdAt: string
+  kind: GoalConversationKind
+  prompt?: string
+  text: string
+}
+
+export type AccountSettings = {
+  status: AccountStatus
+  displayName: string
+  email?: string
+  localOnly: boolean
+  lastChangedAt?: string
+}
+
+export type VisualizationSettings = {
+  performanceFocus: ChartFocus
+  visibleFields: Record<string, string[]>
+}
+
 export type Activity = {
   id: string
-  source: 'intervals' | 'manual'
+  source: ActivitySource
   date: string
   name: string
   type: string
@@ -93,6 +120,9 @@ export type CurrentState = {
   garmin_training_readiness?: number | null
   garmin_sleep_score?: number | null
   garmin_hrv_status?: string | null
+  steps_7d_avg?: number | null
+  recovery_time_hours?: number | null
+  training_status?: TrainingStatus | string | null
   run_lthr?: number | null
   cycle_lthr?: number | null
   run_aet?: number | null
@@ -120,7 +150,8 @@ export type WorkoutRecommendation = {
 }
 
 
-export type DecisionLogAction = 'accepted' | 'rested' | 'overridden'
+export type CoachScenarioId = 'race' | 'rest' | 'easy' | 'ignore'
+export type DecisionLogAction = 'accepted' | 'rested' | 'overridden' | 'scenario-race' | 'scenario-rest' | 'scenario-easy' | 'scenario-ignore'
 
 export type DecisionLogEntry = {
   id: string
@@ -136,6 +167,11 @@ export type DecisionLogEntry = {
   reason: string
   note?: string
   nextRaceName?: string
+  scenarioId?: CoachScenarioId
+  scenarioLabel?: string
+  scenarioExpectedCostRange?: { low: number; high: number }
+  scenarioFatigueDeltaRange?: { low: number; high: number }
+  scenarioRecoveryLagRange?: { low: number; high: number }
 }
 
 export type RaceBlock = {
