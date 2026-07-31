@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react'
 import type { AccountSettings, Activity, CurrentState, DailyDecision, DecisionLogEntry, Goal, GoalConversationEntry, Race, VisualizationSettings, WorkoutRecommendation } from '../../domain/types'
 import type { CoachBriefing } from '../../engine/coachBriefingEngine'
+import type { DailyRecommendation } from '../../engine/dailyRecommendationEngine'
 import type { GoalReadinessResult } from '../../engine/goalReadinessEngine'
 import type { MorningReadinessVerdict } from '../../engine/morningReadinessEngine'
 import type { PathToGoal } from '../../engine/pathEngine'
@@ -16,6 +17,7 @@ export type PremiumCommandDeckProps = {
   decision: DailyDecision
   recommendation: WorkoutRecommendation
   briefing: CoachBriefing
+  dailyRecommendation: DailyRecommendation
   morningReadiness: MorningReadinessVerdict
   next72Plan: Next72Plan
   stats: DashboardStats

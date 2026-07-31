@@ -47,6 +47,8 @@ describe('buildAerionBriefingContext', () => {
     expect(context.control.trajectory.scenarios.map((scenario) => scenario.id)).toEqual(['recommended', 'race', 'rest', 'ignore'])
     expect(context.control.learning.engineVersion).toBe('learning-engine-v1')
     expect(context.control.learning.notes).toContain('Actual completed work remains canonical evidence.')
+    expect(context.control.dailyRecommendation.engineVersion).toBe('daily-recommendation-v1')
+    expect(context.control.dailyRecommendation.week.structure.length).toBeGreaterThan(0)
     expect(context.control.stats.racesNext30d).toBe(1)
   })
 })

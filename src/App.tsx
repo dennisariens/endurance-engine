@@ -97,6 +97,7 @@ export default function App() {
     pathToGoal,
     trajectory,
     learning,
+    dailyRecommendation,
     coachBriefing,
     nextRace,
     nextRaceDetail,
@@ -161,6 +162,7 @@ export default function App() {
         decision={decision}
         recommendation={recommendation}
         briefing={coachBriefing}
+        dailyRecommendation={dailyRecommendation}
         morningReadiness={morningReadiness}
         next72Plan={next72Plan}
         stats={stats}

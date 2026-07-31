@@ -9,8 +9,9 @@ describe('premium screen render smoke', () => {
   it('renders Home mission control with coach and next 72h context', () => {
     const markup = renderToStaticMarkup(<HomeScreen {...props} readyScore={props.readiness?.overallReadiness ?? 62} nextRace={props.decision.nextRace} />)
 
-    expect(markup).toContain('AERION / Today')
+    expect(markup).toContain('AERION / Daily Recommendation')
     expect(markup).toContain('One-glance command overview')
+    expect(markup).toContain('Daily, weekly, and long-term recommendation')
     expect(markup).toContain('Home answers: can I train')
     expect(markup).toContain('AI Coach summary')
     expect(markup).toContain('Next 72h')
@@ -28,7 +29,7 @@ describe('premium screen render smoke', () => {
   it('renders History with agenda/log and health metrics', () => {
     const markup = renderToStaticMarkup(<HistoryScreen {...props} />)
 
-    expect(markup).toContain('Control log')
+    expect(markup).toContain('Proof, not planning')
     expect(markup).toContain('One-glance history overview')
     expect(markup).toContain('Activity split metrics')
     expect(markup).toContain('Health and readiness history')

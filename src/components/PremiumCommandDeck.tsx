@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { Activity, BarChart3, Brain, CalendarClock, Database, Flag, Home, ShieldCheck, Target } from 'lucide-react'
+import { Activity, BarChart3, Brain, CalendarClock, Plug, Flag, Home, ShieldCheck, Target } from 'lucide-react'
 import type { NavItem, PremiumCommandDeckProps, ScreenId } from './premium/types'
 import { formatLabel } from './premium/ui'
 
@@ -16,14 +16,14 @@ const SettingsDataScreen = lazy(() => import('./premium/screens').then((module) 
 
 const navItems: NavItem[] = [
   { id: 'home', label: 'Home', icon: Home },
-  { id: 'history', label: 'History', icon: CalendarClock },
+  { id: 'history', label: 'History / Agenda', icon: CalendarClock },
   { id: 'performance', label: 'Performance', icon: BarChart3 },
   { id: 'races', label: 'Races', icon: Flag },
   { id: 'training', label: 'Training', icon: Activity },
   { id: 'recovery', label: 'Recovery', icon: ShieldCheck },
   { id: 'goals', label: 'Goal Path', icon: Target },
   { id: 'coach', label: 'AI Coach', icon: Brain },
-  { id: 'settings', label: 'Data Hub', icon: Database },
+  { id: 'settings', label: 'Connect', icon: Plug },
 ]
 
 function daysUntil(today: string, date?: string): number | undefined {

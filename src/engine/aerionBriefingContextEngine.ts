@@ -5,6 +5,7 @@ import { buildCanonicalAthleteState, type CanonicalAthleteState } from '../state
 import { buildActualOverride } from './actualOverrideEngine'
 import { buildCoachBriefing } from './coachBriefingEngine'
 import { buildDailyBriefing, type DailyBriefing, type PlannedCalendarEvent } from './dailyBriefingEngine'
+import { buildDailyRecommendation, type DailyRecommendation } from './dailyRecommendationEngine'
 import { makeDailyDecision } from './decisionEngine'
 import { evaluateGoalReadiness, type GoalReadinessResult } from './goalReadinessEngine'
 import { buildMorningReadinessVerdict, type MorningReadinessVerdict } from './morningReadinessEngine'
@@ -53,6 +54,7 @@ export type AerionBriefingContext = {
     pathToGoal?: PathToGoal
     trajectory: TrajectoryEngineOutput
     learning: LearningEngineOutput
+    dailyRecommendation: DailyRecommendation
     stats: DashboardStats
   }
 }
@@ -83,6 +85,7 @@ export function buildAerionBriefingContext(input: AerionBriefingContextInput): A
   const trajectory = buildTrajectory({ athleteState, decision, next72Plan, goalReadiness })
   const learning = buildLearningEngine({ today: input.date, activities: input.activities, decisions: decisionLog, athleteState, trajectory })
   const coachBriefing = buildCoachBriefing({ decision, recommendation, state: input.state, next72Plan, readiness: goalReadiness, morningReadiness, athleteState })
+  const dailyRecommendation = buildDailyRecommendation({ recommendation, briefing: coachBriefing, morningReadiness, next72Plan, activeGoal, readiness: goalReadiness, path: pathToGoal, trajectory, learning, nextRace: decision.nextRace, recoveryMissing: freshness.signals.some((signal) => signal.source === 'current-state' && (signal.status === 'missing' || signal.status === 'stale')), activityProofSparse: input.activities.filter((activity) => activity.source === 'strava').length === 0 })
   const briefing = buildDailyBriefing({
     date: input.date,
     timezone,
@@ -122,6 +125,7 @@ export function buildAerionBriefingContext(input: AerionBriefingContextInput): A
       pathToGoal,
       trajectory,
       learning,
+      dailyRecommendation,
       stats,
     },
   }

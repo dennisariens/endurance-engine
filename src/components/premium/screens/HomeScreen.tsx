@@ -6,7 +6,7 @@ import type { PremiumCommandDeckProps } from '../types'
 type Props = PremiumCommandDeckProps
 
 export function HomeScreen(props: Props & { readyScore: number; nextRace?: Race }) {
-  const { today, decision, recommendation, briefing, morningReadiness, next72Plan, stats, readyScore, nextRace, readiness, trajectory, learning } = props
+  const { today, decision, recommendation, briefing, morningReadiness, next72Plan, stats, readyScore, nextRace, readiness, trajectory, learning, dailyRecommendation } = props
   const keySignal = readiness?.mainLimiter ?? `${stats.avgRaceCost} avg race cost · ${stats.highCostActivities} high-cost sessions`
   const safeNext = briefing.readinessAdjustment?.safeNextAction ?? briefing.nextAction
   const consequence = briefing.consequence ?? next72Plan.summary
@@ -17,9 +17,9 @@ export function HomeScreen(props: Props & { readyScore: number; nextRace?: Race 
   return (
     <section className="premium-screen active home-screen" aria-label="Home Mission Control">
       <CommandPanel
-        eyebrow="AERION / Today"
-        title={formatLabel(decision.mode)}
-        summary={`${decision.today} · ${recommendation.primary.title} · ${recommendation.primary.durationMin || 'Off'} min`}
+        eyebrow="AERION / Daily Recommendation"
+        title={dailyRecommendation.headline}
+        summary={`Goal: ${dailyRecommendation.goal.name}. Week: ${dailyRecommendation.week.focus}. Long term: ${dailyRecommendation.longTerm.direction} ${dailyRecommendation.longTerm.readinessRange.low}–${dailyRecommendation.longTerm.readinessRange.high}.`}
         aside={(
           <div className={`readiness-orb tone-${morningReadiness.tone}`} style={{ ['--score' as string]: `${readyScore * 3.6}deg` }}>
             <strong>{readyScore}</strong>
@@ -27,24 +27,30 @@ export function HomeScreen(props: Props & { readyScore: number; nextRace?: Race 
           </div>
         )}
       >
-        <RouteRail labels={['state', 'risk', 'next']} />
+        <RouteRail labels={['today', 'goal', 'week']} />
         <EvidenceStrip items={[
-          { label: 'Why', value: 'Signal', detail: decision.reasons[0] ?? briefing.status, tone: toneFromStatus(decision) },
-          { label: 'Safe next', value: recommendation.primary.durationMin || 'Off', detail: safeNext, tone: morningReadiness.tone },
-          { label: 'If ignored', value: next72Plan.risk, detail: consequence, tone: riskTone(next72Plan.risk) },
+          { label: 'Today', value: dailyRecommendation.today.durationMin || 'Off', detail: dailyRecommendation.today.safeNext, tone: morningReadiness.tone },
+          { label: 'Goal', value: dailyRecommendation.goal.readiness ?? 'n/a', detail: `${dailyRecommendation.goal.phase ?? 'No phase'} · ${dailyRecommendation.goal.nextFocus}`, tone: readiness?.confidence === 'low' ? 'yellow' : 'blue' },
+          { label: 'Week', value: dailyRecommendation.week.risk, detail: dailyRecommendation.week.structure[0] ?? dailyRecommendation.week.focus, tone: riskTone(dailyRecommendation.week.risk) },
         ]} />
-        <div className="home-race-card compact">
-          <span>Next fixed marker</span>
-          <strong>{nextRace?.name ?? 'No race loaded'}</strong>
-          <p>{nextRace ? `${nextRace.date} · ${distanceText}` : 'No agenda pressure in the system.'}</p>
+        <div className="daily-recommendation-receipt">
+          <article><span>Do today</span><strong>{dailyRecommendation.today.action}</strong><p>{dailyRecommendation.today.reason}</p></article>
+          <article><span>Goal pressure</span><strong>{dailyRecommendation.goal.name}</strong><p>{dailyRecommendation.goal.limiter ?? dailyRecommendation.goal.nextFocus}</p></article>
+          <article><span>Connect next</span><strong>{dailyRecommendation.connect.primary}</strong><p>{dailyRecommendation.connect.action}</p></article>
         </div>
       </CommandPanel>
 
       <div className="home-command-strip" aria-label="One-glance command overview">
-        <article><span>Now</span><strong>{morningReadiness.verdict}</strong><em>{morningReadiness.primaryAction}</em></article>
-        <article><span>Train</span><strong>{recommendation.primary.durationMin || 'Off'} min</strong><em>{recommendation.primary.title}</em></article>
+        <article><span>Today</span><strong>{dailyRecommendation.today.durationMin || 'Off'} min</strong><em>{dailyRecommendation.today.action}</em></article>
+        <article><span>Goal</span><strong>{dailyRecommendation.goal.readiness ?? readyScore}</strong><em>{dailyRecommendation.goal.name}</em></article>
         <article><span>Trajectory</span><strong>{trajectory.direction}</strong><em>{trajectory.readinessRange.low}–{trajectory.readinessRange.high} readiness · {trajectoryConfidence}</em></article>
-        <article><span>Learning</span><strong>{learning.signals.length}</strong><em>{learningSignal?.label ?? 'Pattern density low'}</em></article>
+        <article><span>Connect</span><strong>{dailyRecommendation.connect.primary}</strong><em>{dailyRecommendation.connect.action}</em></article>
+      </div>
+
+      <div className="daily-horizon-board" aria-label="Daily, weekly, and long-term recommendation">
+        <article><span>Today</span><strong>{dailyRecommendation.today.safeNext}</strong><p>{dailyRecommendation.today.consequence}</p></article>
+        <article><span>This week</span><strong>{dailyRecommendation.week.focus}</strong><ul>{dailyRecommendation.week.structure.map((item) => <li key={item}>{item}</li>)}</ul></article>
+        <article><span>Long term</span><strong>{dailyRecommendation.longTerm.stance}</strong><p>Range {dailyRecommendation.longTerm.readinessRange.low}–{dailyRecommendation.longTerm.readinessRange.high}; direction {dailyRecommendation.longTerm.direction}.</p></article>
       </div>
 
       <div className="mission-control-core" aria-label="Mission Control intelligence layer">

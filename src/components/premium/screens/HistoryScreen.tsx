@@ -84,9 +84,9 @@ export function HistoryScreen({ today, activities, races, decisionLog, state, vi
     <section className="premium-screen active history-screen">
       <div className="history-command-header">
         <div>
-          <p className="eyebrow">History</p>
-          <h2>Control log.</h2>
-          <p>Agenda, activity proof, decision log, and body signals in one view. Less scavenger hunt, more control room.</p>
+          <p className="eyebrow">History / Agenda</p>
+          <h2>Proof, not planning.</h2>
+          <p>This page is the record: agenda markers, completed activities, decisions, and body signals. Planning now lives in Daily Recommendation and Goal Path.</p>
           <RouteRail labels={['agenda', 'proof', 'body']} />
         </div>
         <div className={`history-status-card tone-${trainingStatus.tone}`}>
@@ -116,7 +116,7 @@ export function HistoryScreen({ today, activities, races, decisionLog, state, vi
 
       <div className="history-layout">
         <div className="history-log-panel">
-          <div className="chart-title"><ClipboardList size={15} strokeWidth={1.8} /><span>Agenda / log</span></div>
+          <div className="chart-title"><ClipboardList size={15} strokeWidth={1.8} /><span>History / agenda log</span></div>
           {timeline.map((item) => <article key={`${item.kind}-${item.id}`} className={`history-row kind-${item.kind}`}>
             <span>{item.date}</span>
             <strong>{item.title}</strong>

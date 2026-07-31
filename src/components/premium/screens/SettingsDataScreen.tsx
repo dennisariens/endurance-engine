@@ -102,9 +102,9 @@ export function SettingsDataScreen({ stats, state, integrations, account, onUpda
   return (
     <section className="premium-screen active">
       <div className="premium-screen-header compact-header">
-        <p className="eyebrow">Data Hub</p>
-        <h2>Account, connections, and source trust.</h2>
-        <p>Every source has a job. AERION shows which signal is trusted, what it is used for, and gives you direct connection/import controls without leaking browser secrets.</p>
+        <p className="eyebrow">Connect</p>
+        <h2>Strava, Garmin, Intervals.</h2>
+        <p>Connection layer first: Garmin for recovery truth, Strava for completed-proof context, Intervals for load/events. AERION shows the trust boundary and gives direct import/sync controls without leaking browser secrets.</p>
       </div>
 
       <div className="premium-training-grid paginated-grid">
