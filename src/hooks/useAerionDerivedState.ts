@@ -60,7 +60,7 @@ export function useAerionDerivedState({
   const activeGoal = useMemo(() => goals.find((goal) => goal.id === activeGoalId) ?? goals[0], [activeGoalId, goals])
   const goalReadiness = useMemo(() => activeGoal ? evaluateGoalReadiness({ goal: activeGoal, today, activities, races, state }) : undefined, [activeGoal, today, activities, races, state])
   const pathToGoal = useMemo(() => activeGoal && goalReadiness ? buildPathToGoal({ goal: activeGoal, today, readinessScore: goalReadiness.overallReadiness, state, activities, races }) : undefined, [activeGoal, goalReadiness, today, state, activities, races])
-  const coachBriefing = useMemo(() => buildCoachBriefing({ decision, recommendation, state, next72Plan, readiness: goalReadiness, morningReadiness }), [decision, recommendation, state, next72Plan, goalReadiness, morningReadiness])
+  const coachBriefing = useMemo(() => buildCoachBriefing({ decision, recommendation, state, next72Plan, readiness: goalReadiness, morningReadiness, athleteState }), [decision, recommendation, state, next72Plan, goalReadiness, morningReadiness, athleteState])
   const nextRace = decision.nextRace
   const nextRaceDetail = nextRace
     ? `${nextRace.date} · ${nextRace.distanceKm ?? 'TBD'} km · ${nextRace.elevationM ?? 'TBD'} m · Class ${nextRace.class ?? 'TBD'}`

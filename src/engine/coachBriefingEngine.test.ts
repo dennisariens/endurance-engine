@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CurrentState, DailyDecision, WorkoutRecommendation } from '../domain/types'
+import type { CanonicalAthleteState } from '../state/canonicalAthleteState'
 import { buildCoachBriefing } from './coachBriefingEngine'
 
 const baseDecision: DailyDecision = {
@@ -57,6 +58,12 @@ const next72Plan = {
   blocks: [],
 }
 
+const canonicalState = {
+  freshness: { overall: 'stale' },
+  recovery: { status: 'green', confidence: 0.35, missingSignals: ['sleep'] },
+  health: { injuryStatus: 'clear', illnessStatus: 'clear' },
+} as unknown as CanonicalAthleteState
+
 describe('buildCoachBriefing', () => {
   it('creates a direct coach brief with consequence language for red recovery', () => {
     const briefing = buildCoachBriefing({ decision: baseDecision, recommendation, state, next72Plan })
@@ -91,5 +98,30 @@ describe('buildCoachBriefing', () => {
     expect(briefing.status).toContain('Blocked')
     expect(briefing.nextAction).toContain('Stop training load')
     expect(briefing.consequence).toContain('longer reset')
+  })
+
+  it('uses canonical state to cap confidence and dedupe missing signals', () => {
+    const briefing = buildCoachBriefing({ decision: baseDecision, recommendation, state, next72Plan, athleteState: canonicalState })
+
+    expect(briefing.confidence).toBe('low')
+    expect(briefing.missingSignals).toContain('fresh canonical state')
+    expect(briefing.missingSignals.filter((signal) => signal === 'sleep')).toHaveLength(1)
+  })
+
+  it('uses canonical health status as a dominant coach constraint before legacy state is updated', () => {
+    const briefing = buildCoachBriefing({
+      decision: { ...baseDecision, status: 'Green' },
+      recommendation,
+      state: { ...state, recovery_status: 'green', latest_race_cost_band: 'Low' },
+      next72Plan,
+      athleteState: {
+        ...canonicalState,
+        freshness: { overall: 'fresh' },
+        recovery: { status: 'green', confidence: 0.8, missingSignals: [] },
+        health: { injuryStatus: 'blocked', illnessStatus: 'clear' },
+      } as unknown as CanonicalAthleteState,
+    })
+
+    expect(briefing.dominantConstraint).toBe('injury / illness block')
   })
 })

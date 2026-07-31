@@ -1,4 +1,5 @@
 import type { CurrentState, DailyDecision, RaceCostBand, WorkoutRecommendation } from '../domain/types'
+import type { CanonicalAthleteState } from '../state/canonicalAthleteState'
 import type { GoalReadinessResult } from './goalReadinessEngine'
 import type { MorningReadinessVerdict } from './morningReadinessEngine'
 import type { Next72Plan } from './recoveryPlanEngine'
@@ -42,19 +43,23 @@ function raceCostLabel(state: CurrentState): string {
   return 'not synced'
 }
 
-function missingSignals(state: CurrentState): string[] {
+function missingSignals(state: CurrentState, athleteState?: CanonicalAthleteState): string[] {
   const missing: string[] = []
   if (state.recovery_score == null) missing.push('recovery score')
   if (!state.hrv_trend || state.hrv_trend === 'unknown') missing.push('HRV trend')
   if (state.garmin_body_battery == null) missing.push('Body Battery')
   if (state.garmin_training_readiness == null) missing.push('Training Readiness')
   if (state.sleep_score == null && state.garmin_sleep_score == null) missing.push('sleep score')
-  return missing
+  for (const signal of athleteState?.recovery.missingSignals ?? []) missing.push(signal)
+  if (athleteState?.freshness.overall === 'stale') missing.push('fresh canonical state')
+  return [...new Set(missing)]
 }
 
-function dominantConstraint(decision: DailyDecision, state: CurrentState, readiness?: GoalReadinessResult): string {
-  if (decision.status === 'InjuryIllness') return 'injury / illness block'
+function dominantConstraint(decision: DailyDecision, state: CurrentState, readiness?: GoalReadinessResult, athleteState?: CanonicalAthleteState): string {
+  if (decision.status === 'InjuryIllness' || athleteState?.health.injuryStatus === 'blocked' || athleteState?.health.illnessStatus === 'blocked') return 'injury / illness block'
+  if (athleteState?.recovery.status === 'blocked') return 'canonical recovery block'
   if (decision.status === 'Red') return `recovery debt · race cost ${raceCostLabel(state)}`
+  if (athleteState?.recovery.status === 'red') return 'canonical recovery debt'
   if (decision.raceBlock.active) return decision.raceBlock.reason
   if (typeof decision.daysUntilNextRace === 'number' && decision.daysUntilNextRace <= 3) return 'race proximity'
   if (readiness?.mainLimiter) return readiness.mainLimiter
@@ -67,6 +72,12 @@ function buildConsequence(decision: DailyDecision, state: CurrentState, plan: Ne
   if (decision.mode === 'DamageControl' || decision.raceBlock.active) return 'If you chase fitness today, freshness for the fixed race is the thing you spend.'
   if (plan.risk === 'High' || plan.risk === 'Extreme') return 'If you stack load now, adaptation becomes cleanup. Tedious, but physiologically difficult to out-argue.'
   return 'If you exceed the cap, the cost is not today’s workout; it is the next 48–72h recovery budget.'
+}
+
+function briefingConfidence(readiness: GoalReadinessResult | undefined, athleteState?: CanonicalAthleteState): GoalReadinessResult['confidence'] | 'medium' {
+  if (readiness?.confidence === 'low') return 'low'
+  if (athleteState?.freshness.overall === 'stale' || (athleteState?.recovery.confidence ?? 1) < 0.45) return 'low'
+  return readiness?.confidence ?? 'medium'
 }
 
 function buildReadinessAdjustment(morningReadiness: MorningReadinessVerdict | undefined, plan: Next72Plan): CoachReadinessAdjustment | undefined {
@@ -106,8 +117,9 @@ export function buildCoachBriefing(input: {
   next72Plan: Next72Plan
   readiness?: GoalReadinessResult
   morningReadiness?: MorningReadinessVerdict
+  athleteState?: CanonicalAthleteState
 }): CoachBriefing {
-  const { decision, recommendation, state, next72Plan, readiness, morningReadiness } = input
+  const { decision, recommendation, state, next72Plan, readiness, morningReadiness, athleteState } = input
   const nextRace = decision.nextRace?.name ?? 'no fixed race loaded'
   const action = recommendation.primary.durationMin
     ? `${recommendation.primary.title} · ${recommendation.primary.durationMin} min`
@@ -137,10 +149,10 @@ export function buildCoachBriefing(input: {
     recommendation: action,
     consequence: buildConsequence(decision, state, next72Plan),
     nextAction,
-    confidence: readiness?.confidence ?? 'medium',
+    confidence: briefingConfidence(readiness, athleteState),
     tone: toneForDecision(decision),
-    dominantConstraint: dominantConstraint(decision, state, readiness),
-    missingSignals: missingSignals(state),
+    dominantConstraint: dominantConstraint(decision, state, readiness, athleteState),
+    missingSignals: missingSignals(state, athleteState),
     readinessAdjustment: buildReadinessAdjustment(morningReadiness, next72Plan),
   }
 }
