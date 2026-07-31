@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CurrentState } from '../domain/types'
+import type { CanonicalAthleteState } from '../state/canonicalAthleteState'
 import type { ActualOverride } from './actualOverrideEngine'
 import { buildMorningReadinessVerdict } from './morningReadinessEngine'
 
@@ -70,5 +71,23 @@ describe('buildMorningReadinessVerdict', () => {
     expect(verdict.verdict).toBe('Proceed')
     expect(verdict.forwardState).toBe('clear')
     expect(verdict.primaryAction).toContain('Proceed')
+  })
+
+  it('accepts canonical athlete state as advisory evidence without replacing actuals-first readiness signals', () => {
+    const athleteState = {
+      freshness: { overall: 'stale' },
+      recovery: { status: 'green', missingSignals: ['sleep'] },
+      health: { injuryStatus: 'clear', illnessStatus: 'clear' },
+    } as CanonicalAthleteState
+
+    const verdict = buildMorningReadinessVerdict({
+      today: '2026-05-09',
+      state: readyState,
+      athleteState,
+    })
+
+    expect(verdict.verdict).toBe('Proceed')
+    expect(verdict.reasons).toContain('Canonical athlete state is stale; reduce confidence, preserve data, and keep the recommendation advisory.')
+    expect(verdict.reasons).toContain('Missing canonical recovery signals: sleep.')
   })
 })

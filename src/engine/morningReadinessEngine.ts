@@ -1,4 +1,5 @@
 import type { CurrentState } from '../domain/types'
+import type { CanonicalAthleteState } from '../state/canonicalAthleteState'
 import type { ActualOverride } from './actualOverrideEngine'
 import { buildReadinessSignals, type ReadinessSignal } from './readinessSignalEngine'
 
@@ -21,6 +22,7 @@ type Input = {
   today: string
   state: CurrentState
   yesterdayOverride?: ActualOverride
+  athleteState?: CanonicalAthleteState
 }
 
 const signalWeight: Record<ReadinessSignal['status'], number> = {
@@ -45,7 +47,7 @@ function yesterdayDebt(override?: ActualOverride): number {
   return 0
 }
 
-function buildReasons(signals: ReadinessSignal[], override: ActualOverride | undefined, totalDebt: number): string[] {
+function buildReasons(signals: ReadinessSignal[], override: ActualOverride | undefined, totalDebt: number, athleteState?: CanonicalAthleteState): string[] {
   const reasons: string[] = []
   if (override?.authoritativeSource === 'completed-activity') {
     reasons.push(`yesterday actual is canonical: ${override.deltaSummary}`)
@@ -58,14 +60,21 @@ function buildReasons(signals: ReadinessSignal[], override: ActualOverride | und
   if (redSignals.length) reasons.push(`Red readiness signals: ${redSignals.join(', ')}.`)
   if (!redSignals.length && yellowSignals.length) reasons.push(`Caution readiness signals: ${yellowSignals.join(', ')}.`)
   if (!redSignals.length && !yellowSignals.length) reasons.push('Garmin/readiness stack is supportive enough for controlled work.')
+  if (athleteState?.freshness.overall === 'stale') reasons.push('Canonical athlete state is stale; reduce confidence, preserve data, and keep the recommendation advisory.')
+  if (athleteState?.recovery.missingSignals.length) reasons.push(`Missing canonical recovery signals: ${athleteState.recovery.missingSignals.join(', ')}.`)
   reasons.push(`Composite morning debt: ${totalDebt}.`)
   return reasons
 }
 
-export function buildMorningReadinessVerdict({ today, state, yesterdayOverride }: Input): MorningReadinessVerdict {
+export function buildMorningReadinessVerdict({ today, state, yesterdayOverride, athleteState }: Input): MorningReadinessVerdict {
   const signals = buildReadinessSignals(state)
   const totalDebt = readinessDebt(signals) + yesterdayDebt(yesterdayOverride)
-  const hasInjuryBlock = state.injury_present || state.illness_present || state.recovery_status === 'red'
+  const hasInjuryBlock = state.injury_present
+    || state.illness_present
+    || state.recovery_status === 'red'
+    || athleteState?.health.injuryStatus === 'blocked'
+    || athleteState?.health.illnessStatus === 'blocked'
+    || athleteState?.recovery.status === 'blocked'
   const verdict: MorningVerdict = hasInjuryBlock || totalDebt >= 16
     ? 'Recover'
     : totalDebt >= 7
@@ -89,7 +98,7 @@ export function buildMorningReadinessVerdict({ today, state, yesterdayOverride }
       : verdict === 'Modify'
         ? 'Modify: keep work easy, short, capped, and readiness-led.'
         : 'Proceed: controlled aerobic work is allowed; caps remain ceilings, not targets.',
-    reasons: buildReasons(signals, yesterdayOverride, totalDebt),
+    reasons: buildReasons(signals, yesterdayOverride, totalDebt, athleteState),
     signals,
     yesterdaySummary: yesterdayOverride?.actualSummary ?? 'No yesterday actual override available.',
   }

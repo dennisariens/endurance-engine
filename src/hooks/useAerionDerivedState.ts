@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import type { Activity, CurrentState, DecisionLogEntry, Goal, Race } from '../domain/types'
+import { buildEvidenceRecords } from '../data/evidence'
 import { buildIntegrationHealth } from '../data/integrationHealth'
 import { buildFreshnessReport } from '../data/freshness'
 import { buildActualOverride } from '../engine/actualOverrideEngine'
@@ -16,6 +17,7 @@ import { buildDashboardStats } from '../engine/statsEngine'
 import { buildOperationalTimeline } from '../engine/timelineEngine'
 import { makeWorkoutRecommendation } from '../engine/workoutEngine'
 import type { SyncStatus } from '../lib/dataSync'
+import { buildCanonicalAthleteState } from '../state/canonicalAthleteState'
 
 type UseAerionDerivedStateInput = {
   today: string
@@ -47,11 +49,13 @@ export function useAerionDerivedState({
   const coachActionLoop = useMemo(() => buildCoachActionLoop({ today, decisionLog, simulation: scenarioSimulation, state }), [today, decisionLog, scenarioSimulation, state])
   const actualOverride = useMemo(() => buildActualOverride({ today, activities, decisionLog, recommendation }), [today, activities, decisionLog, recommendation])
   const yesterdayOverride = useMemo(() => buildActualOverride({ today: yesterday, activities, decisionLog, recommendation }), [yesterday, activities, decisionLog, recommendation])
-  const morningReadiness = useMemo(() => buildMorningReadinessVerdict({ today, state, yesterdayOverride }), [today, state, yesterdayOverride])
+  const freshness = useMemo(() => buildFreshnessReport({ today, state, activities, races, syncedAt: syncStatus.lastSyncedAt }), [today, state, activities, races, syncStatus.lastSyncedAt])
+  const evidence = useMemo(() => buildEvidenceRecords({ athleteId: 'dennis-local', generatedAt: syncStatus.lastSyncedAt ?? new Date().toISOString(), activities, state, races, goals, freshness }), [activities, state, races, goals, freshness, syncStatus.lastSyncedAt])
+  const athleteState = useMemo(() => buildCanonicalAthleteState({ athleteId: 'dennis-local', today, generatedAt: syncStatus.lastSyncedAt ?? new Date().toISOString(), state, activities, races, goals, freshness, evidence }), [today, state, activities, races, goals, freshness, evidence, syncStatus.lastSyncedAt])
+  const morningReadiness = useMemo(() => buildMorningReadinessVerdict({ today, state, yesterdayOverride, athleteState }), [today, state, yesterdayOverride, athleteState])
   const next72Plan = useMemo(() => buildNext72hPlan({ decision, state, actualOverride, morningReadiness }), [decision, state, actualOverride, morningReadiness])
   const stats = useMemo(() => buildDashboardStats({ today, races, activities }), [today, races, activities])
   const timeline = useMemo(() => buildOperationalTimeline({ today, races, activities, decisions: decisionLog }), [today, races, activities, decisionLog])
-  const freshness = useMemo(() => buildFreshnessReport({ today, state, activities, races, syncedAt: syncStatus.lastSyncedAt }), [today, state, activities, races, syncStatus.lastSyncedAt])
   const integrations = useMemo(() => buildIntegrationHealth({ activities, state, syncStatus, freshness }), [activities, state, syncStatus, freshness])
   const activeGoal = useMemo(() => goals.find((goal) => goal.id === activeGoalId) ?? goals[0], [activeGoalId, goals])
   const goalReadiness = useMemo(() => activeGoal ? evaluateGoalReadiness({ goal: activeGoal, today, activities, races, state }) : undefined, [activeGoal, today, activities, races, state])
@@ -77,6 +81,8 @@ export function useAerionDerivedState({
     stats,
     timeline,
     freshness,
+    evidence,
+    athleteState,
     integrations,
     activeGoal,
     goalReadiness,
