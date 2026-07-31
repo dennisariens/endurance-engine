@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CurrentState, DailyDecision } from '../domain/types'
+import type { CanonicalAthleteState } from '../state/canonicalAthleteState'
 import type { MorningReadinessVerdict } from './morningReadinessEngine'
 import { buildNext72hPlan } from './recoveryPlanEngine'
 
@@ -41,6 +42,13 @@ const baseMorningReadiness: MorningReadinessVerdict = {
   signals: [],
   yesterdaySummary: 'No yesterday actual override available.',
 }
+
+const canonicalReadyState = {
+  freshness: { overall: 'fresh' },
+  recovery: { status: 'green', missingSignals: [] },
+  fatigue: {},
+  health: { injuryStatus: 'clear', illnessStatus: 'clear' },
+} as unknown as CanonicalAthleteState
 
 describe('buildNext72hPlan', () => {
   it('creates four horizon blocks from today through +72h', () => {
@@ -214,5 +222,37 @@ describe('buildNext72hPlan', () => {
     expect(plan.recalculation?.source).toBe('completed-activity')
     expect(plan.blocks[1].action).toBe('Actual-load recovery audit')
     expect(plan.blocks[1].hardLimits).toContain('Actual completed work overrides logged intent')
+  })
+
+  it('uses canonical state as advisory confidence context without changing the legacy build branch', () => {
+    const plan = buildNext72hPlan({
+      decision: baseDecision,
+      state: baseState,
+      athleteState: {
+        ...canonicalReadyState,
+        freshness: { overall: 'stale' },
+        recovery: { status: 'green', missingSignals: ['sleep', 'HRV'] },
+      } as CanonicalAthleteState,
+    })
+
+    expect(plan.blocks[0].action).toBe('Aerobic build')
+    expect(plan.summary).toContain('Canonical state context applied')
+    expect(plan.blocks[0].hardLimits).toContain('Canonical athlete state is stale; verify current signals before progression')
+    expect(plan.blocks[0].hardLimits).toContain('Missing recovery signals: sleep, HRV')
+  })
+
+  it('honours canonical health blocks even when legacy state has not yet received the flag', () => {
+    const plan = buildNext72hPlan({
+      decision: baseDecision,
+      state: baseState,
+      athleteState: {
+        ...canonicalReadyState,
+        health: { injuryStatus: 'blocked', illnessStatus: 'clear' },
+      } as CanonicalAthleteState,
+    })
+
+    expect(plan.summary).toContain('Injury/illness block active')
+    expect(plan.blocks[0].action).toBe('Medical recovery')
+    expect(plan.blocks[0].hardLimits).toContain('No racing')
   })
 })

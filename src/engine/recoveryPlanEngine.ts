@@ -1,4 +1,5 @@
 import type { CurrentState, DailyDecision, RaceCostBand } from '../domain/types'
+import type { CanonicalAthleteState } from '../state/canonicalAthleteState'
 import type { ActualOverride } from './actualOverrideEngine'
 import type { MorningReadinessVerdict } from './morningReadinessEngine'
 
@@ -50,9 +51,14 @@ function latestCostBand(state: CurrentState): RaceCostBand {
   return state.latest_race_cost_band ?? 'Low'
 }
 
-function isHighDebt(state: CurrentState): boolean {
+function isHighDebt(state: CurrentState, athleteState?: CanonicalAthleteState): boolean {
   const band = latestCostBand(state)
-  return state.recovery_status === 'red' || band === 'High' || band === 'Extreme' || (state.latest_race_cost ?? 0) >= 70
+  return state.recovery_status === 'red'
+    || athleteState?.recovery.status === 'red'
+    || band === 'High'
+    || band === 'Extreme'
+    || (state.latest_race_cost ?? 0) >= 70
+    || (athleteState?.fatigue.metabolic ?? 0) >= 70
 }
 
 function injuryIllnessPlan(decision: DailyDecision): Next72Plan {
@@ -243,13 +249,34 @@ function withActualRecalculation(plan: Next72Plan, actualOverride?: ActualOverri
   }
 }
 
-export function buildNext72hPlan(input: { decision: DailyDecision; state: CurrentState; actualOverride?: ActualOverride; morningReadiness?: MorningReadinessVerdict }): Next72Plan {
-  const { decision, state, actualOverride, morningReadiness } = input
-  const basePlan = decision.status === 'InjuryIllness' || state.injury_present || state.illness_present
+function withCanonicalStateContext(plan: Next72Plan, decision: DailyDecision, athleteState?: CanonicalAthleteState): Next72Plan {
+  if (!athleteState) return plan
+  const contextLimits = [
+    athleteState.freshness.overall === 'stale' ? 'Canonical athlete state is stale; verify current signals before progression' : undefined,
+    athleteState.recovery.missingSignals.length ? `Missing recovery signals: ${athleteState.recovery.missingSignals.join(', ')}` : undefined,
+  ].filter((limit): limit is string => Boolean(limit))
+  if (!contextLimits.length) return plan
+  return {
+    ...plan,
+    summary: `${plan.summary} Canonical state context applied: confidence is constrained until source signals improve.`,
+    blocks: plan.blocks.map((block, index) => {
+      if (index > 1) return block
+      return {
+        ...block,
+        hardLimits: [...new Set([...block.hardLimits, capLimit(decision), ...contextLimits])],
+      }
+    }),
+  }
+}
+
+export function buildNext72hPlan(input: { decision: DailyDecision; state: CurrentState; actualOverride?: ActualOverride; morningReadiness?: MorningReadinessVerdict; athleteState?: CanonicalAthleteState }): Next72Plan {
+  const { decision, state, actualOverride, morningReadiness, athleteState } = input
+  const canonicalHealthBlock = athleteState?.health.injuryStatus === 'blocked' || athleteState?.health.illnessStatus === 'blocked' || athleteState?.recovery.status === 'blocked'
+  const basePlan = decision.status === 'InjuryIllness' || state.injury_present || state.illness_present || canonicalHealthBlock
     ? injuryIllnessPlan(decision)
     : decision.today === 'Race'
       ? raceDayPlan(decision, state)
-      : isHighDebt(state) || decision.status === 'Red'
+      : isHighDebt(state, athleteState) || decision.status === 'Red'
         ? highDebtPlan(decision, state)
         : decision.mode === 'DamageControl' || decision.raceBlock.active || (decision.daysUntilNextRace ?? 99) <= 3
           ? raceProximityPlan(decision, state)
@@ -257,5 +284,5 @@ export function buildNext72hPlan(input: { decision: DailyDecision; state: Curren
   const readinessPlan = actualOverride?.authoritativeSource === 'completed-activity'
     ? basePlan
     : withMorningReadiness(basePlan, decision, morningReadiness)
-  return withActualRecalculation(readinessPlan, actualOverride)
+  return withCanonicalStateContext(withActualRecalculation(readinessPlan, actualOverride), decision, athleteState)
 }

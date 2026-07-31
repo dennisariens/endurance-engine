@@ -53,7 +53,7 @@ export function useAerionDerivedState({
   const evidence = useMemo(() => buildEvidenceRecords({ athleteId: 'dennis-local', generatedAt: syncStatus.lastSyncedAt ?? new Date().toISOString(), activities, state, races, goals, freshness }), [activities, state, races, goals, freshness, syncStatus.lastSyncedAt])
   const athleteState = useMemo(() => buildCanonicalAthleteState({ athleteId: 'dennis-local', today, generatedAt: syncStatus.lastSyncedAt ?? new Date().toISOString(), state, activities, races, goals, freshness, evidence }), [today, state, activities, races, goals, freshness, evidence, syncStatus.lastSyncedAt])
   const morningReadiness = useMemo(() => buildMorningReadinessVerdict({ today, state, yesterdayOverride, athleteState }), [today, state, yesterdayOverride, athleteState])
-  const next72Plan = useMemo(() => buildNext72hPlan({ decision, state, actualOverride, morningReadiness }), [decision, state, actualOverride, morningReadiness])
+  const next72Plan = useMemo(() => buildNext72hPlan({ decision, state, actualOverride, morningReadiness, athleteState }), [decision, state, actualOverride, morningReadiness, athleteState])
   const stats = useMemo(() => buildDashboardStats({ today, races, activities }), [today, races, activities])
   const timeline = useMemo(() => buildOperationalTimeline({ today, races, activities, decisions: decisionLog }), [today, races, activities, decisionLog])
   const integrations = useMemo(() => buildIntegrationHealth({ activities, state, syncStatus, freshness }), [activities, state, syncStatus, freshness])
