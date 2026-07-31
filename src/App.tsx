@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import './styles.css'
 import { ActivityPanel } from './components/ActivityPanel'
 import { ActualOverridePanel } from './components/ActualOverridePanel'
@@ -28,22 +28,11 @@ import { buildIntegrationHealth } from './data/integrationHealth'
 import { dedupeSyncedActivities, mergeRacesByStableId } from './data/integrations/dedupe'
 import { parseGarminRecoveryFixture, normalizeGarminRecoveryState } from './data/integrations/garminRecoveryAdapter'
 import { normalizeStravaActivityProofs, type StravaActivityProof } from './data/integrations/stravaActivityProofAdapter'
-import { buildFreshnessReport } from './data/freshness'
 import type { CoachScenarioId, DecisionLogAction, DecisionLogEntry } from './domain/types'
 import { daysBetween } from './engine/calendarEngine'
-import { buildActualOverride } from './engine/actualOverrideEngine'
-import { buildCoachBriefing } from './engine/coachBriefingEngine'
-import { buildCoachActionLoop } from './engine/coachActionLoopEngine'
-import { makeDailyDecision } from './engine/decisionEngine'
-import { evaluateGoalReadiness } from './engine/goalReadinessEngine'
-import { buildPathToGoal } from './engine/pathEngine'
-import { getLatestRaceCost } from './engine/raceCostEngine'
-import { buildNext72hPlan } from './engine/recoveryPlanEngine'
-import { buildMorningReadinessVerdict } from './engine/morningReadinessEngine'
-import { buildScenarioSimulation, type ScenarioOutcome } from './engine/scenarioSimulationEngine'
-import { buildDashboardStats } from './engine/statsEngine'
-import { buildOperationalTimeline, getLocalIsoDate } from './engine/timelineEngine'
-import { makeWorkoutRecommendation } from './engine/workoutEngine'
+import type { ScenarioOutcome } from './engine/scenarioSimulationEngine'
+import { getLocalIsoDate } from './engine/timelineEngine'
+import { useAerionDerivedState } from './hooks/useAerionDerivedState'
 import { useAerionState } from './hooks/useAerionState'
 import { useOpeningSync } from './hooks/useOpeningSync'
 import { AERION_LOCAL_STORAGE_SCHEMA_VERSION } from './lib/storage'
@@ -91,30 +80,27 @@ export default function App() {
   }, [theme])
 
 
-  const decision = useMemo(() => makeDailyDecision({ today, races, activities, state }), [races, activities, state])
-  const latestCost = useMemo(() => getLatestRaceCost(activities), [activities])
-  const recommendation = useMemo(() => makeWorkoutRecommendation({ decision, state }), [decision, state])
-  const scenarioSimulation = useMemo(() => buildScenarioSimulation({ decision, state }), [decision, state])
-  const coachActionLoop = useMemo(() => buildCoachActionLoop({ today, decisionLog, simulation: scenarioSimulation, state }), [decisionLog, scenarioSimulation, state])
-  const actualOverride = useMemo(() => buildActualOverride({ today, activities, decisionLog, recommendation }), [activities, decisionLog, recommendation])
-  const yesterdayOverride = useMemo(() => buildActualOverride({ today: yesterday, activities, decisionLog, recommendation }), [activities, decisionLog, recommendation])
-  const morningReadiness = useMemo(() => buildMorningReadinessVerdict({ today, state, yesterdayOverride }), [state, yesterdayOverride])
-  const next72Plan = useMemo(() => buildNext72hPlan({ decision, state, actualOverride, morningReadiness }), [decision, state, actualOverride, morningReadiness])
-  const selectedScenarioId = coachActionLoop.selectedScenario?.id
-  const stats = useMemo(() => buildDashboardStats({ today, races, activities }), [races, activities])
-  const timeline = useMemo(() => buildOperationalTimeline({ today, races, activities, decisions: decisionLog }), [races, activities, decisionLog])
-  const freshness = useMemo(() => buildFreshnessReport({ today, state, activities, races, syncedAt: syncStatus.lastSyncedAt }), [state, activities, races, syncStatus.lastSyncedAt])
-  const integrations = useMemo(() => buildIntegrationHealth({ activities, state, syncStatus, freshness }), [activities, state, syncStatus, freshness])
-  const activeGoal = useMemo(() => goals.find((goal) => goal.id === activeGoalId) ?? goals[0], [activeGoalId, goals])
-  const goalReadiness = useMemo(() => activeGoal ? evaluateGoalReadiness({ goal: activeGoal, today, activities, races, state }) : undefined, [activeGoal, activities, races, state])
-  const pathToGoal = useMemo(() => activeGoal && goalReadiness ? buildPathToGoal({ goal: activeGoal, today, readinessScore: goalReadiness.overallReadiness, state, activities, races }) : undefined, [activeGoal, goalReadiness, state, activities, races])
-  const coachBriefing = useMemo(() => buildCoachBriefing({ decision, recommendation, state, next72Plan, readiness: goalReadiness, morningReadiness }), [decision, recommendation, state, next72Plan, goalReadiness, morningReadiness])
-  const nextRace = decision.nextRace
-  const nextRaceDetail = nextRace
-    ? `${nextRace.date} · ${nextRace.distanceKm ?? 'TBD'} km · ${nextRace.elevationM ?? 'TBD'} m · Class ${nextRace.class ?? 'TBD'}`
-    : 'No future race loaded'
-
-  const statusTone = decision.status === 'Red' ? 'red' : decision.status === 'Yellow' ? 'yellow' : decision.status === 'InjuryIllness' ? 'purple' : 'green'
+  const {
+    decision,
+    latestCost,
+    recommendation,
+    scenarioSimulation,
+    coachActionLoop,
+    actualOverride,
+    morningReadiness,
+    next72Plan,
+    selectedScenarioId,
+    stats,
+    timeline,
+    integrations,
+    activeGoal,
+    goalReadiness,
+    pathToGoal,
+    coachBriefing,
+    nextRace,
+    nextRaceDetail,
+    statusTone,
+  } = useAerionDerivedState({ today, yesterday, races, goals, activeGoalId, activities, decisionLog, state, syncStatus })
   const latestDecisionAction = decisionLog.find((entry) => entry.date === today)?.action
   const logDecision = (action: DecisionLogAction, note?: string) => {
     const entry: DecisionLogEntry = {
