@@ -423,12 +423,52 @@ This is a Phase 2 draft, not the final v2 state boundary.
 
 Deferred deliberately:
 
-- persisted Evidence Store;
-- SQLite state snapshots;
 - replacing all engines with CanonicalAthleteState input;
-- Trajectory Engine;
-- Learning Engine;
-- visible Mission Control redesign.
+- full SQLite state snapshots and migrations;
+- production-grade trajectory calibration;
+- production-grade learning calibration.
+
+## 6. Trajectory, Learning, Mission Control, and SQLite Evidence Store v1 — 2026-07-31
+
+Implemented first narrow v1 versions of the requested AERION v2 engines and product surface:
+
+```text
+src/engine/trajectoryEngine.ts
+src/engine/learningEngine.ts
+server/evidenceStore.ts
+```
+
+Trajectory Engine v1:
+
+- versioned as `trajectory-engine-v1`;
+- outputs 21-day readiness ranges, direction, dominant constraint, confidence, evidence IDs, and four scenarios: recommended, race/hard, rest, ignore;
+- preserves the rule that predictions are bounded ranges, not certainty.
+
+Learning Engine v1:
+
+- versioned as `learning-engine-v1`;
+- derives behaviour signals from completed activities, decision logs, canonical athlete state, and trajectory;
+- produces advisory policy adjustments only — no rewrite of historical truth.
+
+SQLite Evidence Store v1:
+
+- server-side only under `server/evidenceStore.ts`;
+- uses local `sqlite3` CLI to initialize, upsert, summarize, and read evidence records;
+- persists normalized `EvidenceRecord` rows;
+- browser receives no private keys and no direct SQLite access;
+- API persistence is opt-in via `AERION_EVIDENCE_DB_PATH` or explicit `evidenceDbPath`.
+
+Shared context/API wiring:
+
+- `buildAerionBriefingContext()` now exposes `control.trajectory` and `control.learning` alongside canonical athlete state, evidence, freshness, readiness, recovery plan, path, and stats.
+- `/api/briefing` can persist generated evidence into SQLite when a DB path is configured.
+
+Mission Control redesign:
+
+- Home/Mission Control now surfaces Trajectory Engine range/scenarios and Learning/Evidence ledger state above the detailed cockpit.
+- Existing expert cockpit/debug layer remains intact below the premium surface.
+
+The implementation is intentionally v1 and local-first. It creates the engine/store/control-system spine without adding cloud services, secrets in the browser, or destructive data migration.
 
 ---
 
