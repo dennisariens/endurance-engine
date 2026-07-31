@@ -1,10 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import './styles.css'
-import defaultActivities from '../data/activities.json'
-import defaultBlockedDates from '../data/blocked-dates.json'
-import defaultState from '../data/current-state.json'
-import defaultGoals from '../data/goals.json'
-import defaultRaces from '../data/races.json'
 import { ActivityPanel } from './components/ActivityPanel'
 import { ActualOverridePanel } from './components/ActualOverridePanel'
 import { BaselineZonesPanel } from './components/BaselineZonesPanel'
@@ -34,7 +29,7 @@ import { dedupeSyncedActivities, mergeRacesByStableId } from './data/integration
 import { parseGarminRecoveryFixture, normalizeGarminRecoveryState } from './data/integrations/garminRecoveryAdapter'
 import { normalizeStravaActivityProofs, type StravaActivityProof } from './data/integrations/stravaActivityProofAdapter'
 import { buildFreshnessReport } from './data/freshness'
-import type { AccountSettings, Activity, BlockedDate, CoachScenarioId, CurrentState, DecisionLogAction, DecisionLogEntry, Goal, GoalConversationEntry, Race, Theme, VisualizationSettings } from './domain/types'
+import type { CoachScenarioId, DecisionLogAction, DecisionLogEntry } from './domain/types'
 import { daysBetween } from './engine/calendarEngine'
 import { buildActualOverride } from './engine/actualOverrideEngine'
 import { buildCoachBriefing } from './engine/coachBriefingEngine'
@@ -49,25 +44,11 @@ import { buildScenarioSimulation, type ScenarioOutcome } from './engine/scenario
 import { buildDashboardStats } from './engine/statsEngine'
 import { buildOperationalTimeline, getLocalIsoDate } from './engine/timelineEngine'
 import { makeWorkoutRecommendation } from './engine/workoutEngine'
+import { useAerionState } from './hooks/useAerionState'
 import { useOpeningSync } from './hooks/useOpeningSync'
-import { AERION_LOCAL_STORAGE_SCHEMA_VERSION, loadLocal, saveLocal } from './lib/storage'
+import { AERION_LOCAL_STORAGE_SCHEMA_VERSION } from './lib/storage'
 
 const today = getLocalIsoDate()
-const defaultAccount: AccountSettings = { status: 'local', displayName: 'Dennis', localOnly: true }
-const defaultVisualization: VisualizationSettings = {
-  performanceFocus: 'all',
-  visibleFields: {
-    load: ['ctl', 'atl', 'tsb'],
-    'race-cost': ['value'],
-    recovery: ['drift', 'durability'],
-    goal: ['readiness'],
-    'recovery-signals': ['signals'],
-    'recovery-lag': ['lag', 'risk'],
-    races: ['stages', 'cumulative'],
-    history: ['load', 'distanceKm', 'durationMin', 'avgHr'],
-    'health-history': ['hr', 'hrv', 'sleep', 'vo2max', 'steps', 'readiness', 'recoveryTime'],
-  },
-}
 function addDays(date: string, days: number): string {
   const value = new Date(`${date}T00:00:00Z`)
   value.setUTCDate(value.getUTCDate() + days)
@@ -77,41 +58,37 @@ const yesterday = addDays(today, -1)
 const formatLabel = (value: string) => value.replace(/([A-Z])/g, ' $1').trim()
 
 export default function App() {
-  const [races, setRaces] = useState<Race[]>(() => loadLocal('aerion:races', defaultRaces as Race[]))
-  const [goals, setGoals] = useState<Goal[]>(() => loadLocal('aerion:goals', defaultGoals as Goal[]))
-  const [goalConversation, setGoalConversation] = useState<GoalConversationEntry[]>(() => loadLocal('aerion:goal-conversation', [] as GoalConversationEntry[]))
-  const [activeGoalId, setActiveGoalId] = useState<string | undefined>(() => loadLocal('aerion:active-goal-id', (defaultGoals as Goal[])[0]?.id))
-  const [activities, setActivities] = useState<Activity[]>(() => loadLocal('aerion:activities', defaultActivities as Activity[]))
-  const [blockedDates, setBlockedDates] = useState<BlockedDate[]>(() => loadLocal('aerion:blocked', defaultBlockedDates as BlockedDate[]))
-  const [decisionLog, setDecisionLog] = useState<DecisionLogEntry[]>(() => loadLocal('aerion:decision-log', [] as DecisionLogEntry[]))
-  const [theme, setTheme] = useState<Theme>(() => loadLocal('aerion:theme', 'dark' as Theme))
-  const [account, setAccount] = useState<AccountSettings>(() => loadLocal('aerion:account', defaultAccount))
-  const [visualization, setVisualization] = useState<VisualizationSettings>(() => loadLocal('aerion:visualization', defaultVisualization))
-  const [state, setState] = useState<CurrentState>(() => loadLocal('aerion:current-state', defaultState as CurrentState))
+  const {
+    races,
+    setRaces,
+    goals,
+    setGoals,
+    goalConversation,
+    setGoalConversation,
+    activeGoalId,
+    setActiveGoalId,
+    activities,
+    setActivities,
+    blockedDates,
+    setBlockedDates,
+    decisionLog,
+    setDecisionLog,
+    theme,
+    setTheme,
+    account,
+    setAccount,
+    visualization,
+    setVisualization,
+    state,
+    setState,
+    importSnapshot,
+    resetLocalData,
+  } = useAerionState()
   const { syncStatus, runOpeningSync } = useOpeningSync({ setActivities, setRaces, setState })
 
-  useEffect(() => saveLocal('aerion:races', races), [races])
-  useEffect(() => saveLocal('aerion:goals', goals), [goals])
-  useEffect(() => saveLocal('aerion:goal-conversation', goalConversation), [goalConversation])
-  useEffect(() => saveLocal('aerion:active-goal-id', activeGoalId), [activeGoalId])
-  useEffect(() => saveLocal('aerion:activities', activities), [activities])
-  useEffect(() => saveLocal('aerion:blocked', blockedDates), [blockedDates])
-  useEffect(() => saveLocal('aerion:decision-log', decisionLog), [decisionLog])
-  useEffect(() => saveLocal('aerion:current-state', state), [state])
-  useEffect(() => saveLocal('aerion:theme', theme), [theme])
-  useEffect(() => saveLocal('aerion:account', account), [account])
-  useEffect(() => saveLocal('aerion:visualization', visualization), [visualization])
   useEffect(() => {
     document.documentElement.dataset.theme = theme
   }, [theme])
-
-  useEffect(() => {
-    if (!goals.length) {
-      setActiveGoalId(undefined)
-      return
-    }
-    if (!activeGoalId || !goals.some((goal) => goal.id === activeGoalId)) setActiveGoalId(goals[0].id)
-  }, [activeGoalId, goals])
 
 
   const decision = useMemo(() => makeDailyDecision({ today, races, activities, state }), [races, activities, state])
@@ -183,20 +160,6 @@ export default function App() {
     setDecisionLog((items) => [entry, ...items.filter((item) => item.date !== today)])
   }
 
-  const importSnapshot = (snapshot: AerionLocalSnapshot) => {
-    setRaces(snapshot.races)
-    setGoals(snapshot.goals)
-    setGoalConversation(snapshot.goalConversation ?? [])
-    setActiveGoalId(snapshot.goals[0]?.id)
-    setActivities(snapshot.activities)
-    setBlockedDates(snapshot.blockedDates)
-    setDecisionLog(snapshot.decisionLog)
-    setState(snapshot.currentState)
-    setTheme(snapshot.theme)
-    setAccount(snapshot.account ?? defaultAccount)
-    setVisualization(snapshot.visualization ?? defaultVisualization)
-  }
-
   const exportLocalData = () => {
     const payload: AerionLocalSnapshot = { version: AERION_LOCAL_STORAGE_SCHEMA_VERSION, exportedAt: new Date().toISOString(), races, goals, goalConversation, activities, blockedDates, decisionLog, currentState: state, theme, account, visualization }
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
@@ -234,20 +197,6 @@ export default function App() {
     const sortedDates = imported.map((activity) => activity.date).sort()
     const latestDate = sortedDates[sortedDates.length - 1]
     return { source: 'Strava', records: imported.length, latestDate, message: `Imported Strava activity proof from ${file.name}` }
-  }
-
-  const resetLocalData = () => {
-    setRaces(defaultRaces as Race[])
-    setGoals(defaultGoals as Goal[])
-    setGoalConversation([])
-    setActiveGoalId((defaultGoals as Goal[])[0]?.id)
-    setActivities(defaultActivities as Activity[])
-    setBlockedDates(defaultBlockedDates as BlockedDate[])
-    setDecisionLog([])
-    setState(defaultState as CurrentState)
-    setTheme('dark')
-    setAccount(defaultAccount)
-    setVisualization(defaultVisualization)
   }
 
   return (
