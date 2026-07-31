@@ -410,6 +410,13 @@ buildCanonicalAthleteState()
 
 This is intentionally a narrow adoption path. It does not replace all engine inputs, and it does not add Trajectory Engine or Learning Engine.
 
+Continued narrow runtime adoption:
+
+- `buildNext72hPlan()` now accepts optional `athleteState` and uses it for canonical health/recovery blocks, high-debt detection, stale-state confidence guardrails, and missing recovery signal limits.
+- `buildCoachBriefing()` now accepts optional `athleteState` and uses it to cap confidence, merge missing signals, and surface canonical health/recovery constraints.
+
+The adoption remains one-engine-at-a-time. Existing public output types are preserved, and completed actual work remains authoritative over logged intent or advisory context.
+
 ## Phase 2 deferrals
 
 This is a Phase 2 draft, not the final v2 state boundary.
