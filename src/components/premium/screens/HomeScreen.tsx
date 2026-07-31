@@ -1,4 +1,4 @@
-import { Activity, Brain, Flag, Gauge, LineChart as LineIcon, ShieldCheck, TimerReset } from 'lucide-react'
+import { Activity, Brain, Database, Flag, Gauge, LineChart as LineIcon, ShieldCheck, TimerReset, TrendingUp } from 'lucide-react'
 import type { Race } from '../../../domain/types'
 import { CommandPanel, EvidenceStrip, MetricTile, MiniTimeline, RouteRail, formatLabel, riskTone, toneFromStatus } from '../ui'
 import type { PremiumCommandDeckProps } from '../types'
@@ -6,12 +6,14 @@ import type { PremiumCommandDeckProps } from '../types'
 type Props = PremiumCommandDeckProps
 
 export function HomeScreen(props: Props & { readyScore: number; nextRace?: Race }) {
-  const { today, decision, recommendation, briefing, morningReadiness, next72Plan, stats, readyScore, nextRace, readiness } = props
+  const { today, decision, recommendation, briefing, morningReadiness, next72Plan, stats, readyScore, nextRace, readiness, trajectory, learning } = props
   const keySignal = readiness?.mainLimiter ?? `${stats.avgRaceCost} avg race cost · ${stats.highCostActivities} high-cost sessions`
   const safeNext = briefing.readinessAdjustment?.safeNextAction ?? briefing.nextAction
   const consequence = briefing.consequence ?? next72Plan.summary
   const nextRaceText = nextRace ? `${nextRace.name} · ${nextRace.date}` : 'No fixed race loaded'
   const distanceText = nextRace?.distanceKm ? `${nextRace.distanceKm} km` : 'distance tbd'
+  const trajectoryConfidence = `${Math.round(trajectory.confidence * 100)}%`
+  const learningSignal = learning.signals[0]
   return (
     <section className="premium-screen active home-screen" aria-label="Home Mission Control">
       <CommandPanel
@@ -41,8 +43,31 @@ export function HomeScreen(props: Props & { readyScore: number; nextRace?: Race 
       <div className="home-command-strip" aria-label="One-glance command overview">
         <article><span>Now</span><strong>{morningReadiness.verdict}</strong><em>{morningReadiness.primaryAction}</em></article>
         <article><span>Train</span><strong>{recommendation.primary.durationMin || 'Off'} min</strong><em>{recommendation.primary.title}</em></article>
-        <article><span>Race</span><strong>{nextRace?.name ?? 'None'}</strong><em>{nextRace ? `${nextRace.date} · ${distanceText}` : 'No agenda pressure'}</em></article>
-        <article><span>Risk</span><strong>{next72Plan.risk}</strong><em>{stats.highCostActivities} high-cost sessions</em></article>
+        <article><span>Trajectory</span><strong>{trajectory.direction}</strong><em>{trajectory.readinessRange.low}–{trajectory.readinessRange.high} readiness · {trajectoryConfidence}</em></article>
+        <article><span>Learning</span><strong>{learning.signals.length}</strong><em>{learningSignal?.label ?? 'Pattern density low'}</em></article>
+      </div>
+
+      <div className="mission-control-core" aria-label="Mission Control intelligence layer">
+        <article className="mission-trajectory-panel">
+          <div className="chart-title"><TrendingUp size={15} strokeWidth={1.8} /><span>Trajectory Engine</span></div>
+          <div className="trajectory-range"><strong>{trajectory.readinessRange.low}–{trajectory.readinessRange.high}</strong><span>21d readiness range</span></div>
+          <p>{trajectory.dominantConstraint}</p>
+          <div className="trajectory-scenario-row">
+            {trajectory.scenarios.map((scenario) => (
+              <span key={scenario.id}>{scenario.label}: {scenario.readinessDeltaRange.low > 0 ? '+' : ''}{scenario.readinessDeltaRange.low}–{scenario.readinessDeltaRange.high}</span>
+            ))}
+          </div>
+        </article>
+        <article className="mission-learning-panel">
+          <div className="chart-title"><Database size={15} strokeWidth={1.8} /><span>Learning Engine / Evidence Store</span></div>
+          <h3>{learningSignal?.label ?? 'Pattern density low'}</h3>
+          <p>{learningSignal?.observation ?? 'AERION is collecting actual-completed evidence before adapting harder.'}</p>
+          <div className="learning-ledger-row">
+            <span>{learning.sampleSize.activities} activities</span>
+            <span>{learning.sampleSize.decisions} decisions</span>
+            <span>{learning.sampleSize.evidence} evidence records</span>
+          </div>
+        </article>
       </div>
 
       <div className="home-priority-grid compact-system-grid">

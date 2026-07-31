@@ -11,6 +11,8 @@ import { buildMorningReadinessVerdict, type MorningReadinessVerdict } from './mo
 import { buildPathToGoal, type PathToGoal } from './pathEngine'
 import { buildNext72hPlan, type Next72Plan } from './recoveryPlanEngine'
 import { buildDashboardStats, type DashboardStats } from './statsEngine'
+import { buildLearningEngine, type LearningEngineOutput } from './learningEngine'
+import { buildTrajectory, type TrajectoryEngineOutput } from './trajectoryEngine'
 import { makeWorkoutRecommendation } from './workoutEngine'
 
 export type AerionBriefingContextInput = {
@@ -49,6 +51,8 @@ export type AerionBriefingContext = {
     next72Plan: Next72Plan
     goalReadiness?: GoalReadinessResult
     pathToGoal?: PathToGoal
+    trajectory: TrajectoryEngineOutput
+    learning: LearningEngineOutput
     stats: DashboardStats
   }
 }
@@ -71,12 +75,14 @@ export function buildAerionBriefingContext(input: AerionBriefingContextInput): A
   const recommendation = makeWorkoutRecommendation({ decision, state: input.state })
   const actualOverride = buildActualOverride({ today: input.date, activities: input.activities, decisionLog, recommendation })
   const yesterdayOverride = buildActualOverride({ today: addDays(input.date, -1), activities: input.activities, decisionLog, recommendation })
-  const morningReadiness = buildMorningReadinessVerdict({ today: input.date, state: input.state, yesterdayOverride })
-  const next72Plan = buildNext72hPlan({ decision, state: input.state, actualOverride, morningReadiness })
+  const morningReadiness = buildMorningReadinessVerdict({ today: input.date, state: input.state, yesterdayOverride, athleteState })
+  const next72Plan = buildNext72hPlan({ decision, state: input.state, actualOverride, morningReadiness, athleteState })
   const activeGoal = input.goals[0]
   const goalReadiness = activeGoal ? evaluateGoalReadiness({ goal: activeGoal, today: input.date, activities: input.activities, races: input.races, state: input.state }) : undefined
   const pathToGoal = activeGoal && goalReadiness ? buildPathToGoal({ goal: activeGoal, today: input.date, readinessScore: goalReadiness.overallReadiness, state: input.state, activities: input.activities, races: input.races }) : undefined
-  const coachBriefing = buildCoachBriefing({ decision, recommendation, state: input.state, next72Plan, readiness: goalReadiness, morningReadiness })
+  const trajectory = buildTrajectory({ athleteState, decision, next72Plan, goalReadiness })
+  const learning = buildLearningEngine({ today: input.date, activities: input.activities, decisions: decisionLog, athleteState, trajectory })
+  const coachBriefing = buildCoachBriefing({ decision, recommendation, state: input.state, next72Plan, readiness: goalReadiness, morningReadiness, athleteState })
   const briefing = buildDailyBriefing({
     date: input.date,
     timezone,
@@ -114,6 +120,8 @@ export function buildAerionBriefingContext(input: AerionBriefingContextInput): A
       next72Plan,
       goalReadiness,
       pathToGoal,
+      trajectory,
+      learning,
       stats,
     },
   }

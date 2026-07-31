@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { mkdtempSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { buildBriefingPayload, fetchIntervalsContext } from './aerionApi'
 
 describe('aerion API services', () => {
@@ -33,5 +36,16 @@ describe('aerion API services', () => {
     expect(payload.ok).toBe(true)
     expect(payload.source).toBe('local-fixture')
     expect(payload.sync.source).toBe('unavailable')
+    expect(payload.control.trajectory.engineVersion).toBe('trajectory-engine-v1')
+    expect(payload.control.learning.engineVersion).toBe('learning-engine-v1')
+  })
+
+  it('persists briefing evidence to SQLite when an evidence db path is configured', async () => {
+    const evidenceDbPath = join(mkdtempSync(join(tmpdir(), 'aerion-api-evidence-')), 'evidence.sqlite')
+
+    const payload = await buildBriefingPayload({ env: {}, date: '2026-04-30', now: new Date('2026-07-29T00:00:00Z'), evidenceDbPath })
+
+    expect(payload.evidenceStore?.dbPath).toBe(evidenceDbPath)
+    expect(payload.evidenceStore?.records).toBe(payload.control.evidence.length)
   })
 })

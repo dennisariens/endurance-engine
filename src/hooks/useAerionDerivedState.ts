@@ -8,6 +8,7 @@ import { buildCoachBriefing } from '../engine/coachBriefingEngine'
 import { buildCoachActionLoop } from '../engine/coachActionLoopEngine'
 import { makeDailyDecision } from '../engine/decisionEngine'
 import { evaluateGoalReadiness } from '../engine/goalReadinessEngine'
+import { buildLearningEngine } from '../engine/learningEngine'
 import { buildPathToGoal } from '../engine/pathEngine'
 import { getLatestRaceCost } from '../engine/raceCostEngine'
 import { buildNext72hPlan } from '../engine/recoveryPlanEngine'
@@ -15,6 +16,7 @@ import { buildMorningReadinessVerdict } from '../engine/morningReadinessEngine'
 import { buildScenarioSimulation } from '../engine/scenarioSimulationEngine'
 import { buildDashboardStats } from '../engine/statsEngine'
 import { buildOperationalTimeline } from '../engine/timelineEngine'
+import { buildTrajectory } from '../engine/trajectoryEngine'
 import { makeWorkoutRecommendation } from '../engine/workoutEngine'
 import type { SyncStatus } from '../lib/dataSync'
 import { buildCanonicalAthleteState } from '../state/canonicalAthleteState'
@@ -60,6 +62,8 @@ export function useAerionDerivedState({
   const activeGoal = useMemo(() => goals.find((goal) => goal.id === activeGoalId) ?? goals[0], [activeGoalId, goals])
   const goalReadiness = useMemo(() => activeGoal ? evaluateGoalReadiness({ goal: activeGoal, today, activities, races, state }) : undefined, [activeGoal, today, activities, races, state])
   const pathToGoal = useMemo(() => activeGoal && goalReadiness ? buildPathToGoal({ goal: activeGoal, today, readinessScore: goalReadiness.overallReadiness, state, activities, races }) : undefined, [activeGoal, goalReadiness, today, state, activities, races])
+  const trajectory = useMemo(() => buildTrajectory({ athleteState, decision, next72Plan, goalReadiness }), [athleteState, decision, next72Plan, goalReadiness])
+  const learning = useMemo(() => buildLearningEngine({ today, activities, decisions: decisionLog, athleteState, trajectory }), [today, activities, decisionLog, athleteState, trajectory])
   const coachBriefing = useMemo(() => buildCoachBriefing({ decision, recommendation, state, next72Plan, readiness: goalReadiness, morningReadiness, athleteState }), [decision, recommendation, state, next72Plan, goalReadiness, morningReadiness, athleteState])
   const nextRace = decision.nextRace
   const nextRaceDetail = nextRace
@@ -87,6 +91,8 @@ export function useAerionDerivedState({
     activeGoal,
     goalReadiness,
     pathToGoal,
+    trajectory,
+    learning,
     coachBriefing,
     nextRace,
     nextRaceDetail,

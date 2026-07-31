@@ -95,6 +95,8 @@ export default function App() {
     activeGoal,
     goalReadiness,
     pathToGoal,
+    trajectory,
+    learning,
     coachBriefing,
     nextRace,
     nextRaceDetail,
@@ -172,6 +174,8 @@ export default function App() {
         account={account}
         visualization={visualization}
         readiness={goalReadiness}
+        trajectory={trajectory}
+        learning={learning}
         syncStatus={syncStatus}
         integrations={integrations}
         path={pathToGoal}

@@ -5,6 +5,7 @@ import defaultState from '../data/current-state.json'
 import type { Activity, CurrentState, Goal, Race } from '../src/domain/types'
 import { buildAerionBriefingContext } from '../src/engine/aerionBriefingContextEngine'
 import { normalizeIntervalsActivities, normalizeIntervalsEvents, normalizeIntervalsWellness } from '../src/data/integrations/intervalsAdapter'
+import { upsertEvidenceRecords } from './evidenceStore'
 
 export const DEFAULT_ATHLETE_ID = 'i478692'
 
@@ -35,6 +36,7 @@ export type FetchIntervalsContextOptions = {
 export type BuildBriefingPayloadOptions = FetchIntervalsContextOptions & {
   date: string
   timezone?: string
+  evidenceDbPath?: string
 }
 
 export function getIntervalsCredentials(env: AerionApiEnv) {
@@ -98,7 +100,7 @@ export async function fetchIntervalsContext({ env, fetchImpl = fetch as FetchLik
   }
 }
 
-export async function buildBriefingPayload({ date, timezone = 'Europe/Amsterdam', ...options }: BuildBriefingPayloadOptions) {
+export async function buildBriefingPayload({ date, timezone = 'Europe/Amsterdam', evidenceDbPath, ...options }: BuildBriefingPayloadOptions) {
   const sync = await fetchIntervalsContext(options)
   const useLive = sync.ok && sync.activities
   const payload = buildAerionBriefingContext({
@@ -111,5 +113,7 @@ export async function buildBriefingPayload({ date, timezone = 'Europe/Amsterdam'
     syncedAt: sync.syncedAt,
     source: useLive ? 'local-live' : 'local-fixture',
   })
-  return { ok: true, sync: { source: sync.source, message: sync.message, syncedAt: sync.syncedAt }, ...payload }
+  const resolvedEvidenceDbPath = evidenceDbPath ?? options.env.AERION_EVIDENCE_DB_PATH
+  const evidenceStore = resolvedEvidenceDbPath ? upsertEvidenceRecords(resolvedEvidenceDbPath, payload.control.evidence) : undefined
+  return { ok: true, sync: { source: sync.source, message: sync.message, syncedAt: sync.syncedAt }, evidenceStore, ...payload }
 }

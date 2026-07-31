@@ -6,6 +6,8 @@ import type { MorningReadinessVerdict } from '../../engine/morningReadinessEngin
 import type { PathToGoal } from '../../engine/pathEngine'
 import type { Next72Plan } from '../../engine/recoveryPlanEngine'
 import type { DashboardStats } from '../../engine/statsEngine'
+import type { LearningEngineOutput } from '../../engine/learningEngine'
+import type { TrajectoryEngineOutput } from '../../engine/trajectoryEngine'
 import type { SyncStatus } from '../../lib/dataSync'
 import type { IntegrationHealth } from '../../data/integrationHealth'
 
@@ -27,6 +29,8 @@ export type PremiumCommandDeckProps = {
   account: AccountSettings
   visualization: VisualizationSettings
   readiness?: GoalReadinessResult
+  trajectory: TrajectoryEngineOutput
+  learning: LearningEngineOutput
   syncStatus: SyncStatus
   integrations: IntegrationHealth[]
   path?: PathToGoal
