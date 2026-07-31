@@ -49,6 +49,7 @@ describe('premium screen render smoke', () => {
     const markup = renderToStaticMarkup(<GoalsScreen {...props} />)
 
     expect(markup).toContain('Delete active goal')
+    expect(markup).toContain('Deletion requires confirmation')
     expect(markup).toContain('Delete')
     expect(markup).toContain('Goal selection')
   })

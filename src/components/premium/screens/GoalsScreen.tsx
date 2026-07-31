@@ -21,6 +21,7 @@ export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalCon
   const [discipline, setDiscipline] = useState<GoalDiscipline>('triathlon')
   const [notes, setNotes] = useState('')
   const [answer, setAnswer] = useState('')
+  const [pendingDeleteGoalId, setPendingDeleteGoalId] = useState<string | null>(null)
   const feasibility = useMemo(() => buildGoalFeasibilityBrief({ goal: activeGoal, readiness, path, state, races, today }), [activeGoal, readiness, path, state, races, today])
   const activeConversation = useMemo(() => goalConversation.filter((entry) => entry.goalId === activeGoal?.id), [goalConversation, activeGoal?.id])
   const planningBlock = useMemo(() => buildGoalPlanningBlock({ goal: activeGoal, feasibility, readiness, path, conversation: activeConversation }), [activeGoal, feasibility, readiness, path, activeConversation])
@@ -65,6 +66,11 @@ export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalCon
     setAnswer('')
   }
 
+  const confirmDeleteGoal = (goalId: string) => {
+    onDeleteGoal(goalId)
+    setPendingDeleteGoalId(null)
+  }
+
   return (
     <section className="premium-screen active goals-workbench-screen">
       <div className="premium-screen-header compact-header">
@@ -100,13 +106,21 @@ export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalCon
 
       {goals.length > 0 && (
         <div className="goal-select-strip elevated" aria-label="Goal selection">
+          <p className="goal-delete-note">Deletion requires confirmation. Races and activities are not removed.</p>
           {goals.map((goal) => (
             <article key={goal.id} className={goal.id === activeGoal?.id ? 'active' : ''}>
               <button type="button" onClick={() => onSelectGoal(goal.id)}>
                 <strong>{goal.name}</strong>
                 <span>{label(goal.status)} · {label(goal.type)} · {goal.targetDate ?? 'floating'}</span>
               </button>
-              <button className="goal-delete-chip" type="button" onClick={() => onDeleteGoal(goal.id)}>Delete</button>
+              {pendingDeleteGoalId === goal.id ? (
+                <div className="goal-delete-confirm-row" aria-label={`Confirm deletion for ${goal.name}`}>
+                  <button className="goal-delete-chip confirm" type="button" onClick={() => confirmDeleteGoal(goal.id)}>Confirm delete</button>
+                  <button className="goal-delete-chip cancel" type="button" onClick={() => setPendingDeleteGoalId(null)}>Cancel</button>
+                </div>
+              ) : (
+                <button className="goal-delete-chip" type="button" onClick={() => setPendingDeleteGoalId(goal.id)}>Delete</button>
+              )}
             </article>
           ))}
         </div>
@@ -134,7 +148,14 @@ export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalCon
           <div className="button-row">
             <button type="submit">Add as goal</button>
             <button className="ghost" type="button" onClick={() => addGoal(true)}>Add goal + race</button>
-            {activeGoal && <button className="ghost danger" type="button" onClick={() => onDeleteGoal(activeGoal.id)}>Delete active goal</button>}
+            {activeGoal && (pendingDeleteGoalId === activeGoal.id ? (
+              <>
+                <button className="danger" type="button" onClick={() => confirmDeleteGoal(activeGoal.id)}>Confirm delete active goal</button>
+                <button className="ghost" type="button" onClick={() => setPendingDeleteGoalId(null)}>Cancel</button>
+              </>
+            ) : (
+              <button className="ghost danger" type="button" onClick={() => setPendingDeleteGoalId(activeGoal.id)}>Delete active goal</button>
+            ))}
           </div>
         </form>
 

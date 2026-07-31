@@ -1818,6 +1818,7 @@ button.danger { border-color: rgba(239, 68, 68, .45); color: #fca5a5; }
 .goal-conversation-log strong { display: block; color: var(--text); margin: 6px 0; }
 .goal-conversation-log p { margin: 0; color: var(--soft-text); }
 .goal-select-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.goal-delete-note { grid-column: 1 / -1; margin: 0 0 2px; color: var(--muted); font-size: 11px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
 .goal-select-strip article {
   border: 1px solid rgba(255,255,255,.10);
   border-radius: 18px;
@@ -1852,6 +1853,9 @@ button.danger { border-color: rgba(239, 68, 68, .45); color: #fca5a5; }
   text-transform: uppercase;
   cursor: pointer;
 }
+.goal-delete-confirm-row { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.goal-delete-chip.confirm { border-color: rgba(248,113,113,.55); color: #fee2e2; background: rgba(248,113,113,.18); }
+.goal-delete-chip.cancel { border-color: rgba(148,163,184,.22); color: var(--muted); background: rgba(148,163,184,.06); }
 .goal-delete-chip:focus-visible { outline: 2px solid rgba(248,113,113,.72); outline-offset: 2px; }
 .aerion-screen-loading {
   display: grid;
