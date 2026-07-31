@@ -371,7 +371,15 @@ Split opening-sync orchestration out of `App.tsx`:
 src/hooks/useOpeningSync.ts
 ```
 
-This keeps visible UI unchanged while reducing app-level orchestration load. Broader hook extraction (`useAerionState`, `useAerionDerivedState`, `useAerionImports`) remains deferred.
+Continued app-orchestration split:
+
+```text
+src/hooks/useAerionState.ts
+src/hooks/useAerionDerivedState.ts
+src/hooks/useAerionImports.ts
+```
+
+This keeps visible UI unchanged while moving local persisted state, pure derived dashboard state, and import/export handlers out of `src/App.tsx`. `App.tsx` remains the composition shell for now; full component-level panel decomposition remains deferred.
 
 MCP responses now include response metadata:
 
