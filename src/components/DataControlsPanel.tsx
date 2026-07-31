@@ -1,8 +1,9 @@
 import type { AccountSettings, Activity, BlockedDate, CurrentState, DecisionLogEntry, Goal, GoalConversationEntry, Race, Theme, VisualizationSettings } from '../domain/types'
+import { AERION_LOCAL_STORAGE_SCHEMA_VERSION } from '../lib/storage'
 
 export type AerionLocalSnapshot = {
   exportedAt: string
-  version: 1
+  version: 1 | typeof AERION_LOCAL_STORAGE_SCHEMA_VERSION
   races: Race[]
   goals: Goal[]
   goalConversation?: GoalConversationEntry[]
@@ -23,7 +24,7 @@ type Props = {
 
 export function DataControlsPanel({ snapshot, onImport, onResetLocalData }: Props) {
   const exportData = () => {
-    const payload: AerionLocalSnapshot = { version: 1, exportedAt: new Date().toISOString(), ...snapshot }
+    const payload: AerionLocalSnapshot = { version: AERION_LOCAL_STORAGE_SCHEMA_VERSION, exportedAt: new Date().toISOString(), ...snapshot }
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -38,7 +39,7 @@ export function DataControlsPanel({ snapshot, onImport, onResetLocalData }: Prop
   const importData = async (file?: File) => {
     if (!file) return
     const parsed = JSON.parse(await file.text()) as AerionLocalSnapshot
-    if (parsed.version !== 1 || !Array.isArray(parsed.races) || !Array.isArray(parsed.activities) || !Array.isArray(parsed.goals)) {
+    if (![1, AERION_LOCAL_STORAGE_SCHEMA_VERSION].includes(parsed.version) || !Array.isArray(parsed.races) || !Array.isArray(parsed.activities) || !Array.isArray(parsed.goals)) {
       throw new Error('Invalid AERION backup file')
     }
     parsed.goalConversation ??= []

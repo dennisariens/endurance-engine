@@ -49,8 +49,8 @@ import { buildScenarioSimulation, type ScenarioOutcome } from './engine/scenario
 import { buildDashboardStats } from './engine/statsEngine'
 import { buildOperationalTimeline, getLocalIsoDate } from './engine/timelineEngine'
 import { makeWorkoutRecommendation } from './engine/workoutEngine'
-import { fetchOpeningSync, type SyncStatus } from './lib/dataSync'
-import { loadLocal, saveLocal } from './lib/storage'
+import { useOpeningSync } from './hooks/useOpeningSync'
+import { AERION_LOCAL_STORAGE_SCHEMA_VERSION, loadLocal, saveLocal } from './lib/storage'
 
 const today = getLocalIsoDate()
 const defaultAccount: AccountSettings = { status: 'local', displayName: 'Dennis', localOnly: true }
@@ -88,7 +88,7 @@ export default function App() {
   const [account, setAccount] = useState<AccountSettings>(() => loadLocal('aerion:account', defaultAccount))
   const [visualization, setVisualization] = useState<VisualizationSettings>(() => loadLocal('aerion:visualization', defaultVisualization))
   const [state, setState] = useState<CurrentState>(() => loadLocal('aerion:current-state', defaultState as CurrentState))
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>({ state: 'idle', message: 'Opening sync not started yet.' })
+  const { syncStatus, runOpeningSync } = useOpeningSync({ setActivities, setRaces, setState })
 
   useEffect(() => saveLocal('aerion:races', races), [races])
   useEffect(() => saveLocal('aerion:goals', goals), [goals])
@@ -113,45 +113,6 @@ export default function App() {
     if (!activeGoalId || !goals.some((goal) => goal.id === activeGoalId)) setActiveGoalId(goals[0].id)
   }, [activeGoalId, goals])
 
-  const runOpeningSync = async () => {
-    setSyncStatus({ state: 'syncing', message: 'Connecting AERION Core and syncing Intervals.icu.' })
-    try {
-      const payload = await fetchOpeningSync()
-      if (payload.ok && payload.activities) {
-        setActivities((current) => dedupeSyncedActivities([...current, ...payload.activities ?? []]))
-        if (payload.races?.length) setRaces((current) => mergeRacesByStableId(current, payload.races ?? []))
-        if (payload.state) setState((current) => ({ ...current, ...payload.state }))
-        setSyncStatus({ state: 'fresh', message: payload.message, lastSyncedAt: payload.syncedAt, activityCount: payload.activities.length, raceCount: payload.races?.length ?? 0 })
-        return { source: 'Intervals', records: payload.activities.length + (payload.races?.length ?? 0), latestDate: payload.syncedAt?.slice(0, 10), message: payload.message }
-      }
-      setSyncStatus({ state: payload.source === 'unavailable' ? 'offline' : 'error', message: payload.message, lastSyncedAt: payload.syncedAt })
-      return { source: 'Intervals', records: 0, latestDate: payload.syncedAt?.slice(0, 10), message: payload.message }
-    } catch (error) {
-      const message = `No opening sync available: ${error instanceof Error ? error.message : 'unknown error'}`
-      setSyncStatus({ state: 'offline', message })
-      return { source: 'Intervals', records: 0, message }
-    }
-  }
-
-  useEffect(() => {
-    let cancelled = false
-    fetchOpeningSync()
-      .then((payload) => {
-        if (cancelled) return
-        if (payload.ok && payload.activities) {
-          setActivities((current) => dedupeSyncedActivities([...current, ...payload.activities ?? []]))
-          if (payload.races?.length) setRaces((current) => mergeRacesByStableId(current, payload.races ?? []))
-          if (payload.state) setState((current) => ({ ...current, ...payload.state }))
-          setSyncStatus({ state: 'fresh', message: payload.message, lastSyncedAt: payload.syncedAt, activityCount: payload.activities.length, raceCount: payload.races?.length ?? 0 })
-          return
-        }
-        setSyncStatus({ state: payload.source === 'unavailable' ? 'offline' : 'error', message: payload.message, lastSyncedAt: payload.syncedAt })
-      })
-      .catch((error) => {
-        if (!cancelled) setSyncStatus({ state: 'offline', message: `No opening sync available: ${error instanceof Error ? error.message : 'unknown error'}` })
-      })
-    return () => { cancelled = true }
-  }, [])
 
   const decision = useMemo(() => makeDailyDecision({ today, races, activities, state }), [races, activities, state])
   const latestCost = useMemo(() => getLatestRaceCost(activities), [activities])
@@ -237,7 +198,7 @@ export default function App() {
   }
 
   const exportLocalData = () => {
-    const payload: AerionLocalSnapshot = { version: 1, exportedAt: new Date().toISOString(), races, goals, goalConversation, activities, blockedDates, decisionLog, currentState: state, theme, account, visualization }
+    const payload: AerionLocalSnapshot = { version: AERION_LOCAL_STORAGE_SCHEMA_VERSION, exportedAt: new Date().toISOString(), races, goals, goalConversation, activities, blockedDates, decisionLog, currentState: state, theme, account, visualization }
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -251,7 +212,7 @@ export default function App() {
 
   const importLocalData = async (file: File) => {
     const parsed = JSON.parse(await file.text()) as AerionLocalSnapshot
-    if (parsed.version !== 1 || !Array.isArray(parsed.races) || !Array.isArray(parsed.activities) || !Array.isArray(parsed.goals)) throw new Error('Invalid AERION backup file')
+    if (![1, AERION_LOCAL_STORAGE_SCHEMA_VERSION].includes(parsed.version) || !Array.isArray(parsed.races) || !Array.isArray(parsed.activities) || !Array.isArray(parsed.goals)) throw new Error('Invalid AERION backup file')
     parsed.goalConversation ??= []
     importSnapshot(parsed)
   }

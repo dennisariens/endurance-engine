@@ -1,8 +1,8 @@
 # AERION Architecture — v2 Foundation
 
-Last updated: 2026-07-29  
+Last updated: 2026-07-31  
 Branch: `refactor/v2-foundation`  
-Scope executed: Phase 0 + Phase 1 + Phase 2 draft
+Scope executed: Phase 0 + Phase 1 + Phase 2 draft + Phase 2 hardening pass
 
 ## Direction
 
@@ -339,6 +339,51 @@ Commit:
 feat: expose canonical athlete state in shared context
 ```
 
+## 4. Phase 2 hardening pass — 2026-07-31
+
+Added localStorage schema versioning and migration guards:
+
+```text
+src/lib/storage.ts
+src/lib/storage.test.ts
+```
+
+Behavior:
+
+- existing v1 raw JSON localStorage values are read as-is;
+- the next save wraps values in a v2 envelope with `schemaVersion`, `savedAt`, and optional `migratedFrom`;
+- future/unknown schema envelopes return the safe fallback and are left untouched as user-owned data;
+- corrupt JSON falls back without throwing or deleting data.
+
+Backup/export files now use the current local storage schema version while still accepting v1 backups.
+
+Added adapter-to-evidence contract coverage:
+
+```text
+src/data/integrations/adapterEvidenceContract.test.ts
+```
+
+This verifies Intervals, Strava, Garmin-derived state, races, goals, and freshness records can flow into the canonical evidence layer with stable evidence IDs and confidence values.
+
+Split opening-sync orchestration out of `App.tsx`:
+
+```text
+src/hooks/useOpeningSync.ts
+```
+
+This keeps visible UI unchanged while reducing app-level orchestration load. Broader hook extraction (`useAerionState`, `useAerionDerivedState`, `useAerionImports`) remains deferred.
+
+MCP responses now include response metadata:
+
+```text
+responseMetadata.stateGeneratedAt
+responseMetadata.engineVersion
+responseMetadata.confidence
+responseMetadata.evidenceIds
+```
+
+The MCP server version is now `1.2.0`.
+
 ## Phase 2 deferrals
 
 This is a Phase 2 draft, not the final v2 state boundary.
@@ -474,13 +519,13 @@ MCP should not:
 
 # Deviations from the v2 proposal
 
-The full AERION v2 proposal is now preserved below as Appendix A. The implementation still executed only the explicit Phase 0/1 scope and deliberately deferred larger Phase 2+ systems.
+The full AERION v2 proposal is now preserved below as Appendix A. Phase 0/1 is complete. Phase 2 has a drafted canonical state boundary plus a first hardening pass; larger intelligence systems remain deliberately deferred.
 
 Deliberate deviations / deferrals:
 
-1. **CanonicalAthleteState not built yet**
-   - Deferred to Phase 2.
-   - Reason: too large for the foundation cleanup round.
+1. **CanonicalAthleteState is draft-only**
+   - Built as derived in-memory state, exposed through shared context.
+   - Not yet persisted to SQLite and not yet the input contract for every engine.
 
 2. **Trajectory Engine not built yet**
    - Deferred to Phase 2+.
@@ -527,16 +572,16 @@ The Phase 2 draft introduced the typed state boundary. The next phase should har
 
 Recommended sequence:
 
-1. Add persisted state snapshots and localStorage schema versioning.
-2. Add adapter-to-evidence contract tests for Intervals/Garmin/Strava/manual inputs.
+1. Add persisted state snapshots. ✅ LocalStorage schema versioning added in hardening pass; persisted state snapshots remain deferred.
+2. Add adapter-to-evidence contract tests for Intervals/Garmin/Strava/manual inputs. ✅ First Intervals/Garmin/Strava contract coverage added.
 3. Move `App.tsx` orchestration into hooks:
-   - `useAerionState()`
-   - `useOpeningSync()`
-   - `useAerionDerivedState()`
-   - `useAerionImports()`
+   - `useOpeningSync()` ✅ extracted.
+   - `useAerionState()` deferred.
+   - `useAerionDerivedState()` deferred.
+   - `useAerionImports()` deferred.
 4. Make engines consume CanonicalAthleteState gradually.
 5. Add freshness-aware confidence to coach briefing and scenario simulation.
-6. Add MCP response metadata: state generation time, engine version, evidence IDs.
+6. Add MCP response metadata: state generation time, engine version, evidence IDs. ✅ Added for MCP context/state/freshness/OpenAI responses.
 7. Only after those adoption steps: Trajectory Engine.
 8. Only after trajectory history is stable: Learning Engine.
 

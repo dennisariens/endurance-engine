@@ -5,6 +5,17 @@ import path from 'node:path'
 
 const BASE_URL = (process.env.AERION_BASE_URL || 'http://127.0.0.1:5174').replace(/\/$/, '')
 const MODEL = process.env.AERION_OPENAI_MODEL || process.env.OPENAI_MODEL || 'gpt-4.1-mini'
+const AERION_MCP_ENGINE_VERSION = 'aerion-openai-mcp-1.2.0'
+
+function buildResponseMetadata(context) {
+  const athleteState = context.control?.athleteState
+  return {
+    stateGeneratedAt: athleteState?.generatedAt || context.generatedAt,
+    engineVersion: AERION_MCP_ENGINE_VERSION,
+    confidence: athleteState?.recovery?.confidence ?? null,
+    evidenceIds: athleteState?.evidenceSummary?.includedEvidenceIds || context.control?.evidence?.map((record) => record.id) || [],
+  }
+}
 
 function respond(id, result) {
   if (id === undefined || id === null) return
@@ -54,7 +65,7 @@ async function getAerionContext({ date } = {}) {
     const text = await response.text()
     if (!response.ok) return { ok: false, source: 'aerion-local-api', url, message: `AERION briefing endpoint returned HTTP ${response.status}` }
     const payload = JSON.parse(text)
-    return { ok: true, source: 'aerion-local-api', url, ...payload }
+    return { ok: true, source: 'aerion-local-api', url, ...payload, responseMetadata: buildResponseMetadata(payload) }
   } catch (error) {
     return {
       ok: false,
@@ -75,6 +86,7 @@ async function getAthleteState(args = {}) {
     date: context.date,
     athleteState: context.control?.athleteState,
     evidenceSummary: context.control?.athleteState?.evidenceSummary,
+    responseMetadata: context.responseMetadata,
   }
 }
 
@@ -87,6 +99,7 @@ async function getDataFreshness(args = {}) {
     generatedAt: context.generatedAt,
     date: context.date,
     freshness: context.control?.freshness,
+    responseMetadata: context.responseMetadata,
   }
 }
 
@@ -130,7 +143,7 @@ async function askOpenAI({ prompt, date, model = MODEL, max_output_tokens = 700 
   const text = payload.output_text
     || payload.output?.flatMap((item) => item.content || []).map((content) => content.text || '').join('\n').trim()
     || JSON.stringify(payload)
-  return { ok: true, model, text, context }
+  return { ok: true, model, text, context, responseMetadata: context.responseMetadata }
 }
 
 const tools = [
@@ -187,7 +200,7 @@ async function handle(message) {
       respond(id, {
         protocolVersion: '2024-11-05',
         capabilities: { tools: {} },
-        serverInfo: { name: 'aerion-openai-mcp', version: '1.1.0' },
+        serverInfo: { name: 'aerion-openai-mcp', version: '1.2.0' },
       })
       return
     }
