@@ -38,6 +38,7 @@ export type PremiumCommandDeckProps = {
   path?: PathToGoal
   onSelectGoal: (goalId: string) => void
   onAddGoal: (goal: Goal) => void
+  onDeleteGoal: (goalId: string) => void
   onAddRace: (race: Race) => void
   onAddGoalConversation: (entry: GoalConversationEntry) => void
   onDeleteGoalConversation: (entryId: string) => void

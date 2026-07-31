@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { HistoryScreen, HomeScreen, PerformanceScreen, RecoveryScreen } from './index'
+import { GoalsScreen, HistoryScreen, HomeScreen, PerformanceScreen, RecoveryScreen } from './index'
 import { buildPremiumScreenFixture } from './premiumScreenFixture'
 
 const props = buildPremiumScreenFixture()
@@ -43,5 +43,13 @@ describe('premium screen render smoke', () => {
     expect(markup).toContain('Readiness signals')
     expect(markup).toContain('Recovery lag projection')
     expect(markup).toContain(props.morningReadiness.headline)
+  })
+
+  it('renders Goals with delete controls for existing goals', () => {
+    const markup = renderToStaticMarkup(<GoalsScreen {...props} />)
+
+    expect(markup).toContain('Delete active goal')
+    expect(markup).toContain('Delete')
+    expect(markup).toContain('Goal selection')
   })
 })

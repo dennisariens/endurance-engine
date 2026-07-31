@@ -148,6 +148,15 @@ export default function App() {
     setDecisionLog((items) => [entry, ...items.filter((item) => item.date !== today)])
   }
 
+  const deleteGoal = (goalId: string) => {
+    setGoals((items) => {
+      const nextGoals = items.filter((item) => item.id !== goalId)
+      setActiveGoalId((current) => current === goalId ? nextGoals[0]?.id : current)
+      return nextGoals
+    })
+    setGoalConversation((items) => items.filter((entry) => entry.goalId !== goalId))
+  }
+
   return (
     <main className="app">
       <div className="app-toolbar">
@@ -186,6 +195,7 @@ export default function App() {
           setGoals((items) => [goal, ...items.filter((item) => item.id !== goal.id)])
           setActiveGoalId(goal.id)
         }}
+        onDeleteGoal={deleteGoal}
         onAddRace={(race) => setRaces((items) => [...items, race].sort((a, b) => a.date.localeCompare(b.date)))}
         onAddGoalConversation={(entry) => setGoalConversation((items) => [entry, ...items])}
         onDeleteGoalConversation={(entryId) => setGoalConversation((items) => items.filter((entry) => entry.id !== entryId))}
@@ -237,7 +247,7 @@ export default function App() {
           <MorningReadinessPanel verdict={morningReadiness} />
           <Next72PlanPanel plan={next72Plan} />
           <PathToGoalPanel readiness={goalReadiness} path={pathToGoal} />
-          <GoalControlPanel goals={goals} activeGoalId={activeGoal?.id} onSelectGoal={setActiveGoalId} onUpdateGoal={(goal) => setGoals((items) => items.map((item) => item.id === goal.id ? goal : item))} onDeleteGoal={(goalId) => setGoals((items) => items.filter((item) => item.id !== goalId))} />
+          <GoalControlPanel goals={goals} activeGoalId={activeGoal?.id} onSelectGoal={setActiveGoalId} onUpdateGoal={(goal) => setGoals((items) => items.map((item) => item.id === goal.id ? goal : item))} onDeleteGoal={deleteGoal} />
           <CostReadinessPanel latestRaceActivity={latestCost.activity} state={state} />
           <OperationalLogPanel items={timeline} />
           <LegendPanel />

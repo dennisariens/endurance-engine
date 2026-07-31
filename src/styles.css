@@ -1818,18 +1818,41 @@ button.danger { border-color: rgba(239, 68, 68, .45); color: #fca5a5; }
 .goal-conversation-log strong { display: block; color: var(--text); margin: 6px 0; }
 .goal-conversation-log p { margin: 0; color: var(--soft-text); }
 .goal-select-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.goal-select-strip button {
+.goal-select-strip article {
   border: 1px solid rgba(255,255,255,.10);
   border-radius: 18px;
   padding: 13px;
   color: var(--soft-text);
   background: rgba(255,255,255,.035);
+}
+.goal-select-strip article.active { color: var(--text); border-color: var(--aerion-border-active); background: rgba(125,211,252,.11); }
+.goal-select-strip article > button:first-child {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
   text-align: left;
   cursor: pointer;
 }
-.goal-select-strip button.active { color: var(--text); border-color: var(--aerion-border-active); background: rgba(125,211,252,.11); }
 .goal-select-strip strong { display: block; color: inherit; margin-bottom: 5px; }
 .goal-select-strip span { color: var(--muted); font-size: 11px; font-weight: 850; text-transform: uppercase; letter-spacing: .07em; }
+.goal-delete-chip {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 10px;
+  border: 1px solid rgba(248,113,113,.28);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #fecaca;
+  background: rgba(248,113,113,.08);
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.goal-delete-chip:focus-visible { outline: 2px solid rgba(248,113,113,.72); outline-offset: 2px; }
 .aerion-screen-loading {
   display: grid;
   place-items: center;

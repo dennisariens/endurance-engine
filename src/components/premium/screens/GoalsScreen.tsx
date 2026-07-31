@@ -13,7 +13,7 @@ const goalStatuses: GoalStatus[] = ['draft', 'candidate', 'committed', 'key-even
 const disciplines: GoalDiscipline[] = ['triathlon', 'cycling', 'running', 'endurance', 'other']
 const label = (value: string) => value.replace(/-/g, ' ')
 
-export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalConversation, state, races, onSelectGoal, onAddGoal, onAddRace, onAddGoalConversation, onDeleteGoalConversation }: Props) {
+export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalConversation, state, races, onSelectGoal, onAddGoal, onDeleteGoal, onAddRace, onAddGoalConversation, onDeleteGoalConversation }: Props) {
   const [name, setName] = useState('')
   const [date, setDate] = useState('')
   const [type, setType] = useState<GoalType>('candidate-event')
@@ -101,10 +101,13 @@ export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalCon
       {goals.length > 0 && (
         <div className="goal-select-strip elevated" aria-label="Goal selection">
           {goals.map((goal) => (
-            <button key={goal.id} className={goal.id === activeGoal?.id ? 'active' : ''} type="button" onClick={() => onSelectGoal(goal.id)}>
-              <strong>{goal.name}</strong>
-              <span>{label(goal.status)} · {label(goal.type)} · {goal.targetDate ?? 'floating'}</span>
-            </button>
+            <article key={goal.id} className={goal.id === activeGoal?.id ? 'active' : ''}>
+              <button type="button" onClick={() => onSelectGoal(goal.id)}>
+                <strong>{goal.name}</strong>
+                <span>{label(goal.status)} · {label(goal.type)} · {goal.targetDate ?? 'floating'}</span>
+              </button>
+              <button className="goal-delete-chip" type="button" onClick={() => onDeleteGoal(goal.id)}>Delete</button>
+            </article>
           ))}
         </div>
       )}
@@ -131,6 +134,7 @@ export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalCon
           <div className="button-row">
             <button type="submit">Add as goal</button>
             <button className="ghost" type="button" onClick={() => addGoal(true)}>Add goal + race</button>
+            {activeGoal && <button className="ghost danger" type="button" onClick={() => onDeleteGoal(activeGoal.id)}>Delete active goal</button>}
           </div>
         </form>
 

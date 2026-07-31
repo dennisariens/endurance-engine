@@ -80,6 +80,7 @@ export function buildPremiumScreenFixture(date = '2026-05-18'): PremiumCommandDe
     path,
     onSelectGoal: () => undefined,
     onAddGoal: () => undefined,
+    onDeleteGoal: () => undefined,
     onAddRace: () => undefined,
     onAddGoalConversation: () => undefined,
     onDeleteGoalConversation: () => undefined,
