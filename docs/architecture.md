@@ -470,6 +470,35 @@ Mission Control redesign:
 
 The implementation is intentionally v1 and local-first. It creates the engine/store/control-system spine without adding cloud services, secrets in the browser, or destructive data migration.
 
+## 7. Daily Recommendation surface — 2026-07-31
+
+Added an explicit daily recommendation layer so Mission Control is no longer just engine plumbing or history display.
+
+```text
+src/engine/dailyRecommendationEngine.ts
+```
+
+The daily recommendation is versioned as `daily-recommendation-v1` and combines:
+
+- today: primary action, duration, intensity, safe next step, reason, consequence;
+- goal: active goal name/date, readiness, phase, limiter, next focus;
+- week: focus, suggested structure, avoid list, risk;
+- long term: trajectory direction and readiness range;
+- connect: next source action, prioritizing Garmin recovery truth or Strava completed-proof gaps.
+
+Home/Mission Control now leads with `AERION / Daily Recommendation` and surfaces:
+
+- today’s concrete recommendation;
+- goal pressure and readiness;
+- this-week plan structure;
+- long-term trajectory stance;
+- connect-next action for Garmin/Strava/Intervals.
+
+Navigation semantics were clarified:
+
+- `History / Agenda` is the record/proof layer, not planning;
+- `Connect` is the source connection/import layer for Strava, Garmin, Intervals, and manual/local backup.
+
 ---
 
 ## `fetchIntervalsContext()`
