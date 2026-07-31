@@ -392,6 +392,24 @@ responseMetadata.evidenceIds
 
 The MCP server version is now `1.2.0`.
 
+## 5. First CanonicalAthleteState runtime adoption — 2026-07-31
+
+`useAerionDerivedState()` now derives app-local evidence and a `CanonicalAthleteState` draft alongside freshness:
+
+```text
+buildFreshnessReport()
+buildEvidenceRecords()
+buildCanonicalAthleteState()
+```
+
+`buildMorningReadinessVerdict()` accepts optional `athleteState` input. The engine still preserves existing actuals-first/readiness behavior, but can now use canonical state as advisory evidence for:
+
+- health/recovery hard blocks;
+- stale canonical state warnings;
+- missing recovery signal warnings.
+
+This is intentionally a narrow adoption path. It does not replace all engine inputs, and it does not add Trajectory Engine or Learning Engine.
+
 ## Phase 2 deferrals
 
 This is a Phase 2 draft, not the final v2 state boundary.
