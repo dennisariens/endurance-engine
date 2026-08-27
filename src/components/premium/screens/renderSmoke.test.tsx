@@ -50,6 +50,8 @@ describe('premium screen render smoke', () => {
 
     expect(markup).toContain('Delete active goal')
     expect(markup).toContain('Deletion requires confirmation')
+    expect(markup).toContain('Set primary mission')
+    expect(markup).toContain('Make this the primary mission')
     expect(markup).toContain('Delete')
     expect(markup).toContain('Goal selection')
   })

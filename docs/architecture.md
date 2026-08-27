@@ -525,6 +525,28 @@ Wiring:
 
 This keeps marathon coaching logic in a pure engine and makes the visible daily recommendation aware of the goal/week/long-term context Dennis provided.
 
+## 9. Explicit primary mission selection — 2026-08-20
+
+Goal ownership now includes an explicit primary-mission flag on goals:
+
+```ts
+Goal.primaryMission?: boolean
+```
+
+Premium Goals UI now supports:
+
+- `Set primary mission` on existing goals;
+- `Primary mission` receipt on the selected mission;
+- checkbox during goal intake: `Make this the primary mission for daily recommendations`.
+
+App state keeps this local-first and single-primary:
+
+- adding/updating a goal with `primaryMission: true` clears the flag from other goals;
+- selecting primary mission also selects that goal as active;
+- deletion remains confirmed and removes only the goal plus goal-scoped conversation receipts.
+
+`marathon-block-v1` now prefers an explicit running primary mission before falling back to marathon name detection. This removes the previous dependency on exact goal names such as "marathon" while keeping cycling/non-running goals from accidentally activating the marathon block.
+
 ---
 
 ## `fetchIntervalsContext()`

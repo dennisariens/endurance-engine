@@ -35,6 +35,15 @@ describe('buildMarathonBlock', () => {
     expect(result.easyEfficiency.raceDayExpected).toContain('5:05')
   })
 
+  it('prefers an explicit running primary mission over name heuristics', () => {
+    const unnamedMission: Goal = { ...marathonGoal, id: 'sub3-explicit', name: 'Sub-3 on Nov 15', primaryMission: true }
+    const heuristicGoal: Goal = { ...marathonGoal, id: 'old-marathon', name: 'Old Marathon idea', targetDate: '2026-12-01' }
+    const result = buildMarathonBlock({ today: '2026-08-20', activeGoal: heuristicGoal, goals: [heuristicGoal, unnamedMission], races, activities, state })
+
+    expect(result.mission).toContain('Sub-3 on Nov 15')
+    expect(result.daysToRace).toBe(87)
+  })
+
   it('moves long-run placement away from protected cycling weekends', () => {
     const result = buildMarathonBlock({ today: '2026-08-20', activeGoal: marathonGoal, goals: [marathonGoal], races, activities, state })
 

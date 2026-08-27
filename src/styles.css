@@ -1862,6 +1862,24 @@ button.danger { border-color: rgba(239, 68, 68, .45); color: #fca5a5; }
 .goal-delete-chip.confirm { border-color: rgba(248,113,113,.55); color: #fee2e2; background: rgba(248,113,113,.18); }
 .goal-delete-chip.cancel { border-color: rgba(148,163,184,.22); color: var(--muted); background: rgba(148,163,184,.06); }
 .goal-delete-chip:focus-visible { outline: 2px solid rgba(248,113,113,.72); outline-offset: 2px; }
+.goal-primary-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 27px;
+  border: 1px solid rgba(125,211,252,.28);
+  border-radius: 999px;
+  color: var(--aerion-accent-ice);
+  background: rgba(125,211,252,.075);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.goal-primary-chip.ghost { cursor: pointer; color: var(--soft-text); background: rgba(255,255,255,.025); }
+.goal-primary-toggle { flex-direction: row !important; align-items: center; gap: 9px; color: var(--soft-text); }
+.goal-primary-toggle input { width: auto; }
 .aerion-screen-loading {
   display: grid;
   place-items: center;

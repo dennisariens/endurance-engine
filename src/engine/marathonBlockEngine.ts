@@ -54,7 +54,14 @@ function isMarathonGoal(goal?: Goal): boolean {
   return goal.discipline === 'running' && haystack.includes('marathon')
 }
 
+function isExplicitRunningMission(goal?: Goal): boolean {
+  return Boolean(goal?.primaryMission && goal.discipline === 'running')
+}
+
 function selectMissionGoal(input: Input): Goal | undefined {
+  if (isExplicitRunningMission(input.activeGoal)) return input.activeGoal
+  const explicit = input.goals?.find(isExplicitRunningMission)
+  if (explicit) return explicit
   if (isMarathonGoal(input.activeGoal)) return input.activeGoal
   return input.goals?.find(isMarathonGoal)
 }

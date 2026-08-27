@@ -42,6 +42,7 @@ export type Goal = {
   targetMetric?: string
   targetValue?: string
   priority?: 'low' | 'medium' | 'high'
+  primaryMission?: boolean
   notes?: string
 }
 

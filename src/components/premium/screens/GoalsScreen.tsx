@@ -13,7 +13,7 @@ const goalStatuses: GoalStatus[] = ['draft', 'candidate', 'committed', 'key-even
 const disciplines: GoalDiscipline[] = ['triathlon', 'cycling', 'running', 'endurance', 'other']
 const label = (value: string) => value.replace(/-/g, ' ')
 
-export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalConversation, state, races, onSelectGoal, onAddGoal, onDeleteGoal, onAddRace, onAddGoalConversation, onDeleteGoalConversation }: Props) {
+export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalConversation, state, races, onSelectGoal, onAddGoal, onUpdateGoal, onDeleteGoal, onAddRace, onAddGoalConversation, onDeleteGoalConversation }: Props) {
   const [name, setName] = useState('')
   const [date, setDate] = useState('')
   const [type, setType] = useState<GoalType>('candidate-event')
@@ -21,6 +21,7 @@ export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalCon
   const [discipline, setDiscipline] = useState<GoalDiscipline>('triathlon')
   const [notes, setNotes] = useState('')
   const [answer, setAnswer] = useState('')
+  const [primaryMission, setPrimaryMission] = useState(false)
   const [pendingDeleteGoalId, setPendingDeleteGoalId] = useState<string | null>(null)
   const feasibility = useMemo(() => buildGoalFeasibilityBrief({ goal: activeGoal, readiness, path, state, races, today }), [activeGoal, readiness, path, state, races, today])
   const activeConversation = useMemo(() => goalConversation.filter((entry) => entry.goalId === activeGoal?.id), [goalConversation, activeGoal?.id])
@@ -28,7 +29,7 @@ export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalCon
   const upcomingRaces = useMemo(() => races.filter((race) => race.date >= today).sort((a, b) => a.date.localeCompare(b.date)), [races, today])
   const latestConversation = [...activeConversation].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
   const activeGoalMeta = activeGoal
-    ? `${label(activeGoal.status)} · ${label(activeGoal.type)} · ${activeGoal.targetDate ?? 'floating date'}`
+    ? `${activeGoal.primaryMission ? 'primary mission · ' : ''}${label(activeGoal.status)} · ${label(activeGoal.type)} · ${activeGoal.targetDate ?? 'floating date'}`
     : 'No active goal selected'
 
   const addGoal = (alsoRace: boolean) => {
@@ -42,6 +43,7 @@ export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalCon
       targetDate: date || null,
       description: notes.trim() || 'AERION goal idea',
       priority: status === 'key-event' || status === 'mandatory' ? 'high' as const : 'medium' as const,
+      primaryMission,
     }
     onAddGoal(goal)
     if (alsoRace && date) {
@@ -58,6 +60,7 @@ export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalCon
     }
     setName('')
     setNotes('')
+    setPrimaryMission(false)
   }
 
   const addAnswer = (prompt?: string) => {
@@ -69,6 +72,13 @@ export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalCon
   const confirmDeleteGoal = (goalId: string) => {
     onDeleteGoal(goalId)
     setPendingDeleteGoalId(null)
+  }
+
+  const setPrimaryGoal = (goalId: string) => {
+    const goal = goals.find((item) => item.id === goalId)
+    if (!goal) return
+    onUpdateGoal({ ...goal, primaryMission: true })
+    onSelectGoal(goalId)
   }
 
   return (
@@ -111,8 +121,13 @@ export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalCon
             <article key={goal.id} className={goal.id === activeGoal?.id ? 'active' : ''}>
               <button type="button" onClick={() => onSelectGoal(goal.id)}>
                 <strong>{goal.name}</strong>
-                <span>{label(goal.status)} · {label(goal.type)} · {goal.targetDate ?? 'floating'}</span>
+                <span>{goal.primaryMission ? 'primary mission · ' : ''}{label(goal.status)} · {label(goal.type)} · {goal.targetDate ?? 'floating'}</span>
               </button>
+              {goal.primaryMission ? (
+                <span className="goal-primary-chip">Primary mission</span>
+              ) : (
+                <button className="goal-primary-chip ghost" type="button" onClick={() => setPrimaryGoal(goal.id)}>Set primary mission</button>
+              )}
               {pendingDeleteGoalId === goal.id ? (
                 <div className="goal-delete-confirm-row" aria-label={`Confirm deletion for ${goal.name}`}>
                   <button className="goal-delete-chip confirm" type="button" onClick={() => confirmDeleteGoal(goal.id)}>Confirm delete</button>
@@ -144,6 +159,10 @@ export function GoalsScreen({ today, readiness, path, goals, activeGoal, goalCon
           <label>
             Notes / why it matters / constraints
             <textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Why this matters, target outcome, available time, travel/work constraints…" />
+          </label>
+          <label className="goal-primary-toggle">
+            <input type="checkbox" checked={primaryMission} onChange={(event) => setPrimaryMission(event.target.checked)} />
+            Make this the primary mission for daily recommendations
           </label>
           <div className="button-row">
             <button type="submit">Add as goal</button>

@@ -25,7 +25,7 @@ import { SyncStatusPanel } from './components/SyncStatusPanel'
 import { TodayPlanPanel } from './components/TodayPlanPanel'
 import { WorkoutPanel } from './components/WorkoutPanel'
 import { dedupeSyncedActivities, mergeRacesByStableId } from './data/integrations/dedupe'
-import type { CoachScenarioId, DecisionLogAction, DecisionLogEntry } from './domain/types'
+import type { CoachScenarioId, DecisionLogAction, DecisionLogEntry, Goal } from './domain/types'
 import { daysBetween } from './engine/calendarEngine'
 import type { ScenarioOutcome } from './engine/scenarioSimulationEngine'
 import { getLocalIsoDate } from './engine/timelineEngine'
@@ -158,6 +158,19 @@ export default function App() {
     setGoalConversation((items) => items.filter((entry) => entry.goalId !== goalId))
   }
 
+  const upsertGoal = (goal: Goal) => {
+    setGoals((items) => [goal, ...items
+      .filter((item) => item.id !== goal.id)
+      .map((item) => goal.primaryMission ? { ...item, primaryMission: false } : item)])
+  }
+
+  const updateGoal = (goal: Goal) => {
+    setGoals((items) => items.map((item) => {
+      if (item.id === goal.id) return goal
+      return goal.primaryMission ? { ...item, primaryMission: false } : item
+    }))
+  }
+
   return (
     <main className="app">
       <div className="app-toolbar">
@@ -194,9 +207,10 @@ export default function App() {
         path={pathToGoal}
         onSelectGoal={setActiveGoalId}
         onAddGoal={(goal) => {
-          setGoals((items) => [goal, ...items.filter((item) => item.id !== goal.id)])
+          upsertGoal(goal)
           setActiveGoalId(goal.id)
         }}
+        onUpdateGoal={updateGoal}
         onDeleteGoal={deleteGoal}
         onAddRace={(race) => setRaces((items) => [...items, race].sort((a, b) => a.date.localeCompare(b.date)))}
         onAddGoalConversation={(entry) => setGoalConversation((items) => [entry, ...items])}
@@ -249,7 +263,7 @@ export default function App() {
           <MorningReadinessPanel verdict={morningReadiness} />
           <Next72PlanPanel plan={next72Plan} />
           <PathToGoalPanel readiness={goalReadiness} path={pathToGoal} />
-          <GoalControlPanel goals={goals} activeGoalId={activeGoal?.id} onSelectGoal={setActiveGoalId} onUpdateGoal={(goal) => setGoals((items) => items.map((item) => item.id === goal.id ? goal : item))} onDeleteGoal={deleteGoal} />
+          <GoalControlPanel goals={goals} activeGoalId={activeGoal?.id} onSelectGoal={setActiveGoalId} onUpdateGoal={updateGoal} onDeleteGoal={deleteGoal} />
           <CostReadinessPanel latestRaceActivity={latestCost.activity} state={state} />
           <OperationalLogPanel items={timeline} />
           <LegendPanel />
