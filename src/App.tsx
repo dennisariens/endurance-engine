@@ -21,7 +21,7 @@ import { PathToGoalPanel } from './components/PathToGoalPanel'
 import { PremiumCommandDeck } from './components/PremiumCommandDeck'
 import { ScenarioSimulationPanel } from './components/ScenarioSimulationPanel'
 import { StatsPanel } from './components/StatsPanel'
-import { SyncStatusPanel } from './components/SyncStatusPanel'
+
 import { TodayPlanPanel } from './components/TodayPlanPanel'
 import { WorkoutPanel } from './components/WorkoutPanel'
 import { dedupeSyncedActivities, mergeRacesByStableId } from './data/integrations/dedupe'
@@ -179,7 +179,6 @@ export default function App() {
         </button>
       </div>
 
-      <SyncStatusPanel status={syncStatus} today={today} />
       <PremiumCommandDeck
         today={today}
         decision={decision}

@@ -116,17 +116,25 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); }
-.app-toolbar { display: flex; justify-content: flex-end; max-width: 1440px; margin: 0 0 12px; }
 button, input, select { font: inherit; }
 
 .app {
   min-height: 100vh;
-  padding: 48px;
+  padding: clamp(12px, 1.6vw, 22px);
   color: var(--text);
   background:
     radial-gradient(circle at 12% 0%, rgba(255, 79, 139, .18), transparent 28rem),
     radial-gradient(circle at 84% 8%, rgba(125, 211, 252, .13), transparent 32rem),
     linear-gradient(135deg, #050914, #081125 44%, #0d1830);
+}
+.app-toolbar {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 40;
+  display: flex;
+  justify-content: flex-end;
+  margin: 0;
 }
 
 .hero { max-width: 1200px; margin-bottom: 28px; }
