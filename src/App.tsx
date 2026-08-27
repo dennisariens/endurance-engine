@@ -97,6 +97,7 @@ export default function App() {
     pathToGoal,
     trajectory,
     learning,
+    marathonBlock,
     dailyRecommendation,
     coachBriefing,
     nextRace,
@@ -187,6 +188,7 @@ export default function App() {
         readiness={goalReadiness}
         trajectory={trajectory}
         learning={learning}
+        marathonBlock={marathonBlock}
         syncStatus={syncStatus}
         integrations={integrations}
         path={pathToGoal}

@@ -13,6 +13,7 @@ import { makeDailyDecision } from '../../../engine/decisionEngine'
 import { buildDailyRecommendation } from '../../../engine/dailyRecommendationEngine'
 import { evaluateGoalReadiness } from '../../../engine/goalReadinessEngine'
 import { buildLearningEngine } from '../../../engine/learningEngine'
+import { buildMarathonBlock } from '../../../engine/marathonBlockEngine'
 import { buildMorningReadinessVerdict } from '../../../engine/morningReadinessEngine'
 import { buildPathToGoal } from '../../../engine/pathEngine'
 import { buildNext72hPlan } from '../../../engine/recoveryPlanEngine'
@@ -51,8 +52,9 @@ export function buildPremiumScreenFixture(date = '2026-05-18'): PremiumCommandDe
   const path = activeGoal && readiness ? buildPathToGoal({ goal: activeGoal, today, readinessScore: readiness.overallReadiness, state, activities, races }) : undefined
   const trajectory = buildTrajectory({ athleteState, decision, next72Plan, goalReadiness: readiness })
   const learning = buildLearningEngine({ today, activities, decisions: decisionLog, athleteState, trajectory })
+  const marathonBlock = buildMarathonBlock({ today, activeGoal, goals, races, activities, state })
   const briefing = buildCoachBriefing({ decision, recommendation, state, next72Plan, readiness, morningReadiness, athleteState })
-  const dailyRecommendation = buildDailyRecommendation({ recommendation, briefing, morningReadiness, next72Plan, activeGoal, readiness, path, trajectory, learning, nextRace: decision.nextRace, recoveryMissing: integrations.some((integration) => integration.id === 'garmin' && integration.state !== 'connected'), activityProofSparse: activities.filter((activity) => activity.source === 'strava').length === 0 })
+  const dailyRecommendation = buildDailyRecommendation({ recommendation, briefing, morningReadiness, next72Plan, activeGoal, readiness, path, trajectory, learning, marathonBlock, nextRace: decision.nextRace, recoveryMissing: integrations.some((integration) => integration.id === 'garmin' && integration.state !== 'connected'), activityProofSparse: activities.filter((activity) => activity.source === 'strava').length === 0 })
 
   return {
     today,
@@ -75,6 +77,7 @@ export function buildPremiumScreenFixture(date = '2026-05-18'): PremiumCommandDe
     readiness,
     trajectory,
     learning,
+    marathonBlock,
     syncStatus,
     integrations,
     path,

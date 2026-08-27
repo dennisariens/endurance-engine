@@ -6,7 +6,7 @@ import type { PremiumCommandDeckProps } from '../types'
 type Props = PremiumCommandDeckProps
 
 export function HomeScreen(props: Props & { readyScore: number; nextRace?: Race }) {
-  const { today, decision, recommendation, briefing, morningReadiness, next72Plan, stats, readyScore, nextRace, readiness, trajectory, learning, dailyRecommendation } = props
+  const { today, decision, recommendation, briefing, morningReadiness, next72Plan, stats, readyScore, nextRace, readiness, trajectory, learning, dailyRecommendation, marathonBlock } = props
   const keySignal = readiness?.mainLimiter ?? `${stats.avgRaceCost} avg race cost · ${stats.highCostActivities} high-cost sessions`
   const safeNext = briefing.readinessAdjustment?.safeNextAction ?? briefing.nextAction
   const consequence = briefing.consequence ?? next72Plan.summary
@@ -51,6 +51,14 @@ export function HomeScreen(props: Props & { readyScore: number; nextRace?: Race 
         <article><span>Today</span><strong>{dailyRecommendation.today.safeNext}</strong><p>{dailyRecommendation.today.consequence}</p></article>
         <article><span>This week</span><strong>{dailyRecommendation.week.focus}</strong><ul>{dailyRecommendation.week.structure.map((item) => <li key={item}>{item}</li>)}</ul></article>
         <article><span>Long term</span><strong>{dailyRecommendation.longTerm.stance}</strong><p>Range {dailyRecommendation.longTerm.readinessRange.low}–{dailyRecommendation.longTerm.readinessRange.high}; direction {dailyRecommendation.longTerm.direction}.</p></article>
+        {marathonBlock.active && (
+          <article className="marathon-block-card">
+            <span>Marathon block</span>
+            <strong>{marathonBlock.mission}</strong>
+            <p>{marathonBlock.daysToRace ?? 'TBD'} days · {marathonBlock.phase} · long run {marathonBlock.longRunPlacement.recommendation}</p>
+            <p>{marathonBlock.easyEfficiency.markerHrRange}: {marathonBlock.easyEfficiency.raceDayExpected}</p>
+          </article>
+        )}
       </div>
 
       <div className="mission-control-core" aria-label="Mission Control intelligence layer">

@@ -10,6 +10,7 @@ import { buildDailyRecommendation } from '../engine/dailyRecommendationEngine'
 import { makeDailyDecision } from '../engine/decisionEngine'
 import { evaluateGoalReadiness } from '../engine/goalReadinessEngine'
 import { buildLearningEngine } from '../engine/learningEngine'
+import { buildMarathonBlock } from '../engine/marathonBlockEngine'
 import { buildPathToGoal } from '../engine/pathEngine'
 import { getLatestRaceCost } from '../engine/raceCostEngine'
 import { buildNext72hPlan } from '../engine/recoveryPlanEngine'
@@ -65,9 +66,10 @@ export function useAerionDerivedState({
   const pathToGoal = useMemo(() => activeGoal && goalReadiness ? buildPathToGoal({ goal: activeGoal, today, readinessScore: goalReadiness.overallReadiness, state, activities, races }) : undefined, [activeGoal, goalReadiness, today, state, activities, races])
   const trajectory = useMemo(() => buildTrajectory({ athleteState, decision, next72Plan, goalReadiness }), [athleteState, decision, next72Plan, goalReadiness])
   const learning = useMemo(() => buildLearningEngine({ today, activities, decisions: decisionLog, athleteState, trajectory }), [today, activities, decisionLog, athleteState, trajectory])
+  const marathonBlock = useMemo(() => buildMarathonBlock({ today, activeGoal, goals, races, activities, state }), [today, activeGoal, goals, races, activities, state])
   const coachBriefing = useMemo(() => buildCoachBriefing({ decision, recommendation, state, next72Plan, readiness: goalReadiness, morningReadiness, athleteState }), [decision, recommendation, state, next72Plan, goalReadiness, morningReadiness, athleteState])
   const nextRace = decision.nextRace
-  const dailyRecommendation = useMemo(() => buildDailyRecommendation({ recommendation, briefing: coachBriefing, morningReadiness, next72Plan, activeGoal, readiness: goalReadiness, path: pathToGoal, trajectory, learning, nextRace, recoveryMissing: integrations.some((integration) => integration.id === 'garmin' && integration.state !== 'connected'), activityProofSparse: activities.filter((activity) => activity.source === 'strava').length === 0 }), [recommendation, coachBriefing, morningReadiness, next72Plan, activeGoal, goalReadiness, pathToGoal, trajectory, learning, nextRace, integrations, activities])
+  const dailyRecommendation = useMemo(() => buildDailyRecommendation({ recommendation, briefing: coachBriefing, morningReadiness, next72Plan, activeGoal, readiness: goalReadiness, path: pathToGoal, trajectory, learning, marathonBlock, nextRace, recoveryMissing: integrations.some((integration) => integration.id === 'garmin' && integration.state !== 'connected'), activityProofSparse: activities.filter((activity) => activity.source === 'strava').length === 0 }), [recommendation, coachBriefing, morningReadiness, next72Plan, activeGoal, goalReadiness, pathToGoal, trajectory, learning, marathonBlock, nextRace, integrations, activities])
   const nextRaceDetail = nextRace
     ? `${nextRace.date} · ${nextRace.distanceKm ?? 'TBD'} km · ${nextRace.elevationM ?? 'TBD'} m · Class ${nextRace.class ?? 'TBD'}`
     : 'No future race loaded'
@@ -95,6 +97,7 @@ export function useAerionDerivedState({
     pathToGoal,
     trajectory,
     learning,
+    marathonBlock,
     dailyRecommendation,
     coachBriefing,
     nextRace,

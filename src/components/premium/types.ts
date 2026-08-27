@@ -8,6 +8,7 @@ import type { PathToGoal } from '../../engine/pathEngine'
 import type { Next72Plan } from '../../engine/recoveryPlanEngine'
 import type { DashboardStats } from '../../engine/statsEngine'
 import type { LearningEngineOutput } from '../../engine/learningEngine'
+import type { MarathonBlockOutput } from '../../engine/marathonBlockEngine'
 import type { TrajectoryEngineOutput } from '../../engine/trajectoryEngine'
 import type { SyncStatus } from '../../lib/dataSync'
 import type { IntegrationHealth } from '../../data/integrationHealth'
@@ -33,6 +34,7 @@ export type PremiumCommandDeckProps = {
   readiness?: GoalReadinessResult
   trajectory: TrajectoryEngineOutput
   learning: LearningEngineOutput
+  marathonBlock: MarathonBlockOutput
   syncStatus: SyncStatus
   integrations: IntegrationHealth[]
   path?: PathToGoal

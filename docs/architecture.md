@@ -8,7 +8,7 @@ Scope executed: Phase 0 + Phase 1 + Phase 2 draft + Phase 2 hardening pass
 
 AERION is Dennis Ariens' local-first endurance control system: a race-control layer above Intervals.icu/Garmin/Strava-style data, not a generic fitness dashboard.
 
-The v2 direction is to stabilize the foundation before adding larger intelligence layers. This pass introduced a derived CanonicalAthleteState v2 draft, but deliberately does **not** build Trajectory Engine or Learning Engine yet.
+The v2 direction is to stabilize the foundation while progressively turning AERION into a visible race-control product surface. The current spine includes CanonicalAthleteState v2 draft, Trajectory Engine v1, Learning Engine v1, Daily Recommendation v1, and a Marathon Block v1 operating context.
 
 ## Product invariants
 
@@ -498,6 +498,32 @@ Navigation semantics were clarified:
 
 - `History / Agenda` is the record/proof layer, not planning;
 - `Connect` is the source connection/import layer for Strava, Garmin, Intervals, and manual/local backup.
+
+## 8. Marathon Block Engine — 2026-08-20
+
+Added a pure marathon-specific operating context engine:
+
+```text
+src/engine/marathonBlockEngine.ts
+```
+
+The engine is versioned as `marathon-block-v1` and converts the captured marathon-block coaching context into deterministic product state:
+
+- active marathon mission detection from the active/running marathon goal;
+- days-to-race and phase: foundation, build, specific, taper, race-week, post-race-continuity;
+- priority stack: marathon performance, run durability, aerobic efficiency, cycling only when useful or consciously recovery-costed;
+- 129–132 bpm easy-efficiency marker with current reference, cool-weather equivalent, race-day expectation, and six-month continuation estimate;
+- long-run placement logic that moves long runs to weekdays when Chasing Red/Worlds/TTT weekend events are detected;
+- cycling policy for each phase;
+- decision rules preserving fixed-race semantics, actuals-authoritative evidence, and injury/illness override.
+
+Wiring:
+
+- `useAerionDerivedState()` now builds `marathonBlock` alongside trajectory and learning.
+- `buildDailyRecommendation()` accepts `marathonBlock` and lets it override weekly and long-term recommendation text when a marathon mission is active.
+- Home/Mission Control shows a `Marathon block` panel with mission, days to race, phase, long-run placement, and 130-bpm pace expectation.
+
+This keeps marathon coaching logic in a pure engine and makes the visible daily recommendation aware of the goal/week/long-term context Dennis provided.
 
 ---
 
