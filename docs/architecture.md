@@ -547,6 +547,30 @@ App state keeps this local-first and single-primary:
 
 `marathon-block-v1` now prefers an explicit running primary mission before falling back to marathon name detection. This removes the previous dependency on exact goal names such as "marathon" while keeping cycling/non-running goals from accidentally activating the marathon block.
 
+## 10. Home one-glance redesign — 2026-08-20
+
+Home/Mission Control was redesigned around an Apple iOS meets endurance command surface.
+
+The Home screen now answers the core product questions in the first viewport:
+
+- how it stands now;
+- what the athlete should do today;
+- why that is the safe/actionable recommendation;
+- where to go next in the app.
+
+Product changes:
+
+- replaced the previous stacked engine sections with an `ios-endurance-home` composition;
+- added top-level `Today at a glance` hierarchy;
+- added an immediate action card: `What must we do?`;
+- added direct Home links to Training, Goal Path, History, Recovery, Performance, and Connect;
+- added adjustable layout modes: Coach, Mission, Data;
+- added compact signal panels for Mission, Week, Useful Signals, Next 72h, Evidence, and Connect;
+- kept existing engines/data flow intact: daily recommendation, marathon block, trajectory, learning, next72, readiness, stats;
+- preserved mobile-first responsive behavior with collapsed one-column iOS-style cards.
+
+The customization is local UI state for now. It gives Dennis a product feel for rearranging the dashboard without introducing persistence/schema complexity yet.
+
 ---
 
 ## `fetchIntervalsContext()`

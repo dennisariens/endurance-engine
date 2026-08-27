@@ -87,7 +87,7 @@ export function PremiumCommandDeck(props: PremiumCommandDeckProps) {
         </header>
 
         <Suspense fallback={<div className="premium-screen active aerion-screen-loading">Loading AERION screen…</div>}>
-          {activeScreen === 'home' && <HomeScreen {...props} readyScore={readyScore} nextRace={nextRace} />}
+          {activeScreen === 'home' && <HomeScreen {...props} readyScore={readyScore} nextRace={nextRace} onNavigate={setActiveScreen} />}
           {activeScreen === 'history' && <HistoryScreen {...props} />}
           {activeScreen === 'performance' && <PerformanceScreen {...props} />}
           {activeScreen === 'races' && <RacesScreen {...props} />}
