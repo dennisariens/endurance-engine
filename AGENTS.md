@@ -2,9 +2,7 @@
 
 ## Mission
 
-Build AERION into Dennis Ariens' personal AI endurance coach: a reality-aware endurance control system for fixed-race athletes.
-
-This is not a generic fitness app. It is a race-control layer above Intervals.icu/Garmin-style data.
+Build AERION into Dennis Ariens' private AI endurance coach: a reality-aware endurance control system for fixed-race athletes. Keep it separate from the Eintracht Frankfurt Eagles Race Engine.
 
 ## Product rules
 
@@ -12,33 +10,35 @@ This is not a generic fitness app. It is a race-control layer above Intervals.ic
 - Actual completed activities are authoritative.
 - Fixed races remain fixed unless injury or illness is present.
 - Recommendations are advisory, not restrictive.
-- Ignored advice is not failure; it is new input state.
+- Ignored advice is new input state, not failure.
 - Explain consequences without scolding.
 - Predictions are ranges with confidence, never certainty.
 
 ## Visual direction
 
-EF / Rapha / Breakaway-inspired:
-- premium cycling utility
-- mobile-first race-control feel
-- deep black / graphite base
-- ice-blue system accent
-- restrained green / amber / red states
-- crisp typography and high readability
-- no generic SaaS styling, muddy overlays, or bro-fitness language
+- Premium endurance utility inspired by Breakaway, Rapha, MAAP and EF Cycling without copying them.
+- Deep black / navy / graphite base, restrained coral action accent and cyan telemetry.
+- One dominant answer per screen; calm evidence hierarchy; no generic SaaS card wall.
+- Preserve the active contracts in `BRAND.md` and `DESIGN.md`.
 
 ## Architecture rules
 
 - Keep coaching logic in pure engines under `src/engine/` before adding React UI.
-- React panels live under `src/components/`.
-- Domain types live in `src/domain/types.ts`.
-- Data normalization lives under `src/data/` or dedicated engine modules.
-- Browser must never receive private API keys.
-- `.env.local` is private and must not be echoed, logged, exported, or committed.
+- React panels live under `src/components/`; domain types live in `src/domain/types.ts`.
+- Data normalization belongs under `src/data/` or dedicated engine modules.
+- Never expose, echo, log, export or commit secrets or `.env.local`.
+- Preserve sync, timeline, logs, `baselineConfig`, HR labels, tests, auth boundaries and data contracts.
+
+## Repository workflow
+
+- Current product authority: `refactor/v2-foundation` until AERION-001 resolves promotion to `main`.
+- Dennis's primary conversation is **HR Chest Strap Insights**.
+- Use `codex/<task-id>-<slug>` for implementation tasks.
+- Read `STATE.md`, `DECISIONS.md` and `tasks/ACTIVE.md` before edits.
+- Preserve unrelated and uncommitted user work. Never clean or overwrite the Mac checkout without explicit confirmation.
+- Report exact commits, files, checks, limitations and deployment state in `handoffs/CODEX_TO_WORK.md`.
 
 ## Verification gate
-
-Before claiming completion, run:
 
 ```bash
 npm test
@@ -46,23 +46,5 @@ npm run typecheck
 npm run build
 ```
 
-For UI work also verify locally:
+For UI work, run the app at `http://127.0.0.1:5174/`, inspect desktop and mobile views, and check browser console errors. Do not stop Hermes Web Dashboard on `127.0.0.1:9119`.
 
-```bash
-npm run dev
-# open http://127.0.0.1:5174/
-```
-
-Check browser console for errors and visually inspect the dashboard. Do not stop Hermes Web Dashboard on `127.0.0.1:9119`.
-
-## Current north star
-
-Fully functional Personal AI Endurance Coach:
-- opening sync from Intervals.icu
-- Garmin/readiness transparency
-- race-cost explanation
-- 72h recovery control plan
-- Goal Readiness + Path to Goal
-- scenario simulation: race/rest/easy/ignore
-- coach briefing with status, recommendation, consequence, next action
-- mobile-first premium race-control UI

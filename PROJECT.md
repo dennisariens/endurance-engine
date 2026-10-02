@@ -1,36 +1,35 @@
-# Project File — Endurance Engine Product
+# AERION — Project
 
-Created: 2026-04-30
-Owner: Dennis Ariens
-Status: local scaffold / pre-MVP
-Brand: undecided, not ColdDesert-branded
+Owner: Dennis Ariens  
+Repository: `dennisariens/endurance-engine`  
+Product: private AI endurance coach and reality-aware performance control system  
+Status: active v2 foundation; baseline reconciliation required
 
-## Product thesis
+## Purpose
 
-Most endurance tools assume the athlete can follow an optimal plan. This product handles the more annoying reality: fixed races, accumulated fatigue, and training that has to adapt around mandatory participation.
+AERION helps Dennis pursue long-term endurance goals while adapting to real completed training, recovery and a fixed race calendar. It is not a generic fitness app and it is separate from the Eintracht Frankfurt Eagles Race Engine.
 
-## User
+## Current primary mission
 
-Primary user: Dennis initially.
-Future user: endurance athlete/racer with fixed events, Zwift racing, stage race blocks, running/cycling aerobic goals.
+- Sub-3 marathon on 15 November 2026, with 4:16/km target pace.
+- Preserve cycling race participation and use cycling intelligently within the combined load.
+- Chest-strap heart rate is the primary HR source for important sessions.
 
-## Core Jobs
+## Product rules
 
-- Know what is fixed: races, blocked dates, travel, illness/injury.
-- Know what is flexible: easy work, recovery, core, strength, fasting/weight work.
-- Convert recent activity + wellness into daily guidance.
-- Show race cost and recovery consequences without moralizing.
-- Keep long-term aerobic development moving despite race chaos.
+- Reality > plan; actual completed activity is authoritative.
+- Fixed races stay fixed unless injury or illness is present.
+- Recommendations are advisory; ignored advice becomes new input state.
+- Explain consequences without scolding.
+- Predictions use ranges and confidence, never false certainty.
+- Local-first and private by default.
+- Browser code must never receive private API keys.
 
-## Product constraints
+## Product direction
 
-- Local-first first.
-- API integrations later.
-- Intervals.icu first integration.
-- ECRO calendar support first.
-- No overbuilt coaching marketplace nonsense. We are not assembling another SaaS cathedral to mediocrity.
+The interface should feel like a quiet, evidence-led premium endurance coach: athlete-first, decisive and data-dense only where useful. Breakaway, Rapha, MAAP and EF Cycling are behavioural references, not brands to copy. Preserve the approved AERION identity in `BRAND.md` and `DESIGN.md`.
 
-## Non-negotiable rule
+## Success
 
-Do not block fixed races unless injury or illness is present.
-If suboptimal but mandatory, switch to damage-control mode.
+AERION reliably synchronizes or imports evidence, explains today's recommendation and its consequences, controls the next 72 hours, tracks Path to Goal, and stays coherent across ChatGPT, Work, Codex and the local Mac app.
+
