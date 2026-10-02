@@ -1,36 +1,35 @@
-# AERION-001 — Baseline and source reconciliation audit
+# AERION-002 — Real-state bootstrap and activity identity guardrails
 
-Status: ready for Codex audit  
+Status: recommended next safe product task  
 Owner: Work · Executor: Codex  
 Base branch: `refactor/v2-foundation`  
-Base commit: `01db3bf5dc4d2c9cdf0dd9a82d98939cfdd2d315`  
-Task branch: `codex/aerion-001-baseline-audit`
+Task branch: `codex/aerion-002-real-state-guardrails`
 
 ## Goal
 
-Establish one trustworthy Aerion source baseline without losing remote or local work.
+Prevent repository fixtures and manual defaults from silently becoming athlete truth, and make activity identity/provenance deterministic before adding more coaching intelligence.
+
+## Why now
+
+AERION-001 confirmed that fresh/reset state can load historical April 2026 fixtures, including a hardcoded manual placeholder activity and stale recovery/race context. It also confirmed that manual activities bypass the shared synced-activity dedupe map.
 
 ## Scope
 
-1. Inventory the remote product branch and relevant architecture/data contracts.
-2. On Dennis's Mac, inspect Git status and identify modified/untracked files without cleaning, resetting or overwriting them.
-3. Compare the Mac checkout with the verified remote base and classify local-only, remote-only and conflicting work.
-4. Run `npm test`, `npm run typecheck`, and `npm run build` where dependencies and secrets permit.
-5. Verify the app at `127.0.0.1:5174` on desktop and mobile where available; record console/runtime failures.
-6. Audit the known risks recorded in `PROJECT_CONTEXT.md` without implementing broad fixes.
-7. Recommend a safe canonical-branch and next-task plan.
+1. Separate demo/fixture bootstrap from live athlete state.
+2. Prevent `manual-20260430-sort-like-activity` from entering live coaching state.
+3. Make manual-vs-synced duplicate policy explicit and covered by tests.
+4. Preserve Intervals.icu sync, Garmin/Strava adapter contracts, local persistence and backup import/export.
+5. Add provenance/fixture guards at the data/state layer before UI changes.
 
 ## Acceptance
 
-- [x] Repository, product branch and exact remote base SHA recorded.
-- [ ] Mac working-tree state inventoried without mutation.
-- [ ] Remote/local differences classified with preservation plan.
-- [ ] Tests, typecheck and build run or limitations stated.
-- [ ] Current primary UI and data-source status verified.
-- [ ] Known architecture/data risks confirmed, corrected or explicitly disproved.
-- [ ] Work receives evidence and a bounded next-task recommendation.
+- [ ] Fixture/default records are explicitly marked and excluded from live coaching authority once real evidence exists.
+- [ ] Fresh/reset live state cannot silently inherit stale April 2026 recovery/race truth.
+- [ ] Manual-vs-synced duplicate behaviour is deterministic and tested.
+- [ ] Existing local data is never reset or silently rewritten.
+- [ ] `npm test`, `npm run typecheck`, and `npm run build` pass, or exact limitations are recorded.
+- [ ] No UI redesign, backend migration, branch promotion or coaching-rule change.
 
-## Exclusions
+## Preservation gate
 
-No destructive Git operation, data reset, secrets exposure, redesign, backend migration, branch promotion, merge to `main`, deployment or new coaching rule.
-
+Do not reset, clean or overwrite Dennis's Mac checkout. If local files overlap this task, stop and compare before applying changes.
