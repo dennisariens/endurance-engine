@@ -1,0 +1,11 @@
+{
+  "same_alpha_silhouette": true,
+  "master_path_sha256": "746a3f969bcab07e1f39c9933671ef2e16c02389c422dcd04b99ba13241103ec",
+  "native_png_dimensions": true,
+  "transparent_4096_png": true,
+  "highres_size": [
+    4096,
+    2027
+  ],
+  "all_svg_master_paths_identical": true
+}

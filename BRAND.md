@@ -160,3 +160,11 @@ Performance should feel like telemetry proof, not spreadsheet analytics.
 - no heavy all-bold labels,
 - no fake consumer fitness cheerleading,
 - no decorative colors that do not encode state or action.
+
+## Locked logo identity — 15 October 2026
+
+Dennis approved Candidate B and its complete identity overview in AERION Work and requested the GitHub lock. The canonical versioned package is [AERION identity v1](docs/brand/aerion-v1/README.md).
+
+Use its exact integrated AE master and documented yellow/lime → pink → blue/cyan gradient across brand applications. Keep one geometry across all variants. Earlier exploratory marks and the rejected R1 reconstruction are superseded. This identity gradient is a logo finish, not a replacement for the semantic product palette above.
+
+App icon installation and live UI integration require separate approval. Typography refinement, real-device size checks and supplier proofs remain open; the geometry and colour recipe are locked.
