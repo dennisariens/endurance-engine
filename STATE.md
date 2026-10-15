@@ -1,6 +1,6 @@
 # Current state
 
-Updated: 2026-10-02 · OS version: 1
+Updated: 2026-10-15 · OS version: 2
 
 ## Repository truth
 
@@ -8,8 +8,9 @@ Updated: 2026-10-02 · OS version: 1
 - Current remote product authority: `refactor/v2-foundation`
 - Verified product base: `01db3bf5dc4d2c9cdf0dd9a82d98939cfdd2d315`
 - `main` contains only a minimal README and has unrelated history; it is not canonical.
-- AERION-001 audit branch: `codex/aerion-001-baseline-audit`
+- Audit branch: `codex/aerion-001-baseline-audit`
 - AERION-001 evidence: `docs/AERION-001-AUDIT.md`
+- Remote tree contains a macOS case collision between `docs/architecture.md` and `docs/ARCHITECTURE.md`; resolve it before fast-forwarding the Mac checkout.
 
 ## Product state
 
@@ -19,14 +20,15 @@ The premium shell is present. Canonical athlete state and evidence/freshness bui
 
 AERION-001 confirmed a live-state bootstrap risk: repository fixture JSON can seed athlete state on a fresh/reset install. The historical activity fixture contains a hardcoded manual placeholder and the current-state fixture is stale April 2026 evidence. Manual activities also bypass the synced dedupe map.
 
-The exact current Mac working-tree inventory is not durably recorded, so any local-only modified/untracked work is treated as protected. Do not reset, clean, overwrite or promote branches until that inventory is captured.
+- Mac reconciliation is complete: the clean checkout is `refactor/v2-foundation` @ `01db3bf5dc4d2c9cdf0dd9a82d98939cfdd2d315`, one workflow/documentation commit behind the remote product branch. There are no tracked modifications, non-ignored untracked files, stashes or local-only commits. Ignored local data remains protected and uninspected.
 
 ## Verification evidence
 
-- Prior local audit: typecheck passed.
-- Prior local audit: build passed.
-- Prior local audit: 160/164 tests passed.
-- Four SQLite-backed evidence/API tests failed because `sqlite3` was expected from the system rather than managed by the project.
+- Mac rerun at `01db3bf`: 52 test files and 164 tests passed.
+- Typecheck passed.
+- Build passed with Vite 8.0.10; 2,368 modules transformed.
+- The prior SQLite-backed failures were not reproduced, although the external `sqlite3` dependency remains unmanaged by the project.
+- Desktop/mobile runtime audit recorded stale fixture mission state, desktop hero text collision and mobile horizontal clipping.
 - No current production deployment is recorded.
 
 ## Operating model
@@ -46,3 +48,5 @@ The exact current Mac working-tree inventory is not durably recorded, so any loc
 ## Next
 
 AERION-002: real-state bootstrap and activity identity guardrails. No redesign, data reset, backend migration, branch promotion, deployment or new coaching rule is authorized.
+
+Current coaching context: Tuesday ZRL is not fixed before the 15 November marathon, and long runs may float based on recovery. Injury-aware scheduling and progressive home strength training are future requirements; none was implemented in AERION-001.

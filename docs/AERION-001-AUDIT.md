@@ -74,3 +74,69 @@ Minimum acceptance:
 - manual-vs-synced duplicate behavior is explicit and tested;
 - reset/demo behavior is separated from real-state bootstrap;
 - test/typecheck/build results are recorded.
+
+## Mac reconciliation follow-up — 2026-10-15
+
+This follow-up supersedes the earlier statement that the Mac inventory and runtime proof were unavailable.
+
+### Exact source state
+
+- Mac checkout: `refactor/v2-foundation` @ `01db3bf5dc4d2c9cdf0dd9a82d98939cfdd2d315`.
+- Configured upstream after fetch: `origin/refactor/v2-foundation` @ `56ddc1d107b40f2bd880decae3a6264bbcd00717`.
+- Audit branch before this follow-up: `origin/codex/aerion-001-baseline-audit` @ `4b95ad005854009ff2a0efdeefadfe1a19119ef2`.
+- Placeholder `main`: `e2c382de7e8e7809817c59ac335b437f30f44ef8`; it still has no merge base with the product history.
+- Local `master`: `ec39274f2a82f138615ed6dcde6d272b645c45b2`; it is an ancestor of the product branch and is already reachable from both remote product and audit branches.
+- Working tree: no tracked modifications and no non-ignored untracked files.
+- Local product branch divergence: `+0 / -1`; it is behind only the remote workflow/documentation commit `56ddc1d`.
+- No stash entries and no commits exist only on local branches.
+- Ignored local data, dependency and generated output remain preserved. Their contents were not inspected or changed; `.env.local` was not read or exposed.
+
+The source code at the baseline, current remote product branch and audit branch is identical. `56ddc1d` adds project workflow/documentation only; the audit branch adds audit/task/handoff documentation only.
+
+One remote-only workflow defect blocks a blind Mac fast-forward: the tree contains both existing `docs/architecture.md` and newly added `docs/ARCHITECTURE.md`. These are distinct in Git but collide on the default case-insensitive macOS filesystem. A temporary Mac worktree demonstrated that checking out/restoring one path marks the other as modified. Neither file was included in this follow-up commit. Resolve the duplicate path deliberately before updating the main Mac checkout.
+
+### Verification rerun on the Mac
+
+Executed against the clean baseline checkout at `01db3bf5dc4d2c9cdf0dd9a82d98939cfdd2d315`:
+
+- `npm test`: passed — 52 test files, 164 tests.
+- `npm run typecheck`: passed.
+- `npm run build`: passed — Vite 8.0.10, 2,368 modules transformed.
+
+The previously recorded SQLite failure is not reproducible in the current Mac environment: all evidence-store and API tests passed. `sqlite3` remains an unmanaged external runtime dependency and should still be made explicit in a later bounded task.
+
+### Runtime and interface evidence
+
+- Vite served the app at `http://127.0.0.1:5174/`; `/` and `/api/sync` both returned HTTP 200.
+- A fresh isolated Chrome profile loaded the rendered app. Console output contained only Vite connection messages and the React DevTools notice; no application exception was observed. Headless Chrome emitted macOS display-link diagnostics, which are browser-environment noise rather than app errors.
+- Evidence captures: desktop `1440×1100`, tall desktop `1440×2600`, and mobile `390×844`.
+
+Visible discrepancies:
+
+1. Desktop hero typography collides: the magenta “HOW ARE YOU?” label is obscured by the oversized “HOLD” headline, and the first viewport clips lower hero content.
+2. Fresh-profile fixture state is visibly stale/conflicting: on 2026-10-15 the UI shows “No fixed race” while continuing to present `IRONMAN LANZAROTE · 2026-10-01` as the active mission with red/extreme recovery guidance.
+3. Recovery guidance is repeated across the hero, status columns, action panel and weekly card. The visible `37` and `35` values are not clearly differentiated.
+4. At `390×844`, the desktop-style navigation remains expanded, produces horizontal clipping, truncates labels/date controls and pushes the primary race-control answer below the fold.
+5. The tall desktop page continues below the first viewport without obvious horizontal overflow, but uses large sparse panels and heavily wrapped risk copy; the capture does not reach a definitive page end.
+
+No UI, data or coaching-rule change was made during this audit.
+
+### Updated canonical-branch recommendation
+
+Keep `refactor/v2-foundation` as the sole product authority until the audit documentation is reviewed. Do not merge unrelated `main` history.
+
+Safest promotion sequence, each step requiring explicit approval:
+
+1. Preserve immutable refs for the placeholder `main`, product branch and accepted audit head.
+2. Resolve the `docs/architecture.md` / `docs/ARCHITECTURE.md` case collision in a bounded documentation commit, preserving both contents under unambiguous paths.
+3. Review and fast-forward the audit documentation into the product history.
+4. Fast-forward the clean Mac checkout to the accepted product/audit state; do not reset local data.
+5. Archive/rename the unrelated placeholder `main`.
+6. Either make `refactor/v2-foundation` the GitHub default branch immediately, or rename that branch to `main` after the placeholder is archived. A branch rename/default switch is safer than an unrelated-history merge or force-push.
+7. Add branch protection and verify a fresh clone on macOS before retiring historical aliases.
+
+### Product context recorded, not implemented
+
+- Tuesday ZRL is no longer a fixed training obligation before the 15 November marathon.
+- Long runs may float based on recovery.
+- Injury-aware scheduling and progressive home strength training are future product requirements, outside AERION-001.
