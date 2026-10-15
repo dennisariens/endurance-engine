@@ -34,3 +34,7 @@ The redesigned premium shell is present on the product branch. A previous local 
 
 AERION-001: reconcile remote product source with the Mac checkout, run the verification gates, document architecture/data risks and recommend the safe canonical-branch plan. No redesign, data reset or deployment is authorized by setup.
 
+
+## Brand update — 2026-10-15
+
+AERION identity v1 (Candidate B) is owner-approved and locked in `docs/brand/aerion-v1/`. Delivery branch: `codex/aerion-brand-lock-v1`, based on `refactor/v2-foundation` at `56ddc1d107b40f2bd880decae3a6264bbcd00717`. Brand assets and documentation only; no app implementation, branch promotion, merge or deployment. AERION-001 source reconciliation remains separate.

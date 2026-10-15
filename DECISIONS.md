@@ -13,3 +13,7 @@
 
 Changes require date, reason and provenance. Product behaviour already present is not automatically an approved coaching rule unless recorded here or in `PROJECT.md`.
 
+
+## 2026-10-15 — A009: Candidate B identity locked
+
+Status: agreed. Dennis selected B, accepted its faithful vector reconstruction and identity overview, then explicitly instructed: “Excellent, lock it and push it to github”. See `docs/brand/aerion-v1/README.md` for the canonical assets, palette and usage rules. One AE geometry is required across all applications; no new direction or independent variant geometry. Existing product UI and app icon are not replaced by this decision. No merge or deployment is authorized. Typography polish, physical production proofs and device checks remain follow-up work.

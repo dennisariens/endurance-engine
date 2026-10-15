@@ -1,0 +1,37 @@
+{
+  "color_space": "sRGB",
+  "direction": "top to bottom",
+  "gradientUnits": "userSpaceOnUse",
+  "y1": 135,
+  "y2": 472,
+  "stops": [
+    {
+      "position": 0,
+      "hex": "#F0FF6B"
+    },
+    {
+      "position": 0.15,
+      "hex": "#F9F38B"
+    },
+    {
+      "position": 0.34,
+      "hex": "#FF8FBA"
+    },
+    {
+      "position": 0.52,
+      "hex": "#FF5FB8"
+    },
+    {
+      "position": 0.68,
+      "hex": "#C28CE6"
+    },
+    {
+      "position": 0.84,
+      "hex": "#58C6FF"
+    },
+    {
+      "position": 1,
+      "hex": "#32B8F1"
+    }
+  ]
+}
