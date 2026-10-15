@@ -2,11 +2,15 @@
 
 These are **one-time thread setup prompts** and short recurring commands. They do not magically connect chats; a connected GitHub tool must fetch the documents on each requested sync.
 
+**During PR #1 review:** the protocol and this quickstart live on `docs/aerion-communication-protocol`, NOT yet on the product branch. Fetch them from that proposal branch. Read `STATE.md`, `DECISIONS.md` and `tasks/ACTIVE.md` from `refactor/v2-foundation` until AERION-001 establishes a new product authority. After adoption, read the protocol from the then-current canonical product branch.
+
 ## Universal command (any AERION thread)
 ```
-Sync AERION from GitHub. Read docs/GIT_COMMUNICATION_PROTOCOL.md, STATE.md,
-DECISIONS.md, tasks/ACTIVE.md and relevant current Issues/PRs from the
-product branch (currently refactor/v2-foundation; verify current authority).
+Sync AERION from GitHub. During PR #1 review read
+`docs/GIT_COMMUNICATION_PROTOCOL.md` from `docs/aerion-communication-protocol`.
+Read STATE.md, DECISIONS.md, tasks/ACTIVE.md from the current product branch
+(currently refactor/v2-foundation). Read current relevant Issues and PRs.
+After PR adoption, retrieve the protocol from the canonical product branch.
 Report what changed since the last verified record, what's pending for this
 thread and any uncertainties. Do not claim to have synced if access fails.
 Do not copy private athlete details into the public repository.
