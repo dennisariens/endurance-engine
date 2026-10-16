@@ -1,0 +1,12 @@
+{
+  "status": "Work P1 specification; not installed",
+  "brandCommit": "78bfed9821f3b04941f945cf805b251a52303a39",
+  "dark": {"canvas":"#090D13","surface":"#10151D","raised":"#18212D","text":"#F4F7FA","secondary":"#A9B7C8","action":"#FF8FBA","actionText":"#10151D","telemetry":"#58C6FF","focus":"#F0FF6B","positive":"#69DBA0","caution":"#F2CF75","restriction":"#FF9C9C"},
+  "light": {"canvas":"#F4F6F8","surface":"#FFFFFF","raised":"#E9EEF3","text":"#14202C","secondary":"#506174","action":"#A51555","actionText":"#FFFFFF","telemetry":"#006C9E","focus":"#725500","positive":"#176C44","caution":"#785600","restriction":"#A32232"},
+  "spacingPx": [4,8,12,16,24,32,48],
+  "panelRadiusPx":16,"controlRadiusPx":10,"minimumTargetPx":44,
+  "decisionTypeDesktopPx":[36,42],"decisionTypeMobilePx":[28,34],
+  "bodyTypePx":[16,24],"supportTypePx":[14,20],"labelTypePx":[12,16],
+  "motionMs":[120,180],"reducedMotion":"disable decorative transitions",
+  "gradientUsage":"approved SVG only; no panel gradients"
+}
