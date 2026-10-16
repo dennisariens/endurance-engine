@@ -1,8 +1,5 @@
-import defaultActivities from '../data/activities.json'
-import defaultGoals from '../data/goals.json'
-import defaultRaces from '../data/races.json'
-import defaultState from '../data/current-state.json'
-import type { Activity, CurrentState, Goal, Race } from '../src/domain/types'
+import type { Activity, CurrentState, DecisionLogEntry, Goal, Race } from '../src/domain/types'
+import { buildCoachingProvenance } from '../src/data/coachingProvenance'
 import { buildAerionBriefingContext } from '../src/engine/aerionBriefingContextEngine'
 import { normalizeIntervalsActivities, normalizeIntervalsEvents, normalizeIntervalsWellness } from '../src/data/integrations/intervalsAdapter'
 import { upsertEvidenceRecords } from './evidenceStore'
@@ -37,6 +34,7 @@ export type BuildBriefingPayloadOptions = FetchIntervalsContextOptions & {
   date: string
   timezone?: string
   evidenceDbPath?: string
+  snapshot?: { activities: Activity[]; races: Race[]; goals: Goal[]; state: CurrentState; decisionLog?: DecisionLogEntry[]; activeGoalId?: string; syncedAt?: string }
 }
 
 export function getIntervalsCredentials(env: AerionApiEnv) {
@@ -59,7 +57,7 @@ function isoDate(date: Date): string {
 export async function fetchIntervalsContext({ env, fetchImpl = fetch as FetchLike, now = new Date() }: FetchIntervalsContextOptions): Promise<OpeningSyncPayload> {
   const { apiKey, athleteId } = getIntervalsCredentials(env)
   if (!apiKey) {
-    return { ok: false, source: 'unavailable', message: 'INTERVALS_ICU_API_KEY is not set; using local fixture/manual data only.' }
+    return { ok: false, source: 'unavailable', message: 'Intervals credentials are unavailable. Existing browser-local data is unchanged; no fixtures substituted.' }
   }
 
   try {
@@ -100,20 +98,19 @@ export async function fetchIntervalsContext({ env, fetchImpl = fetch as FetchLik
   }
 }
 
-export async function buildBriefingPayload({ date, timezone = 'Europe/Amsterdam', evidenceDbPath, ...options }: BuildBriefingPayloadOptions) {
-  const sync = await fetchIntervalsContext(options)
-  const useLive = sync.ok && sync.activities
+export async function buildBriefingPayload({ date, timezone = 'Europe/Amsterdam', evidenceDbPath, snapshot, ...options }: BuildBriefingPayloadOptions) {
+  // The browser owns edits, selected goals and decisions. A server-only fetch
+  // cannot reproduce that state and must never masquerade as the in-app coach.
+  if (!snapshot) return { ok: false as const, source: 'unavailable', message: 'A browser coaching snapshot is required. Use the in-app coach or POST the current snapshot; no fixture fallback.', control: undefined, evidenceStore: undefined }
+  const provenance = buildCoachingProvenance({ today: date, ...snapshot })
+  if (provenance.status === 'conflicting') return { ok: false as const, source: 'browser-local', message: 'Resolve conflicting browser inputs before generating a briefing.', provenance, control: undefined, evidenceStore: undefined }
   const payload = buildAerionBriefingContext({
     date,
     timezone,
-    activities: useLive ? sync.activities ?? [] : defaultActivities as Activity[],
-    races: useLive && sync.races?.length ? sync.races : defaultRaces as Race[],
-    goals: defaultGoals as Goal[],
-    state: useLive ? { ...defaultState as CurrentState, ...sync.state } : defaultState as CurrentState,
-    syncedAt: sync.syncedAt,
-    source: useLive ? 'local-live' : 'local-fixture',
+    ...snapshot,
+    source: 'browser-local',
   })
   const resolvedEvidenceDbPath = evidenceDbPath ?? options.env.AERION_EVIDENCE_DB_PATH
   const evidenceStore = resolvedEvidenceDbPath ? upsertEvidenceRecords(resolvedEvidenceDbPath, payload.control.evidence) : undefined
-  return { ok: true, sync: { source: sync.source, message: sync.message, syncedAt: sync.syncedAt }, evidenceStore, ...payload }
+  return { ok: true as const, provenance, evidenceStore, ...payload }
 }

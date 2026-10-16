@@ -9,7 +9,7 @@ describe('aerion API services', () => {
     const payload = await fetchIntervalsContext({ env: {}, now: new Date('2026-07-29T00:00:00Z') })
 
     expect(payload).toMatchObject({ ok: false, source: 'unavailable' })
-    expect(payload.message).toContain('using local fixture/manual data only')
+    expect(payload.message).toContain('no fixtures substituted')
   })
 
   it('normalizes live Intervals activity, wellness, and event rows', async () => {
@@ -30,22 +30,20 @@ describe('aerion API services', () => {
     expect(payload.state).toMatchObject({ last_updated: '2026-07-28', resting_hr_14d_avg: 48, sleep_hours_14d_avg: 8 })
   })
 
-  it('builds briefing from fixture state when sync is unavailable', async () => {
+  it('refuses to substitute fixtures when no browser snapshot is supplied', async () => {
     const payload = await buildBriefingPayload({ env: {}, date: '2026-04-30', now: new Date('2026-07-29T00:00:00Z') })
 
-    expect(payload.ok).toBe(true)
-    expect(payload.source).toBe('local-fixture')
-    expect(payload.sync.source).toBe('unavailable')
-    expect(payload.control.trajectory.engineVersion).toBe('trajectory-engine-v1')
-    expect(payload.control.learning.engineVersion).toBe('learning-engine-v1')
+    expect(payload.ok).toBe(false)
+    expect(payload.source).toBe('unavailable')
+    expect(payload.control).toBeUndefined()
   })
 
   it('persists briefing evidence to SQLite when an evidence db path is configured', async () => {
     const evidenceDbPath = join(mkdtempSync(join(tmpdir(), 'aerion-api-evidence-')), 'evidence.sqlite')
 
-    const payload = await buildBriefingPayload({ env: {}, date: '2026-04-30', now: new Date('2026-07-29T00:00:00Z'), evidenceDbPath })
+    const payload = await buildBriefingPayload({ env: {}, date: '2026-04-30', now: new Date('2026-07-29T00:00:00Z'), evidenceDbPath, snapshot: { activities: [], races: [], goals: [], state: { injury_present: false, illness_present: false, recovery_status: 'unknown' } } })
 
     expect(payload.evidenceStore?.dbPath).toBe(evidenceDbPath)
-    expect(payload.evidenceStore?.records).toBe(payload.control.evidence.length)
+    expect(payload.evidenceStore?.records).toBe(payload.control?.evidence.length)
   })
 })
