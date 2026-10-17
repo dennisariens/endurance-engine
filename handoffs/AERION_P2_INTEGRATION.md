@@ -1,5 +1,36 @@
 # AERION Main — P2 integration candidate
 
+## Storage recovery addendum
+
+Narrow follow-up to PR #12 review `discussion_r4303634965` only.
+Verified code: `59f97ada08831b69342ef6f2f113c4b550c2455b`.
+
+Automatic fallback saves still preserve malformed (including empty JSON) and
+future-schema bytes. Explicit validated import and confirmed reset now persist
+replacement values synchronously, even if React sees an unchanged default and
+skips rendering. An absent active-goal selection is removed rather than stored
+as an envelope without a value. Unrelated keys remain untouched. All validation
+completes before recovery writes. No automatic repair or user-data migration.
+
+Existing local worktrees and the available Hermes handoff were checked before
+coding: no reusable local storage-recovery patch was available. The recorded
+Hermes local patch concerned the already-fixed API prefix, so no duplicate prefix
+change was made.
+
+- Full tests: **337 PASS / 59 files**; typecheck and build PASS.
+- `node scripts/qa-storage-recovery.cjs`: PASS in disposable Chromium with
+  synthetic data. For malformed JSON and future envelopes across all eleven
+  state keys: initial fallback and reload preserve exact bytes; import survives
+  reload; confirmed reset survives reload, including unchanged fallback defaults;
+  no console/page errors; unrelated key unchanged.
+- Results and four captures: `docs/qa/storage-recovery/`.
+- Existing nine-screen captures below are historical integration evidence; this
+  follow-up ran focused real-browser storage regressions and the full unit suite.
+
+No feature expansion, UI redesign, coaching-rule changes, deployment, canonical
+merge or Mac installation. The older storage-recovery limitation below is
+superseded for explicit validated import/confirmed reset by this addendum.
+
 ## Sources and isolation
 
 - PR #9: `b93ba07d1094d46961bec76d8618f63340a636bd`.
