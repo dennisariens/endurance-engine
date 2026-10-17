@@ -121,7 +121,7 @@ async function launch() {
         await page.screenshot({ path: path.join(output, `button-${theme}-hover-${width}.png`) });
         await page.mouse.down();
         const pressed = await style();
-        assert.notEqual(pressed.background, hover.background);
+        assert.equal(pressed.background, 'rgb(240, 255, 107)', 'Pressed action uses AE lime with dark label');
         await page.screenshot({ path: path.join(output, `button-${theme}-pressed-${width}.png`) });
         // Release away from the button so the state capture does not navigate.
         await page.mouse.move(0, 0); await page.mouse.up();

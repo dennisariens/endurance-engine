@@ -42,7 +42,7 @@ html:has(.v3-shell), body:has(.v3-shell) { background:var(--v3-bg); color:var(--
 .v3-shell button:hover:not(:disabled),.v3-shell .file-button:hover {
   border-color:var(--v3-blue);
 }
-.v3-shell button:active:not(:disabled),.v3-shell .file-button:active {
+.v3-shell :where(button):active:not(:disabled),.v3-shell .file-button:active {
   background:var(--v3-selected-bg); border-color:var(--v3-selected);
 }
 .v3-shell :where(.v3-primary,.button-row > button:not(.ghost):not(.danger),.account-action-grid > button:not(.ghost),.integration-actions > button:not(.ghost),.file-button):not(:disabled) {
