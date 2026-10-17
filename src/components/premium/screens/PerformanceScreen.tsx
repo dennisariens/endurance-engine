@@ -45,7 +45,7 @@ export function PerformanceScreen({ stats, state, readiness, visualization, onUp
         ))}
       </div>
       <div className="chart-grid two">
-        {isVisible('load') && <ChartShell title="Load balance" description="Fitness, fatigue, and form-style balance. Use this as direction, not gospel." fields={fieldsFor('load', ['ctl', 'atl', 'tsb'])} actions={['ctl', 'atl', 'tsb'].map((field) => <button key={field} type="button" className={fieldsFor('load', ['ctl', 'atl', 'tsb']).includes(field) ? 'active' : ''} onClick={() => toggleField('load', field)}>{field}</button>)}>
+        {isVisible('load') && <ChartShell title="Load balance" unavailable={!loadData.length} description="Dated load-balance measurements are required." fields={fieldsFor('load', ['ctl', 'atl', 'tsb'])} actions={['ctl', 'atl', 'tsb'].map((field) => <button key={field} type="button" className={fieldsFor('load', ['ctl', 'atl', 'tsb']).includes(field) ? 'active' : ''} onClick={() => toggleField('load', field)}>{field}</button>)}>
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={loadData} margin={{ top: 10, right: 10, bottom: 0, left: -18 }}>
               <CartesianGrid stroke={aerionChartTheme.grid} vertical={false} />
@@ -60,7 +60,7 @@ export function PerformanceScreen({ stats, state, readiness, visualization, onUp
             </LineChart>
           </ResponsiveContainer>
         </ChartShell>}
-        {isVisible('race-cost') && <ChartShell title="Race cost trend" icon={BarChart3} description="Completed work cost trend. Actual logged activities remain authoritative." fields={['cost', 'high-cost flags', 'trend']}>
+        {isVisible('race-cost') && <ChartShell title="Race cost trend" unavailable={!raceCost.length} icon={BarChart3} description="Engine-estimated race cost from recorded activities, not a directly measured physiological signal." fields={['cost', 'high-cost flags', 'trend']}>
           <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={raceCost} margin={{ top: 10, right: 10, bottom: 0, left: -18 }}>
               <defs><linearGradient id="raceCostGradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor={aerionChartTheme.series.raceCost} stopOpacity={0.5}/><stop offset="100%" stopColor={aerionChartTheme.series.raceCost} stopOpacity={0.04}/></linearGradient></defs>
@@ -73,7 +73,7 @@ export function PerformanceScreen({ stats, state, readiness, visualization, onUp
             </AreaChart>
           </ResponsiveContainer>
         </ChartShell>}
-        {isVisible('recovery') && <ChartShell title="HR drift / durability proxy" description="Durability should rise while drift stays controlled. Useful once Garmin/Strava evidence improves." fields={fieldsFor('recovery', ['drift', 'durability'])} actions={['drift', 'durability'].map((field) => <button key={field} type="button" className={fieldsFor('recovery', ['drift', 'durability']).includes(field) ? 'active' : ''} onClick={() => toggleField('recovery', field)}>{field}</button>)}>
+        {isVisible('recovery') && <ChartShell title="HR drift / durability" unavailable={!driftData.length} description="Dated HR drift and durability measurements are required." fields={fieldsFor('recovery', ['drift', 'durability'])} actions={['drift', 'durability'].map((field) => <button key={field} type="button" className={fieldsFor('recovery', ['drift', 'durability']).includes(field) ? 'active' : ''} onClick={() => toggleField('recovery', field)}>{field}</button>)}>
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={driftData} margin={{ top: 10, right: 10, bottom: 0, left: -18 }}>
               <CartesianGrid stroke={aerionChartTheme.grid} vertical={false} />
@@ -86,7 +86,7 @@ export function PerformanceScreen({ stats, state, readiness, visualization, onUp
             </LineChart>
           </ResponsiveContainer>
         </ChartShell>}
-        {isVisible('goal') && <ChartShell title="Goal readiness trajectory" icon={Target} description="Forward readiness estimate shown as a range-oriented planning signal, not certainty." fields={['readiness', 'confidence', 'limiter']}>
+        {isVisible('goal') && <ChartShell title="Goal readiness trajectory" unavailable={!readinessTrajectory.length} icon={Target} description="No verified readiness history or numerical projection is available." fields={['readiness', 'confidence', 'limiter']}>
           <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={readinessTrajectory} margin={{ top: 10, right: 10, bottom: 0, left: -18 }}>
               <CartesianGrid stroke={aerionChartTheme.grid} vertical={false} />

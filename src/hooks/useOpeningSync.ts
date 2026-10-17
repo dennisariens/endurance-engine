@@ -2,6 +2,7 @@ import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
 import type { Activity, CurrentState, Race } from '../domain/types'
 import { dedupeSyncedActivities, mergeRacesByStableId } from '../data/integrations/dedupe'
 import { fetchOpeningSync, type SyncStatus } from '../lib/dataSync'
+import { mergeRecoveryEvidence } from '../data/coachingProvenance'
 
 type UseOpeningSyncInput = {
   setActivities: Dispatch<SetStateAction<Activity[]>>
@@ -16,7 +17,7 @@ export function useOpeningSync({ setActivities, setRaces, setState }: UseOpening
     if (payload.ok && payload.activities) {
       setActivities((current) => dedupeSyncedActivities([...current, ...payload.activities ?? []]))
       if (payload.races?.length) setRaces((current) => mergeRacesByStableId(current, payload.races ?? []))
-      if (payload.state) setState((current) => ({ ...current, ...payload.state }))
+      if (payload.state) setState((current) => mergeRecoveryEvidence(current, payload.state ?? {}))
       setSyncStatus({ state: 'fresh', message: payload.message, lastSyncedAt: payload.syncedAt, activityCount: payload.activities.length, raceCount: payload.races?.length ?? 0 })
       return { source: 'Intervals', records: payload.activities.length + (payload.races?.length ?? 0), latestDate: payload.syncedAt?.slice(0, 10), message: payload.message }
     }

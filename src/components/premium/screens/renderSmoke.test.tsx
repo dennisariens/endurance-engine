@@ -7,16 +7,43 @@ const props = buildPremiumScreenFixture()
 
 describe('premium screen render smoke', () => {
   it('renders Home mission control with coach and next 72h context', () => {
-    const markup = renderToStaticMarkup(<HomeScreen {...props} readyScore={props.readiness?.overallReadiness ?? 62} nextRace={props.decision.nextRace} />)
+    const markup = renderToStaticMarkup(<HomeScreen {...props} />)
+    expect(markup).toContain('WHAT DO I DO TODAY?')
+    expect(markup).toContain('Why this recommendation?')
+    expect(markup).toContain('The next 72 hours')
+    expect(markup).toContain('The evidence behind today')
+    expect(markup).not.toContain('readiness-orb')
+  })
 
-    expect(markup).toContain('Today at a glance')
-    expect(markup).toContain('How are we doing?')
-    expect(markup).toContain('What must we do?')
-    expect(markup).toContain('Quick navigation links')
-    expect(markup).toContain('Adjustable one-glance dashboard')
-    expect(markup).toContain('Customize')
-    expect(markup).toContain('Home answers in one glance')
-    expect(markup).toContain('Next 72h')
+  it('preserves zero recovery and does not replace it with goal readiness', () => {
+    const markup = renderToStaticMarkup(<HomeScreen {...props} state={{ ...props.state, recovery_score: 0, last_updated: props.today }} />)
+    expect(markup).toContain('0 / 100')
+    expect(markup).toContain('Recovery score')
+    expect(markup).toContain('Goal readiness · model estimate')
+  })
+
+  it('does not invent readiness or a session when evidence is absent', () => {
+    const markup = renderToStaticMarkup(<HomeScreen {...props} activities={[]} state={{ injury_present: false, illness_present: false, recovery_status: 'unknown' }} />)
+    expect(markup).toContain('Establish your starting point.')
+    expect(markup).toContain('Unavailable')
+    expect(markup).not.toContain('View session')
+    expect(markup).not.toContain('72 / 100')
+  })
+
+  it('withholds a decision when recovery is stale or conflicting', () => {
+    for (const state of [{ ...props.state, recovery_score: 80, last_updated: '2000-01-01' }, { ...props.state, recovery_score: 80, last_updated: props.today, data_conflicts: ['Conflicting sources'] }]) {
+      const markup = renderToStaticMarkup(<HomeScreen {...props} state={state} />)
+      expect(markup).not.toContain('View session')
+      expect(markup).toContain('role="status"')
+    }
+  })
+
+  it('keeps the engine safety restriction visible even without recovery measurements', () => {
+    const markup = renderToStaticMarkup(<HomeScreen {...props} activities={[]} state={{ injury_present: true, illness_present: false, recovery_status: 'unknown' }} recommendation={{ ...props.recommendation, primary: { ...props.recommendation.primary, title: 'Medical recovery', purpose: 'Injury overrides training.' } }} />)
+    expect(markup).toContain('Medical recovery')
+    expect(markup).toContain('Injury overrides training.')
+    expect(markup).toContain('View session')
+    expect(markup).toContain('Unavailable')
   })
 
   it('renders Performance telemetry without hiding chart shells', () => {

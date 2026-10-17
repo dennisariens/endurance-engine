@@ -5,6 +5,8 @@ import { dedupeSyncedActivities } from '../data/integrations/dedupe'
 import { parseGarminRecoveryFixture, normalizeGarminRecoveryState } from '../data/integrations/garminRecoveryAdapter'
 import { normalizeStravaActivityProofs, type StravaActivityProof } from '../data/integrations/stravaActivityProofAdapter'
 import { AERION_LOCAL_STORAGE_SCHEMA_VERSION } from '../lib/storage'
+import { validateBackupSnapshot } from '../data/backupSnapshot'
+import { mergeRecoveryEvidence } from '../data/coachingProvenance'
 
 type UseAerionImportsInput = {
   snapshot: Omit<AerionLocalSnapshot, 'exportedAt' | 'version'>
@@ -28,9 +30,7 @@ export function useAerionImports({ snapshot, importSnapshot, setActivities, setS
   }
 
   const importLocalData = async (file: File) => {
-    const parsed = JSON.parse(await file.text()) as AerionLocalSnapshot
-    if (![1, AERION_LOCAL_STORAGE_SCHEMA_VERSION].includes(parsed.version) || !Array.isArray(parsed.races) || !Array.isArray(parsed.activities) || !Array.isArray(parsed.goals)) throw new Error('Invalid AERION backup file')
-    parsed.goalConversation ??= []
+    const parsed = validateBackupSnapshot(JSON.parse(await file.text()))
     importSnapshot(parsed)
   }
 
@@ -38,7 +38,7 @@ export function useAerionImports({ snapshot, importSnapshot, setActivities, setS
     const snapshots = parseGarminRecoveryFixture(JSON.parse(await file.text()))
     const latest = snapshots.filter((item) => item.date).sort((a, b) => String(b.date).localeCompare(String(a.date)))[0] ?? snapshots[0]
     if (!latest) throw new Error('No Garmin recovery snapshots found')
-    setState((current) => ({ ...current, ...normalizeGarminRecoveryState(latest) }))
+    setState((current) => mergeRecoveryEvidence(current, normalizeGarminRecoveryState(latest)))
     return { source: 'Garmin', records: snapshots.length, latestDate: latest.date, message: `Imported Garmin recovery snapshot${snapshots.length === 1 ? '' : 's'} from ${file.name}` }
   }
 

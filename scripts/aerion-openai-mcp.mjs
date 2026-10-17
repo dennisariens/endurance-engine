@@ -2,6 +2,11 @@
 import { readFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
+import { fetchBriefing, snapshotPathFromArgs } from './aerion-briefing-client.mjs'
+
+// Only process-start CLI/env opt-in may select a local file, never MCP tool args.
+let snapshotPath, snapshotArgumentError = false
+try { snapshotPath = snapshotPathFromArgs() } catch { snapshotArgumentError = true }
 
 const BASE_URL = (process.env.AERION_BASE_URL || 'http://127.0.0.1:5174').replace(/\/$/, '')
 const MODEL = process.env.AERION_OPENAI_MODEL || process.env.OPENAI_MODEL || 'gpt-4.1-mini'
@@ -58,22 +63,10 @@ async function readEnvKey() {
 }
 
 async function getAerionContext({ date } = {}) {
-  const anchorDate = date || new Date().toISOString().slice(0, 10)
-  const url = `${BASE_URL}/api/briefing?date=${encodeURIComponent(anchorDate)}`
-  try {
-    const response = await fetch(url, { headers: { Accept: 'application/json' } })
-    const text = await response.text()
-    if (!response.ok) return { ok: false, source: 'aerion-local-api', url, message: `AERION briefing endpoint returned HTTP ${response.status}` }
-    const payload = JSON.parse(text)
-    return { ok: true, source: 'aerion-local-api', url, ...payload, responseMetadata: buildResponseMetadata(payload) }
-  } catch (error) {
-    return {
-      ok: false,
-      source: 'aerion-local-api',
-      url,
-      message: `AERION local briefing service unavailable. Start AERION with npm run dev or open the desktop app. ${error instanceof Error ? error.message : String(error)}`,
-    }
-  }
+  if (snapshotArgumentError) return { ok: false, code: 'INVALID_ARGUMENTS', message: '--snapshot requires a file. Alternatively set AERION_SNAPSHOT_PATH.' }
+  const payload = await fetchBriefing({ baseUrl: BASE_URL, date, snapshotPath })
+  if (!payload.ok) return payload
+  return { ...payload, responseMetadata: buildResponseMetadata(payload) }
 }
 
 async function getAthleteState(args = {}) {
@@ -117,7 +110,6 @@ async function askOpenAI({ prompt, date, model = MODEL, max_output_tokens = 700 
     return {
       ok: false,
       message: 'No OpenAI API key found. Set AERION_OPENAI_API_KEY or OPENAI_API_KEY in server-side environment or local env file.',
-      context,
     }
   }
 
@@ -138,7 +130,7 @@ async function askOpenAI({ prompt, date, model = MODEL, max_output_tokens = 700 
   })
   const payload = await response.json().catch(() => ({}))
   if (!response.ok) {
-    return { ok: false, status: response.status, message: payload.error?.message || 'OpenAI request failed', context }
+    return { ok: false, status: response.status, message: 'OpenAI request failed. Check provider configuration and retry.' }
   }
   const text = payload.output_text
     || payload.output?.flatMap((item) => item.content || []).map((content) => content.text || '').join('\n').trim()
@@ -222,15 +214,15 @@ async function handle(message) {
           ? await askOpenAI(args)
           : null
       if (!result) {
-        fail(id, -32601, `Unknown tool: ${name}`)
+        fail(id, -32601, 'Unknown tool.')
         return
       }
       respond(id, { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] })
       return
     }
-    fail(id, -32601, `Unknown method: ${method}`)
-  } catch (error) {
-    fail(id, -32000, error instanceof Error ? error.message : String(error))
+    fail(id, -32601, 'Unknown method.')
+  } catch {
+    fail(id, -32000, 'AERION request failed. Check local service and provider configuration.')
   }
 }
 

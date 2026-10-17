@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
-import { buildBriefingPayload, fetchIntervalsContext } from './server/aerionApi'
+import { fetchIntervalsContext } from './server/aerionApi'
+import { createBriefingHandler } from './server/briefingHttp'
 
 function aerionSyncPlugin(env: Record<string, string>): Plugin {
   return {
@@ -10,18 +11,7 @@ function aerionSyncPlugin(env: Record<string, string>): Plugin {
         res.setHeader('Content-Type', 'application/json')
         res.end(JSON.stringify(await fetchIntervalsContext({ env })))
       })
-
-      server.middlewares.use('/api/briefing', async (req, res) => {
-        res.setHeader('Content-Type', 'application/json')
-        try {
-          const url = new URL(req.url ?? '', 'http://127.0.0.1')
-          const date = url.searchParams.get('date') || new Date().toISOString().slice(0, 10)
-          res.end(JSON.stringify(await buildBriefingPayload({ env, date }), null, 2))
-        } catch (error) {
-          res.statusCode = 500
-          res.end(JSON.stringify({ ok: false, message: error instanceof Error ? error.message : 'Unknown briefing error' }))
-        }
-      })
+      server.middlewares.use('/api/briefing', createBriefingHandler())
     },
   }
 }

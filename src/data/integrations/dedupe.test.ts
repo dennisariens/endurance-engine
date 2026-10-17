@@ -35,4 +35,17 @@ describe('integration dedupe rules', () => {
       notes: 'Local note',
     })
   })
+
+  it('updates a stable synced ID even when revised metrics move it to another bucket', () => {
+    const original: Activity = { id: 'intervals-synthetic', source: 'intervals', date: '2026-10-17', name: 'Synthetic activity', type: 'Run', durationSec: 3600, load: 30, avgHr: 120 }
+    const merged = dedupeSyncedActivities([original, { ...original, load: 60, durationSec: 4000, avgHr: undefined }])
+    expect(merged).toHaveLength(1)
+    expect(merged[0]).toMatchObject({ load: 60, durationSec: 4000, avgHr: 120 })
+  })
+
+  it('is idempotent for repeated manual imports without merging distinct manual and synced records', () => {
+    const manual: Activity = { id: 'manual-synthetic', source: 'manual', date: '2026-10-17', name: 'Synthetic activity', type: 'Run', durationSec: 3600, load: 30 }
+    expect(dedupeSyncedActivities([manual, manual])).toEqual([manual])
+    expect(dedupeSyncedActivities([manual, { ...manual, id: 'intervals-synthetic', source: 'intervals' }])).toHaveLength(2)
+  })
 })

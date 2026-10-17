@@ -71,7 +71,7 @@ export default function App() {
     resetLocalData,
   } = useAerionState()
   const { syncStatus, runOpeningSync } = useOpeningSync({ setActivities, setRaces, setState })
-  const snapshot = { races, goals, goalConversation, activities, blockedDates, decisionLog, currentState: state, theme, account, visualization }
+  const snapshot = { races, goals, activeGoalId, goalConversation, activities, blockedDates, decisionLog, currentState: state, theme, account, visualization }
   const { exportLocalData, importLocalData, importGarminRecovery, importStravaActivities } = useAerionImports({ snapshot, importSnapshot, setActivities, setState })
 
   useEffect(() => {

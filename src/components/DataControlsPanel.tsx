@@ -6,6 +6,7 @@ export type AerionLocalSnapshot = {
   version: 1 | typeof AERION_LOCAL_STORAGE_SCHEMA_VERSION
   races: Race[]
   goals: Goal[]
+  activeGoalId?: string
   goalConversation?: GoalConversationEntry[]
   activities: Activity[]
   blockedDates: BlockedDate[]

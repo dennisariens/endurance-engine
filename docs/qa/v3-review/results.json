@@ -1,0 +1,39 @@
+{
+  "source": "8100fd19c9c27fe1e8937c2cf1db71753d73b287",
+  "baseline": false,
+  "results": [
+    {
+      "width": 1440,
+      "errors": [],
+      "overflow": false,
+      "themeSwitch": true,
+      "why": true,
+      "navigationScreens": 9,
+      "backupDownloadImportRestore": true,
+      "data": "synthetic-only",
+      "reducedMotion": true
+    },
+    {
+      "width": 390,
+      "errors": [],
+      "overflow": false,
+      "themeSwitch": true,
+      "why": true,
+      "navigationScreens": 9,
+      "backupDownloadImportRestore": true,
+      "data": "synthetic-only",
+      "reducedMotion": true
+    },
+    {
+      "width": 375,
+      "errors": [],
+      "overflow": false,
+      "themeSwitch": true,
+      "why": true,
+      "navigationScreens": 9,
+      "backupDownloadImportRestore": true,
+      "data": "synthetic-only",
+      "reducedMotion": true
+    }
+  ]
+}
