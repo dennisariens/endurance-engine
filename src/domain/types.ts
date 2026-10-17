@@ -97,6 +97,7 @@ export type BlockedDate = {
 export type RaceCostBand = 'Low' | 'Medium' | 'High' | 'Extreme'
 
 export type CurrentState = {
+  data_conflicts?: string[]
   last_updated?: string
   injury_present: boolean
   illness_present: boolean

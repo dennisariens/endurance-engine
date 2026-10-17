@@ -1,20 +1,8 @@
-import { Activity, Gauge, Map, ShieldCheck } from 'lucide-react'
-import { PremiumKpi, formatLabel } from '../ui'
 import type { PremiumCommandDeckProps } from '../types'
-
-type Props = PremiumCommandDeckProps
-
-export function TrainingScreen({ recommendation, path, decision }: Props) {
-  return (
-    <section className="premium-screen active">
-      <div className="premium-screen-header compact-header"><p className="eyebrow">Training</p><h2>Adaptive sessions, not calendar cosplay.</h2><p>Training exists only inside the available recovery budget. Actual completed work remains authoritative.</p></div>
-      <div className="premium-training-grid paginated-grid">
-        <PremiumKpi label="Primary session" value={recommendation.primary.title} detail={recommendation.primary.purpose} tone="blue" icon={Activity} />
-        <PremiumKpi label="Duration / cap" value={`${recommendation.primary.durationMin || 'Off'} min`} detail={recommendation.primary.hrCap ? `HR ≤ ${recommendation.primary.hrCap}` : recommendation.primary.intensity} tone="green" icon={Gauge} />
-        <PremiumKpi label="Current phase" value={path?.phase ?? formatLabel(decision.mode)} detail={path?.nextFocus?.[0] ?? recommendation.longTermBias} tone="slate" icon={Map} />
-        <PremiumKpi label="Avoid" value={path?.avoid?.[0] ?? 'Unplanned intensity'} detail="If it damages tomorrow, it was not free today." tone="yellow" icon={ShieldCheck} />
-      </div>
-      <div className="coach-summary-card"><h3>Session steps</h3><ul>{recommendation.primary.steps.map((step) => <li key={step}>{step}</li>)}</ul></div>
-    </section>
-  )
+import { buildCoachingProvenance } from '../../../data/coachingProvenance'
+export function TrainingScreen({ recommendation, path, decision, activities, state, today, goals, activeGoal }: PremiumCommandDeckProps) {
+  const session = recommendation.primary
+  const hasEvidence = buildCoachingProvenance({ today, state, activities, goals, activeGoalId: activeGoal?.id }).status === 'current' || state.injury_present || state.illness_present
+  return <section className="v3-training" aria-label="Training session"><div className="v3-page-heading"><div><p className="v3-kicker">YOUR NEXT SESSION</p><h1>Training</h1></div><span className="v3-tag">Recommended, not scheduled</span></div>{hasEvidence ? <div className="v3-training-grid"><article className="v3-decision"><p className="v3-kicker">{session.discipline}</p><h2>{session.title}</h2><p>{session.purpose}</p><div className="v3-session-meta"><span>{session.durationMin} min</span><span>{session.intensity}</span>{session.hrCap != null && <span>HR ≤ {session.hrCap} bpm</span>}</div><h3>Session steps</h3><ol className="v3-session-steps">{session.steps.map(step => <li key={step}>{step}</li>)}</ol></article><aside className="v3-goal"><h2>Keep the bigger picture</h2><p className="v3-kicker">CURRENT PHASE</p><h3>{path?.phase ?? decision.mode}</h3><p>{path?.nextFocus?.[0] ?? recommendation.longTermBias}</p><h3>Constraints</h3><ul>{[...session.cautions, ...(path?.avoid ?? [])].map((item, i) => <li key={i}>{item}</li>)}</ul><p className="v3-muted">Actual completed work remains authoritative. This recommendation does not change your calendar.</p></aside></div> : <div className="v3-empty"><h2>Your evidence comes first.</h2><p>Connect or import training and recovery records in Settings & data to establish a useful session recommendation.</p></div>}</section>
 }
+

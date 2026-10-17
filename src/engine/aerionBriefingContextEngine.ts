@@ -1,6 +1,8 @@
 import type { Activity, CurrentState, DecisionLogEntry, Goal, Race } from '../domain/types'
 import { buildEvidenceRecords, type EvidenceRecord } from '../data/evidence'
 import { buildFreshnessReport, type FreshnessReport } from '../data/freshness'
+import { buildIntegrationHealth } from '../data/integrationHealth'
+import { buildMarathonBlock } from './marathonBlockEngine'
 import { buildCanonicalAthleteState, type CanonicalAthleteState } from '../state/canonicalAthleteState'
 import { buildActualOverride } from './actualOverrideEngine'
 import { buildCoachBriefing } from './coachBriefingEngine'
@@ -22,6 +24,7 @@ export type AerionBriefingContextInput = {
   activities: Activity[]
   races: Race[]
   goals: Goal[]
+  activeGoalId?: string
   state: CurrentState
   decisionLog?: DecisionLogEntry[]
   calendarEvents?: PlannedCalendarEvent[]
@@ -34,7 +37,7 @@ export type AerionBriefingContext = {
   generatedAt: string
   date: string
   timezone: string
-  source: 'local-fixture' | 'local-live'
+  source: 'local-fixture' | 'local-live' | 'browser-local'
   briefing: DailyBriefing
   coach: DailyBriefing['decision'] & {
     headline: string
@@ -79,13 +82,15 @@ export function buildAerionBriefingContext(input: AerionBriefingContextInput): A
   const yesterdayOverride = buildActualOverride({ today: addDays(input.date, -1), activities: input.activities, decisionLog, recommendation })
   const morningReadiness = buildMorningReadinessVerdict({ today: input.date, state: input.state, yesterdayOverride, athleteState })
   const next72Plan = buildNext72hPlan({ decision, state: input.state, actualOverride, morningReadiness, athleteState })
-  const activeGoal = input.goals[0]
+  const activeGoal = input.goals.find(goal => goal.id === input.activeGoalId) ?? input.goals[0]
   const goalReadiness = activeGoal ? evaluateGoalReadiness({ goal: activeGoal, today: input.date, activities: input.activities, races: input.races, state: input.state }) : undefined
   const pathToGoal = activeGoal && goalReadiness ? buildPathToGoal({ goal: activeGoal, today: input.date, readinessScore: goalReadiness.overallReadiness, state: input.state, activities: input.activities, races: input.races }) : undefined
   const trajectory = buildTrajectory({ athleteState, decision, next72Plan, goalReadiness })
   const learning = buildLearningEngine({ today: input.date, activities: input.activities, decisions: decisionLog, athleteState, trajectory })
   const coachBriefing = buildCoachBriefing({ decision, recommendation, state: input.state, next72Plan, readiness: goalReadiness, morningReadiness, athleteState })
-  const dailyRecommendation = buildDailyRecommendation({ recommendation, briefing: coachBriefing, morningReadiness, next72Plan, activeGoal, readiness: goalReadiness, path: pathToGoal, trajectory, learning, nextRace: decision.nextRace, recoveryMissing: freshness.signals.some((signal) => signal.source === 'current-state' && (signal.status === 'missing' || signal.status === 'stale')), activityProofSparse: input.activities.filter((activity) => activity.source === 'strava').length === 0 })
+  const marathonBlock = buildMarathonBlock({ today: input.date, activeGoal, goals: input.goals, races: input.races, activities: input.activities, state: input.state })
+  const integrations = buildIntegrationHealth({ activities: input.activities, state: input.state, freshness, syncStatus: { state: input.syncedAt ? 'fresh' : 'offline', message: 'Browser snapshot', lastSyncedAt: input.syncedAt } })
+  const dailyRecommendation = buildDailyRecommendation({ recommendation, briefing: coachBriefing, morningReadiness, next72Plan, activeGoal, readiness: goalReadiness, path: pathToGoal, trajectory, learning, marathonBlock, nextRace: decision.nextRace, recoveryMissing: integrations.some(integration => integration.id === 'garmin' && integration.state !== 'connected'), activityProofSparse: input.activities.filter((activity) => activity.source === 'strava').length === 0 })
   const briefing = buildDailyBriefing({
     date: input.date,
     timezone,
