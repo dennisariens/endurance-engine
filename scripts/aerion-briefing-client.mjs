@@ -40,7 +40,10 @@ export async function fetchBriefing({ baseUrl = process.env.AERION_BASE_URL || '
   try {
     const base = new URL(baseUrl)
     if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password || base.search || base.hash) throw new Error('Invalid endpoint')
-    url = new URL('/api/briefing', base)
+    // Treat the configured pathname as a deployment directory, with or without
+    // a trailing slash. A root-relative endpoint would discard this prefix.
+    base.pathname = `${base.pathname.replace(/\/+$/, '')}/`
+    url = new URL('api/briefing', base)
   } catch { return unavailable('INVALID_ENDPOINT', 'AERION_BASE_URL must be an HTTP(S) endpoint without credentials, query or fragment.') }
   let body
   if (snapshotPath) {

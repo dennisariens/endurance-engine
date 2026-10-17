@@ -180,6 +180,27 @@ async function launch() {
       await page.waitForFunction(() => JSON.parse(localStorage.getItem('aerion:account')).value.displayName === 'Synthetic changed');
       await upload.setInputFiles(backupPath);
       await page.waitForFunction(() => JSON.parse(localStorage.getItem('aerion:account')).value.displayName === 'Synthetic QA');
+      // Exercise the merged Vite HTTP boundary with this browser's actual
+      // exported synthetic state, rather than a separate hand-built fixture.
+      const snapshot = { activities: backup.activities, races: backup.races, goals: backup.goals,
+        state: backup.currentState, decisionLog: backup.decisionLog, activeGoalId: backup.activeGoalId,
+        date: backup.exportedAt.slice(0, 10) };
+      const briefing = await page.evaluate(async snapshot => {
+        const response = await fetch('/api/briefing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(snapshot) });
+        return { status: response.status, cache: response.headers.get('cache-control'), payload: await response.json() };
+      }, snapshot);
+      assert.equal(briefing.status, 200, 'Browser backup → snapshot POST succeeds');
+      assert.equal(briefing.payload.ok, true);
+      assert.equal(briefing.cache, 'no-store');
+      const legacy = await page.request.get(url + '/api/briefing');
+      assert.equal(legacy.status(), 409);
+      assert.equal((await legacy.json()).code, 'BROWSER_SNAPSHOT_REQUIRED');
+      const missing = await page.request.post(url + '/api/briefing', { data: { ...snapshot, state: { injury_present: false, illness_present: false, recovery_status: 'unknown' } } });
+      assert.equal(missing.status(), 409);
+      assert.equal((await missing.json()).code, 'COACHING_EVIDENCE_MISSING');
+      const crossOrigin = await page.request.post(url + '/api/briefing', { headers: { Origin: 'https://synthetic.invalid' }, data: snapshot });
+      assert.equal(crossOrigin.status(), 403);
+      assert.equal((await crossOrigin.json()).code, 'SAME_ORIGIN_REQUIRED');
       await navigate('Home');
       if (width < 1200) {
         const more = page.getByRole('button', { name: 'More navigation', exact: true });
@@ -188,7 +209,7 @@ async function launch() {
         assert.equal(await more.evaluate(el => el === document.activeElement), true, 'Escape returns focus');
       }
       assert.deepEqual(errors, [], `Uncaught browser errors at ${width}`);
-      results.push({ width, interactionStates, errors, overflow: false, themeSwitch: true, why: true, navigationScreens: 9, backupDownloadImportRestore: true, data: 'synthetic-only', reducedMotion: true });
+      results.push({ width, interactionStates, errors, overflow: false, themeSwitch: true, why: true, navigationScreens: 9, snapshotApi: { browserBackupPost: 200, legacyGet: 409, missingEvidence: 409, crossOrigin: 403 }, backupDownloadImportRestore: true, data: 'synthetic-only', reducedMotion: true });
       await context.close();
     }
     const report = { source: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), baseline, results };

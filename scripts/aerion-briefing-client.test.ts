@@ -50,6 +50,30 @@ describe('explicit snapshot briefing clients', () => {
     expect(calls[0]).toMatchObject({ method: 'POST', url: '/api/briefing' })
     expect(JSON.parse(calls[0].body)).toEqual({ ...synthetic, date: '2026-10-17' })
   })
+  it.each(['', '/', '/aerion', '/aerion/', '/nested/aerion', '/nested/aerion/'])('preserves base path %j for GET and snapshot POST', async prefix => {
+    const { baseUrl, calls } = await service()
+    const endpoint = `${prefix.replace(/\/$/, '')}/api/briefing`
+    const options = { baseUrl: baseUrl + prefix, date: '2026-10-17' }
+    expect(await fetchBriefing(options)).toMatchObject({ ok: false, code: 'BROWSER_SNAPSHOT_REQUIRED' })
+    expect((await fetchBriefing({ ...options, snapshotPath: await file() })).ok).toBe(true)
+    expect(calls.map(({ method, url }) => ({ method, url }))).toEqual([
+      { method: 'GET', url: endpoint }, { method: 'POST', url: endpoint },
+    ])
+    expect(JSON.parse(calls[1].body)).toEqual({ ...synthetic, date: '2026-10-17' })
+  })
+  it('CLI and MCP retain a configured deployment prefix', async () => {
+    const { baseUrl, calls } = await service()
+    const snapshot = await file()
+    const cli = await run('scripts/aerion-briefing-context.mjs', ['--snapshot', snapshot, '--date=2026-10-17'], baseUrl + '/nested/aerion')
+    expect(cli.code).toBe(0)
+    expect(JSON.parse(cli.out).ok).toBe(true)
+    const message = JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'get_aerion_context', arguments: { date: '2026-10-17' } } }) + '\n'
+    const mcp = await run('scripts/aerion-openai-mcp.mjs', [], baseUrl + '/nested/aerion/', snapshot, message)
+    expect(mcp.code).toBe(0)
+    expect(JSON.parse(JSON.parse(mcp.out).result.content[0].text).ok).toBe(true)
+    expect(calls.map(call => call.url)).toEqual(['/nested/aerion/api/briefing', '/nested/aerion/api/briefing'])
+    expect(calls.every(call => call.method === 'POST')).toBe(true)
+  })
   it('provides actionable unavailability for missing or stale snapshot evidence without echoing body data', async () => {
     const { baseUrl } = await service()
     const missing = { ...synthetic, state: { injury_present: false, illness_present: false, recovery_status: 'unknown' } }
