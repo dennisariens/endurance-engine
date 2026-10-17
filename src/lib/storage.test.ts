@@ -46,4 +46,18 @@ describe('versioned AERION localStorage', () => {
 
     expect(loadLocal('aerion:activities', [])).toEqual([])
   })
+
+  it('does not overwrite a future envelope when a fallback auto-save follows load', () => {
+    const raw = JSON.stringify({ schemaVersion: 999, value: ['synthetic future record'], savedAt: '2026-10-17T00:00:00Z' })
+    const store = installLocalStorage({ 'aerion:activities': raw })
+    const fallback = loadLocal('aerion:activities', [])
+    saveLocal('aerion:activities', fallback)
+    expect(store.get('aerion:activities')).toBe(raw)
+  })
+
+  it('preserves corrupt user-owned bytes during fallback auto-save', () => {
+    const store = installLocalStorage({ 'aerion:activities': '{recoverable-synthetic-bytes' })
+    saveLocal('aerion:activities', loadLocal('aerion:activities', []))
+    expect(store.get('aerion:activities')).toBe('{recoverable-synthetic-bytes')
+  })
 })

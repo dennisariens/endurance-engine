@@ -5,6 +5,7 @@ import { dedupeSyncedActivities } from '../data/integrations/dedupe'
 import { parseGarminRecoveryFixture, normalizeGarminRecoveryState } from '../data/integrations/garminRecoveryAdapter'
 import { normalizeStravaActivityProofs, type StravaActivityProof } from '../data/integrations/stravaActivityProofAdapter'
 import { AERION_LOCAL_STORAGE_SCHEMA_VERSION } from '../lib/storage'
+import { validateBackupSnapshot } from '../data/backupSnapshot'
 import { mergeRecoveryEvidence } from '../data/coachingProvenance'
 
 type UseAerionImportsInput = {
@@ -29,9 +30,7 @@ export function useAerionImports({ snapshot, importSnapshot, setActivities, setS
   }
 
   const importLocalData = async (file: File) => {
-    const parsed = JSON.parse(await file.text()) as AerionLocalSnapshot
-    if (![1, AERION_LOCAL_STORAGE_SCHEMA_VERSION].includes(parsed.version) || !Array.isArray(parsed.races) || !Array.isArray(parsed.activities) || !Array.isArray(parsed.goals)) throw new Error('Invalid AERION backup file')
-    parsed.goalConversation ??= []
+    const parsed = validateBackupSnapshot(JSON.parse(await file.text()))
     importSnapshot(parsed)
   }
 

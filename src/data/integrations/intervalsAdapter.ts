@@ -1,5 +1,6 @@
 import type { Activity, CurrentState, Race } from '../../domain/types'
 import type { TrainingLoadAdapter } from './types'
+import { observationTime, stampStateFields, stateFieldEntries } from '../recoveryEvidence'
 
 export type IntervalsActivitySummary = Record<string, unknown>
 export type IntervalsWellnessSummary = Record<string, unknown>
@@ -65,14 +66,27 @@ export function normalizeIntervalsEvents(rows: IntervalsEventSummary[]): Race[] 
 }
 
 export function normalizeIntervalsWellness(rows: IntervalsWellnessSummary[]): Partial<CurrentState> {
-  const latest = [...rows]
-    .filter((row) => stringValue(row.id) || stringValue(row.date))
-    .sort((a, b) => (stringValue(b.id) ?? stringValue(b.date) ?? '').localeCompare(stringValue(a.id) ?? stringValue(a.date) ?? ''))[0]
+  const ordered = [...rows]
+    .filter(row => observationTime(stringValue(row.id) ?? stringValue(row.date)) !== undefined)
+    .sort((a, b) => observationTime(stringValue(b.id) ?? stringValue(b.date))! - observationTime(stringValue(a.id) ?? stringValue(a.date))!)
+  const state: Partial<CurrentState> = {}
+  for (const row of ordered) {
+    const normalized = normalizeWellnessRow(row)
+    for (const [field, value] of stateFieldEntries(normalized)) {
+      if (state[field] == null) {
+        Object.assign(state, { [field]: value })
+        state.field_evidence = { ...state.field_evidence, [field]: normalized.field_evidence?.[field] }
+      }
+    }
+    if (!state.last_updated && stateFieldEntries(normalized).length) state.last_updated = normalized.last_updated
+  }
+  return state
+}
 
-  if (!latest) return {}
+function normalizeWellnessRow(latest: IntervalsWellnessSummary): Partial<CurrentState> {
   const sleepSeconds = numberValue(latest.sleepSecs) ?? numberValue(latest.sleep_secs) ?? numberValue(latest.sleep)
   const sleepHours = sleepSeconds && sleepSeconds > 24 ? Number((sleepSeconds / 3600).toFixed(1)) : sleepSeconds
-  return {
+  return stampStateFields({
     last_updated: stringValue(latest.id) ?? stringValue(latest.date),
     resting_hr_14d_avg: numberValue(latest.restingHR) ?? numberValue(latest.resting_hr),
     hrv_14d_avg: numberValue(latest.hrv) ?? numberValue(latest.hrv_rmssd),
@@ -83,7 +97,7 @@ export function normalizeIntervalsWellness(rows: IntervalsWellnessSummary[]): Pa
     garmin_training_readiness: numberValue(latest.trainingReadiness) ?? numberValue(latest.training_readiness) ?? numberValue(latest.trainingReadinessScore),
     garmin_sleep_score: numberValue(latest.sleepScore) ?? numberValue(latest.sleep_score),
     garmin_hrv_status: stringValue(latest.hrvStatus) ?? stringValue(latest.hrv_status),
-  }
+  }, 'intervals')
 }
 
 function disciplineFromType(type: string): Race['discipline'] {

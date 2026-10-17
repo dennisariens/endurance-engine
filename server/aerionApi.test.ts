@@ -38,10 +38,20 @@ describe('aerion API services', () => {
     expect(payload.control).toBeUndefined()
   })
 
+  it.each([
+    { state: { injury_present: false, illness_present: false, recovery_status: 'unknown' as const }, code: 'COACHING_EVIDENCE_MISSING' },
+    { state: { injury_present: false, illness_present: false, recovery_status: 'unknown' as const, recovery_score: 70, last_updated: '2026-10-10' }, code: 'COACHING_EVIDENCE_STALE' },
+  ])('withholds unsupported briefing values when evidence is unavailable: $code', async ({ state, code }) => {
+    const payload = await buildBriefingPayload({ env: {}, date: '2026-10-17', snapshot: { activities: [], races: [], goals: [], state } })
+    expect(payload).toMatchObject({ ok: false, code })
+    expect(payload.control).toBeUndefined()
+    expect(payload).not.toHaveProperty('briefing')
+  })
+
   it('persists briefing evidence to SQLite when an evidence db path is configured', async () => {
     const evidenceDbPath = join(mkdtempSync(join(tmpdir(), 'aerion-api-evidence-')), 'evidence.sqlite')
 
-    const payload = await buildBriefingPayload({ env: {}, date: '2026-04-30', now: new Date('2026-07-29T00:00:00Z'), evidenceDbPath, snapshot: { activities: [], races: [], goals: [], state: { injury_present: false, illness_present: false, recovery_status: 'unknown' } } })
+    const payload = await buildBriefingPayload({ env: {}, date: '2026-04-30', now: new Date('2026-07-29T00:00:00Z'), evidenceDbPath, snapshot: { activities: [], races: [], goals: [], state: { injury_present: false, illness_present: false, recovery_status: 'unknown', recovery_score: 70, last_updated: '2026-04-30' } } })
 
     expect(payload.evidenceStore?.dbPath).toBe(evidenceDbPath)
     expect(payload.evidenceStore?.records).toBe(payload.control?.evidence.length)

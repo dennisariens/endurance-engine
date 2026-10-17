@@ -1,4 +1,5 @@
 import type { Activity, CurrentState, Race } from '../domain/types'
+import { observationTime, readinessObservedAt } from './recoveryEvidence'
 
 export type FreshnessStatus = 'fresh' | 'aging' | 'stale' | 'missing'
 export type FreshnessSource = 'current-state' | 'activities' | 'races' | 'sync'
@@ -26,9 +27,7 @@ const thresholds: Record<FreshnessSource, { aging: number; stale: number }> = {
 }
 
 function isoDate(value?: string | null): string | undefined {
-  if (!value) return undefined
-  const match = value.match(/\d{4}-\d{2}-\d{2}/)
-  return match?.[0]
+  return observationTime(value) === undefined ? undefined : value!.slice(0, 10)
 }
 
 export function daysOld(today: string, value?: string | null): number | undefined {
@@ -83,7 +82,7 @@ function worstStatus(signals: FreshnessSignal[]): FreshnessStatus {
 export function buildFreshnessReport(input: { today: string; state: CurrentState; activities: Activity[]; races: Race[]; syncedAt?: string }): FreshnessReport {
   const { today, state, activities, races, syncedAt } = input
   const signals = [
-    signal('current-state', today, isoDate(state.last_updated), 'Current recovery/readiness state'),
+    signal('current-state', today, isoDate(state.field_evidence ? readinessObservedAt(state) : state.last_updated), 'Current recovery/readiness state'),
     signal('activities', today, latestActivityDate(activities), 'Latest activity evidence'),
     signal('races', today, nextRaceDate(today, races), 'Next fixed race'),
     signal('sync', today, isoDate(syncedAt), 'Opening sync receipt'),
