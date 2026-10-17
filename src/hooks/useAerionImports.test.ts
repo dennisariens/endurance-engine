@@ -42,6 +42,36 @@ describe('restore safety', () => {
     expect(setters.every(setter => setter.mock.calls.length === 0)).toBe(true)
   })
 
+  it.each(['malformed', 'future'] as const)('explicit restore and reset survive reload over %s storage', kind => {
+    const keys = ['races', 'goals', 'goal-conversation', 'active-goal-id', 'activities', 'blocked', 'decision-log', 'current-state', 'theme', 'account', 'visualization']
+    const raw = kind === 'malformed' ? '{protected synthetic bytes' : JSON.stringify({ schemaVersion: 999, value: 'protected synthetic value' })
+    const store = new Map(keys.map(key => [`aerion:${key}`, raw]))
+    vi.stubGlobal('window', { localStorage: {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => store.set(key, value),
+      removeItem: (key: string) => store.delete(key),
+    } })
+    const state = useAerionState()
+    expect(() => state.importSnapshot({ ...snapshot, activities: [{}] } as never)).toThrow()
+    for (const key of keys) expect(store.get(`aerion:${key}`)).toBe(raw)
+    state.importSnapshot({ ...snapshot, activities: [{ id: 'restored', date: '2026-10-17', name: 'Synthetic restored run', type: 'Run', source: 'manual', load: 0 }] })
+    const restored = useAerionState() // Fresh hook initialization reads persisted values.
+    expect(restored.activities).toMatchObject([{ id: 'restored', load: 0 }])
+    expect(restored.state.recovery_score).toBe(0)
+    expect(restored.account.displayName).toBe('Synthetic QA')
+    expect(restored.activeGoalId).toBeUndefined()
+    // Protect again to ensure reset itself, not the prior import, unblocks writes.
+    for (const key of keys) store.set(`aerion:${key}`, raw)
+    useAerionState().resetLocalData()
+    const reset = useAerionState()
+    expect(reset.activities).toEqual([])
+    expect(reset.goals).toEqual([])
+    expect(reset.state).toEqual({ injury_present: false, illness_present: false, recovery_status: 'unknown' })
+    expect(reset.account.displayName).toBe('Athlete')
+    expect(reset.activeGoalId).toBeUndefined()
+    for (const key of keys) expect(store.get(`aerion:${key}`)).not.toBe(raw)
+  })
+
   it('replaces rather than merges and resets absent optional preferences', () => {
     setters.length = 0
     vi.stubGlobal('localStorage', { getItem: () => null })

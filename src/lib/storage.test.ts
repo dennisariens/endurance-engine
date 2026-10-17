@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { AERION_LOCAL_STORAGE_SCHEMA_KEY, AERION_LOCAL_STORAGE_SCHEMA_VERSION, loadLocal, saveLocal } from './storage'
+import { AERION_LOCAL_STORAGE_SCHEMA_KEY, AERION_LOCAL_STORAGE_SCHEMA_VERSION, loadLocal, replaceLocal, saveLocal } from './storage'
 
 function installLocalStorage(seed: Record<string, string> = {}) {
   const store = new Map(Object.entries(seed))
@@ -59,5 +59,28 @@ describe('versioned AERION localStorage', () => {
     const store = installLocalStorage({ 'aerion:activities': '{recoverable-synthetic-bytes' })
     saveLocal('aerion:activities', loadLocal('aerion:activities', []))
     expect(store.get('aerion:activities')).toBe('{recoverable-synthetic-bytes')
+  })
+})
+
+
+describe('explicit storage recovery', () => {
+  it.each(['', '{broken', JSON.stringify({ schemaVersion: 999, value: ['future'] })])('replaces protected bytes only on explicit recovery: %s', raw => {
+    const store = installLocalStorage({ 'aerion:activities': raw, 'unrelated:key': raw })
+    saveLocal('aerion:activities', loadLocal('aerion:activities', []))
+    expect(store.get('aerion:activities')).toBe(raw)
+    replaceLocal('aerion:activities', [{ id: 'restored', load: 0 }])
+    expect(loadLocal('aerion:activities', [])).toEqual([{ id: 'restored', load: 0 }])
+    expect(store.get('unrelated:key')).toBe(raw)
+  })
+
+  it('clears an absent selection explicitly, while automatic fallback preserves protected bytes', () => {
+    const raw = '{protected'
+    const store = installLocalStorage({ 'aerion:active-goal-id': raw })
+    saveLocal('aerion:active-goal-id', undefined)
+    expect(store.get('aerion:active-goal-id')).toBe(raw)
+    replaceLocal('aerion:active-goal-id', undefined)
+    expect(store.has('aerion:active-goal-id')).toBe(false)
+    saveLocal('aerion:active-goal-id', undefined)
+    expect(loadLocal('aerion:active-goal-id', undefined)).toBeUndefined()
   })
 })

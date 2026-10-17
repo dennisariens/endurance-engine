@@ -39,10 +39,19 @@ export function loadLocal<T>(key: string, fallback: T): T {
 }
 
 export function saveLocal<T>(key: string, value: T): void {
+  writeLocal(key, value, false)
+}
+
+/** Explicit user recovery only: validated backup restore or confirmed reset. */
+export function replaceLocal<T>(key: string, value: T): void {
+  writeLocal(key, value, true)
+}
+
+function writeLocal<T>(key: string, value: T, replaceProtected: boolean): void {
   if (typeof window === 'undefined') return
   const existing = window.localStorage.getItem(key)
   let migratedFrom: number | undefined
-  if (existing) {
+  if (existing !== null && !replaceProtected) {
     try {
       const parsed = JSON.parse(existing) as unknown
       // Unknown envelopes and damaged JSON are protected even when React's
@@ -52,6 +61,11 @@ export function saveLocal<T>(key: string, value: T): void {
     } catch {
       return
     }
+  }
+  // An absent selection must reload as absent, not as an envelope without value.
+  if (value === undefined) {
+    window.localStorage.removeItem(key)
+    return
   }
   const payload: StorageEnvelope<T> = {
     schemaVersion: AERION_LOCAL_STORAGE_SCHEMA_VERSION,
