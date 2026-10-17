@@ -1,7 +1,7 @@
 # Repeatable AERION browser QA
 
 Use Node 24 in an isolated checkout. No live athlete data or existing browser
-profile is used. The runner starts Vite itself on an available local port,
+profile is used. The runner starts Vite itself on `127.0.0.1:5174` (fails if occupied; never stops an existing server),
 creates new browser contexts, blocks live sync and external requests, and seeds
 only synthetic records. It closes its server/browser and cleans its temporary
 browser extraction directory after each run.
@@ -47,3 +47,17 @@ the cloud browser could not reach this execution environment's localhost. Those
 are avoided by this local runner. Fontconfig must retain system font aliases:
 without them the packaged browser crashed or substituted serif faces. Failures
 must remain failures; do not remove assertions to make a report pass.
+
+## P2.1 visual refinement
+
+The runner additionally captures all nine screens in dark and light mode at
+1440×900, 390×844 and 375×844; checks overflow on every screen/theme; exercises
+Performance, Races and Recovery selection controls; and follows Home's primary
+CTA into Training. Browser console errors now fail the run alongside page errors.
+
+Primary CTA normal, hover, mouse-down, keyboard focus and disabled styles are
+recorded in `results.json`, with state screenshots for both themes at all widths.
+Disabled screenshots temporarily set the native disabled attribute on the real
+CTA in the disposable browser, then restore it. They verify CSS, not a new product
+disabling rule. Live services remain blocked and backup round-trips use only
+synthetic records. These checks do not certify native Electron or Safari.

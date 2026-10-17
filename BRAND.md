@@ -160,3 +160,21 @@ Performance should feel like telemetry proof, not spreadsheet analytics.
 - no heavy all-bold labels,
 - no fake consumer fitness cheerleading,
 - no decorative colors that do not encode state or action.
+
+## Approved V3 identity refinement — 2026-10-17
+
+Owner approval for P2.1 keeps the existing V3 typography, layout and dark/light
+surfaces. The approved B master in `src/assets/brand/AE-B-gradient.svg` is the
+identity source. V3 controls use its lime `#F0FF6B`, pink `#FF5FB8`, lighter pink
+`#FF8FBA` and blue `#58C6FF` stops with restraint:
+
+- Pink primary actions with dark labels in both themes; lighter pink on hover,
+  lime while pressed, visible keyboard focus and neutral native-disabled states.
+- Lime selection in dark mode; olive `#405000` text on pale lime in light mode.
+- Thin lime → pink → blue identity markers in navigation and route details.
+- Blue for interaction edges and telemetry; darkened pink `#A51555` for small
+  identity labels on light surfaces so the master pink is not used as low-contrast
+  text. Filled primary actions retain master pink in light mode.
+
+Readiness and risk colors retain their semantic meaning. Do not recolor coaching
+states to match the logo or expand these accents into panel-wide decoration.
