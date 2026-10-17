@@ -44,7 +44,7 @@ async function launch() {
   const root = path.resolve(process.env.AERION_QA_ROOT || '.');
   const baseline = process.env.AERION_QA_BASELINE === '1';
   const { createServer } = await import('vite');
-  const server = await createServer({ root, server: { host: '127.0.0.1', port: 0, strictPort: false } });
+  const server = await createServer({ root, server: { host: '127.0.0.1', port: 5174, strictPort: true } });
   let browser;
   let activePage;
   const results = [];
@@ -77,6 +77,7 @@ async function launch() {
       page.setDefaultNavigationTimeout(20000);
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
+      page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
       await page.goto(url);
       await page.getByRole('heading', { name: baseline ? 'Today at a glance' : 'Today', exact: true }).waitFor();
       await page.evaluate(() => document.fonts.ready);
@@ -100,9 +101,64 @@ async function launch() {
           await page.getByRole('button', { name: 'More navigation', exact: true }).click();
           await page.getByRole('dialog').getByRole('button', { name, exact: true }).click();
         }
-        await page.locator('.v3-content section').first().waitFor();
+        await page.locator('.v3-content > section').waitFor();
+        await page.mouse.move(0, 0);
+        await page.evaluate(() => document.fonts.ready);
+        await page.waitForTimeout(150);
       };
-      await navigate('Training');
+      const interactionStates = [];
+      for (const theme of ['dark', 'light']) {
+        await page.evaluate(theme => document.documentElement.dataset.theme = theme, theme);
+        await navigate('Home');
+        const primary = page.getByRole('button', { name: 'View session', exact: true });
+        const style = () => primary.evaluate(el => { const s = getComputedStyle(el); return { background: s.backgroundColor, color: s.color, outline: s.outlineStyle, cursor: s.cursor }; });
+        await page.mouse.move(0, 0);
+        const normal = await style();
+        assert.equal(normal.background, 'rgb(255, 95, 184)');
+        await primary.hover();
+        const hover = await style();
+        assert.notEqual(hover.background, normal.background);
+        await page.screenshot({ path: path.join(output, `button-${theme}-hover-${width}.png`) });
+        await page.mouse.down();
+        const pressed = await style();
+        assert.notEqual(pressed.background, hover.background);
+        await page.screenshot({ path: path.join(output, `button-${theme}-pressed-${width}.png`) });
+        // Release away from the button so the state capture does not navigate.
+        await page.mouse.move(0, 0); await page.mouse.up();
+        await primary.focus();
+        await page.keyboard.press('Tab'); await page.keyboard.press('Shift+Tab');
+        const focus = await style();
+        assert.equal(focus.outline, 'solid');
+        await page.screenshot({ path: path.join(output, `button-${theme}-focus-${width}.png`) });
+        // Isolated CSS fixture: temporarily disable the real CTA, then restore it.
+        await primary.evaluate(el => el.disabled = true);
+        const disabled = await style();
+        assert.equal(disabled.cursor, 'not-allowed');
+        assert.equal(await primary.isDisabled(), true);
+        assert.notEqual(disabled.background, normal.background);
+        await primary.hover({ force: true });
+        assert.deepEqual(await style(), disabled, 'Disabled hover preserves disabled styling');
+        await page.screenshot({ path: path.join(output, `button-${theme}-disabled-${width}.png`) });
+        await primary.evaluate(el => el.disabled = false);
+        await page.mouse.move(0, 0);
+        interactionStates.push({ theme, normal, hover, pressed, focus, disabled });
+        for (const name of ['Home', 'Training', 'Performance', 'Coach', 'Goals', 'Races', 'Recovery', 'History', 'Settings & data']) {
+          await navigate(name);
+          assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${name}/${theme}/${width} overflow`);
+          if (['Performance', 'Races', 'Recovery'].includes(name)) {
+            const option = name === 'Performance' ? page.locator('.chart-option-bar button:not(.active)').first() : page.locator('.chart-option-bar button').last();
+            const before = await option.getAttribute('class');
+            await option.click();
+            assert.notEqual(await option.getAttribute('class'), before, `${name} option toggles`);
+            await page.mouse.move(0, 0);
+          }
+          const slug = name.toLowerCase().replace(/[^a-z]+/g, '-');
+          await page.screenshot({ path: path.join(output, `${slug}-${theme}-${width}.png`), fullPage: true });
+        }
+      }
+      await page.evaluate(() => document.documentElement.dataset.theme = 'dark');
+      await navigate('Home');
+      await page.getByRole('button', { name: 'View session', exact: true }).click();
       await page.getByRole('heading', { name: 'Training', exact: true }).waitFor();
       await page.screenshot({ path: path.join(output, `training-${width}.png`), fullPage: true });
       for (const name of ['Performance', 'Coach', 'Goals', 'Races', 'Recovery', 'History', 'Settings & data']) await navigate(name);
@@ -130,7 +186,7 @@ async function launch() {
         assert.equal(await more.evaluate(el => el === document.activeElement), true, 'Escape returns focus');
       }
       assert.deepEqual(errors, [], `Uncaught browser errors at ${width}`);
-      results.push({ width, errors, overflow: false, themeSwitch: true, why: true, navigationScreens: 9, backupDownloadImportRestore: true, data: 'synthetic-only', reducedMotion: true });
+      results.push({ width, interactionStates, errors, overflow: false, themeSwitch: true, why: true, navigationScreens: 9, backupDownloadImportRestore: true, data: 'synthetic-only', reducedMotion: true });
       await context.close();
     }
     const report = { source: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), baseline, results };
