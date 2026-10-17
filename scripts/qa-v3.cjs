@@ -146,7 +146,9 @@ async function launch() {
           await navigate(name);
           assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${name}/${theme}/${width} overflow`);
           if (['Performance', 'Races', 'Recovery'].includes(name)) {
-            const option = name === 'Performance' ? page.locator('.chart-option-bar button:not(.active)').first() : page.locator('.chart-option-bar button').last();
+            const optionLocator = name === 'Performance' ? page.locator('.chart-option-bar button:not(.active)').first() : page.locator('.chart-option-bar button').last();
+            const option = await optionLocator.elementHandle();
+            assert.ok(option);
             const before = await option.getAttribute('class');
             await option.click();
             assert.notEqual(await option.getAttribute('class'), before, `${name} option toggles`);
