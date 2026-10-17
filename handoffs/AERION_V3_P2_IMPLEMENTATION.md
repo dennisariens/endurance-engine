@@ -1,5 +1,12 @@
 # AERION V3 implementation checkpoint — 16 October 2026
 
+**Browser follow-up:** the screenshot/runtime blocker described below is now
+resolved locally. See `docs/qa/v3-review/README.md`, screenshots, results.json
+and comparison.html. The new self-contained browser runner passed all three
+viewports, navigation/theme/Why, mobile dialog focus, and actual synthetic backup
+download/import/restore. Historical limitations below remain for chronology;
+data provenance, external integration and SQLite gates are still open.
+
 Branch: `codex/aerion-v3-home`. Base: `56ddc1d107b40f2bd880decae3a6264bbcd00717`. Target: `refactor/v2-foundation`.
 
 Actual React application changes are implemented, not a concept render. This is a draft review checkpoint; visual acceptance is incomplete. No merge, deployment, native installation, private athlete-data changes or Electron configuration changes were performed.
