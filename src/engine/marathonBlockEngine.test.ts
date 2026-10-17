@@ -32,7 +32,7 @@ describe('buildMarathonBlock', () => {
     expect(result.phase).toBe('build')
     expect(result.priorityStack[0]).toContain('Marathon performance')
     expect(result.easyEfficiency.markerHrRange).toBe('129–132 bpm')
-    expect(result.easyEfficiency.raceDayExpected).toContain('5:05')
+    expect(result.easyEfficiency.raceDayExpected).toContain('Unavailable')
   })
 
   it('prefers an explicit running primary mission over name heuristics', () => {
@@ -64,5 +64,13 @@ describe('buildMarathonBlock', () => {
 
     expect(result.phase).toBe('race-week')
     expect(result.decisionRules[0]).toContain('Injury/illness can override')
+  })
+
+  it('does not invent a reference run or heat-adjusted pace forecasts without measured evidence', () => {
+    const result = buildMarathonBlock({ today: '2026-10-17', activeGoal: marathonGoal, races: [], activities: [], state })
+    expect(result.easyEfficiency.currentReference).toContain('Unavailable')
+    expect(result.easyEfficiency.coolWeatherEquivalent).toContain('Unavailable')
+    expect(result.easyEfficiency.raceDayExpected).toContain('Unavailable')
+    expect(result.easyEfficiency.sixMonthExpected).toContain('Unavailable')
   })
 })

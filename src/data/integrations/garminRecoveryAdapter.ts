@@ -1,6 +1,7 @@
 import type { CurrentState } from '../../domain/types'
 import type { RawHealthSample } from '../healthDataAdapter'
 import type { RecoverySnapshotAdapter } from './types'
+import { stampStateFields } from '../recoveryEvidence'
 
 export type GarminRecoverySnapshot = {
   date?: string
@@ -60,7 +61,7 @@ export function normalizeGarminRecoverySnapshot(snapshot: GarminRecoverySnapshot
 
 export function normalizeGarminRecoveryState(snapshot: GarminRecoverySnapshot): Partial<CurrentState> {
   const sample = normalizeGarminRecoverySnapshot(snapshot)
-  return {
+  return stampStateFields({
     last_updated: sample.date,
     resting_hr_14d_avg: sample.restingHr14dAvg ?? sample.restingHr7dAvg ?? sample.restingHr ?? undefined,
     hrv_14d_avg: sample.hrv7dAvgMs ?? sample.hrvMs ?? undefined,
@@ -76,7 +77,7 @@ export function normalizeGarminRecoveryState(snapshot: GarminRecoverySnapshot): 
     steps_7d_avg: finiteNumber(snapshot.steps7dAvg) ?? finiteNumber(snapshot.steps) ?? undefined,
     training_status: snapshot.trainingStatus ?? undefined,
     vo2max: sample.vo2max ?? undefined,
-  }
+  }, 'garmin')
 }
 
 export function parseGarminRecoveryFixture(value: unknown): GarminRecoverySnapshot[] {

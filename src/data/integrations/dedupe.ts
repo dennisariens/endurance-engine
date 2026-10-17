@@ -15,8 +15,17 @@ const defaultSourcePriority: Record<Activity['source'], number> = {
 
 export function dedupeSyncedActivities(activities: Activity[], options: ActivityDedupeOptions = {}): Activity[] {
   const priority = { ...defaultSourcePriority, ...options.sourcePriority }
-  const manualActivities = activities.filter((activity) => activity.source === 'manual')
-  const syncedActivities = activities.filter((activity) => activity.source !== 'manual')
+  // Stable source IDs take precedence over metric buckets: a provider may revise
+  // duration/load after an activity has already been synchronized.
+  const byId = new Map<string, Activity>()
+  for (const activity of activities) {
+    const key = `${activity.source}:${activity.id}`
+    const existing = byId.get(key)
+    byId.set(key, existing ? { ...existing, ...definedFields(activity) } : activity)
+  }
+  const unique = [...byId.values()]
+  const manualActivities = unique.filter((activity) => activity.source === 'manual')
+  const syncedActivities = unique.filter((activity) => activity.source !== 'manual')
   const byKey = new Map<string, Activity>()
 
   for (const activity of syncedActivities) {

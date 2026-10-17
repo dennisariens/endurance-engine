@@ -103,7 +103,13 @@ export async function buildBriefingPayload({ date, timezone = 'Europe/Amsterdam'
   // cannot reproduce that state and must never masquerade as the in-app coach.
   if (!snapshot) return { ok: false as const, source: 'unavailable', message: 'A browser coaching snapshot is required. Use the in-app coach or POST the current snapshot; no fixture fallback.', control: undefined, evidenceStore: undefined }
   const provenance = buildCoachingProvenance({ today: date, ...snapshot })
-  if (provenance.status === 'conflicting') return { ok: false as const, source: 'browser-local', message: 'Resolve conflicting browser inputs before generating a briefing.', provenance, control: undefined, evidenceStore: undefined }
+  // This is a presentation boundary, not a new coaching-engine policy: do not
+  // publish model-default prescriptions/projections as supported athlete data.
+  if (provenance.status !== 'current') return {
+    ok: false as const, source: 'browser-local', code: `COACHING_EVIDENCE_${provenance.status.toUpperCase()}`,
+    message: 'Refresh or resolve browser recovery evidence before requesting a personalised briefing. Retained measurements are unchanged.',
+    provenance, control: undefined, evidenceStore: undefined,
+  }
   const payload = buildAerionBriefingContext({
     date,
     timezone,
