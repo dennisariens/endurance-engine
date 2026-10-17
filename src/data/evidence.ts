@@ -1,5 +1,6 @@
 import type { Activity, ActivitySource, CurrentState, Goal, Race } from '../domain/types'
 import type { FreshnessReport, FreshnessStatus } from './freshness'
+import { daysOld } from './freshness'
 
 export type EvidenceSource = ActivitySource | 'aerion' | 'derived'
 export type EvidenceQuality = 'verified' | 'reported' | 'estimated' | 'stale' | 'missing'
@@ -74,13 +75,13 @@ export function buildEvidenceRecords(input: {
   freshness?: FreshnessReport
 }): EvidenceRecord[] {
   const { athleteId, generatedAt, state, activities, races, goals, freshness } = input
-  const activityFreshness = signalFor(freshness, 'activities')
   const stateFreshness = signalFor(freshness, 'current-state')
   const raceFreshness = signalFor(freshness, 'races')
   const records: EvidenceRecord[] = []
 
   for (const activity of activities) {
-    const quality = statusQuality(activityFreshness?.status)
+    const age = daysOld(freshness?.today ?? generatedAt.slice(0, 10), activity.date)
+    const quality = statusQuality(age === undefined ? 'missing' : age >= 14 ? 'stale' : age >= 4 ? 'aging' : 'fresh')
     records.push({
       id: `activity:${activity.source}:${activity.id}`,
       athleteId,
@@ -91,7 +92,7 @@ export function buildEvidenceRecords(input: {
       value: activity,
       quality,
       confidence: clampConfidence(sourceConfidence(activity.source) * qualityConfidence(quality)),
-      freshnessHours: activityFreshness?.ageDays === undefined ? undefined : activityFreshness.ageDays * 24,
+      freshnessHours: age === undefined ? undefined : age * 24,
       provenance: { externalId: activity.id, calculationVersion: EVIDENCE_SCHEMA_VERSION },
     })
   }

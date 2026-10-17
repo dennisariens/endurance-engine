@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { AccountSettings, Activity, BlockedDate, CurrentState, DecisionLogEntry, Goal, GoalConversationEntry, Race, Theme, VisualizationSettings } from '../domain/types'
 import { loadLocal, saveLocal } from '../lib/storage'
+import { validateStateSnapshot } from '../data/backupSnapshot'
 
 const defaultActivities: Activity[] = []
 const defaultBlockedDates: BlockedDate[] = []
@@ -70,7 +71,8 @@ export function useAerionState() {
     if (!activeGoalId || !goals.some((goal) => goal.id === activeGoalId)) setActiveGoalId(goals[0].id)
   }, [activeGoalId, goals])
 
-  const importSnapshot = (snapshot: AerionStateSnapshot) => {
+  const importSnapshot = (input: AerionStateSnapshot) => {
+    const snapshot = validateStateSnapshot(input)
     setRaces(snapshot.races)
     setGoals(snapshot.goals)
     setGoalConversation(snapshot.goalConversation ?? [])

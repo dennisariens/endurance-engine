@@ -45,9 +45,12 @@ export function saveLocal<T>(key: string, value: T): void {
   if (existing) {
     try {
       const parsed = JSON.parse(existing) as unknown
+      // Unknown envelopes and damaged JSON are protected even when React's
+      // initial effect tries to persist the fallback returned by loadLocal.
+      if (isStorageEnvelope(parsed) && parsed.schemaVersion !== AERION_LOCAL_STORAGE_SCHEMA_VERSION) return
       migratedFrom = isStorageEnvelope(parsed) ? parsed.schemaVersion : 1
     } catch {
-      migratedFrom = 1
+      return
     }
   }
   const payload: StorageEnvelope<T> = {
