@@ -16,11 +16,21 @@
     "desktop:package": "npm run build && electron-packager . AERION --platform=darwin --arch=arm64 --out=release --overwrite --app-bundle-id=ai.colddesert.aerion --app-category-type=public.app-category.healthcare-fitness --ignore='^/release($|/)' --ignore='^/[.]git($|/)' && cp build/icon.icns release/AERION-darwin-arm64/AERION.app/Contents/Resources/electron.icns && touch release/AERION-darwin-arm64/AERION.app",
     "build": "tsc && vite build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:server": "node scripts/build-personal-server.mjs",
+    "typecheck:server": "tsc --project tsconfig.personal.json --noEmit",
+    "start:server": "node app.cjs",
+    "admin:server": "node dist-server/admin.mjs",
+    "test:personal:pg": "node scripts/test-personal-pg.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
+    "bcryptjs": "3.0.3",
+    "express": "5.3.0",
+    "express-rate-limit": "8.7.1",
+    "helmet": "8.3.0",
     "lucide-react": "latest",
+    "pg": "8.23.1",
     "react": "latest",
     "react-dom": "latest",
     "recharts": "latest",
@@ -30,10 +40,15 @@
   "devDependencies": {
     "@electron/packager": "^20.0.1",
     "@sparticuz/chromium": "153.0.0",
+    "@types/express": "5.0.6",
+    "@types/node": "26.6.5",
+    "@types/pg": "8.23.1",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "electron": "^42.3.3",
+    "esbuild": "0.28.2",
     "playwright": "1.58.2",
+    "tsx": "4.23.15",
     "vitest": "latest"
   }
 }
