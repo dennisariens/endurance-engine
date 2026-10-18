@@ -16,7 +16,8 @@
     "desktop:package": "npm run build && electron-packager . AERION --platform=darwin --arch=arm64 --out=release --overwrite --app-bundle-id=ai.colddesert.aerion --app-category-type=public.app-category.healthcare-fitness --ignore='^/release($|/)' --ignore='^/[.]git($|/)' && cp build/icon.icns release/AERION-darwin-arm64/AERION.app/Contents/Resources/electron.icns && touch release/AERION-darwin-arm64/AERION.app",
     "build": "tsc && vite build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "qa:personal": "node scripts/qa-personal-beta.cjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",

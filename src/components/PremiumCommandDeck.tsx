@@ -36,9 +36,9 @@ export function PremiumCommandDeck(props: PremiumCommandDeckProps) {
     return () => window.removeEventListener('aerion:navigate', handler)
   }, [])
   const navButton = ({ id, label, icon: Icon }: NavItem) => <button key={id} type="button" aria-current={activeScreen === id ? 'page' : undefined} onClick={() => navigate(id)}><Icon size={18} strokeWidth={1.8} /><span>{label}</span></button>
-  const syncLabel = syncStatus.state === 'fresh' ? 'Sync received' : syncStatus.state === 'syncing' ? 'Syncing…' : syncStatus.state === 'error' ? 'Sync needs attention' : 'Local data'
+  const syncLabel = props.hosted ? 'Shared state' : syncStatus.state === 'fresh' ? 'Sync received' : syncStatus.state === 'syncing' ? 'Syncing…' : syncStatus.state === 'error' ? 'Sync needs attention' : 'Local data'
   return <section className="v3-shell" aria-label="AERION endurance coach">
-    <aside className="v3-sidebar"><AerionLogo /><p className="v3-nav-label">YOUR TRAINING</p><nav aria-label="Main navigation">{navItems.map(navButton)}</nav><div className="v3-sidebar-note"><span className="v3-status-dot" /> Local-first coaching<p>Your evidence. Your next move.</p></div></aside>
+    <aside className="v3-sidebar"><AerionLogo /><p className="v3-nav-label">YOUR TRAINING</p><nav aria-label="Main navigation">{navItems.map(navButton)}</nav><div className="v3-sidebar-note"><span className="v3-status-dot" /> {props.hosted ? 'Private shared coaching' : 'Local-first coaching'}<p>Your evidence. Your next move.</p></div></aside>
     <div className="v3-page"><header className="v3-topbar"><div className="v3-mobile-brand"><AerionLogo /></div><span className="v3-desktop-date">{new Date(today + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</span><button className="v3-source-button" onClick={() => navigate('settings')}><span className="v3-status-dot" />{syncLabel}</button></header>
       <div className="v3-content"><Suspense fallback={<p role="status">Loading AERION…</p>}>
         {activeScreen === 'home' && <HomeScreen {...props} onNavigate={navigate} />}

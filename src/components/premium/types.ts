@@ -14,6 +14,7 @@ import type { SyncStatus } from '../../lib/dataSync'
 import type { IntegrationHealth } from '../../data/integrationHealth'
 
 export type PremiumCommandDeckProps = {
+  hosted?: boolean
   today: string
   decision: DailyDecision
   recommendation: WorkoutRecommendation
