@@ -1,0 +1,16 @@
+.personal-beta { min-height: 100vh; }
+.personal-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; padding: 18px 24px; border-bottom: 1px solid var(--border, #293548); }
+.personal-bar p { margin: 5px 0 0; }
+.personal-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.personal-gate { max-width: 720px; margin: 32px auto; padding: 28px; }
+.personal-gate h1 { font-size: clamp(32px, 7vw, 64px); }
+.personal-gate form, .personal-gate label { display: grid; gap: 12px; margin: 16px 0; }
+.personal-gate input[type=password] { width: 100%; font-size: 16px; }
+.personal-gate button { margin: 4px; }
+.personal-gate pre { overflow: auto; max-height: 300px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.personal-notice, .personal-editor { margin: 16px 24px; padding: 16px; border: 1px solid var(--border, #293548); border-radius: 12px; }
+.personal-editor { display: flex; flex-wrap: wrap; gap: 24px; }
+.personal-app { min-width: 0; padding: 0; margin: 0; border: 0; }
+.personal-app[disabled] { opacity: .65; }
+.personal-app[disabled] input, .personal-app[disabled] button { cursor: not-allowed; }
+@media (max-width: 600px) { .personal-bar { padding: 12px; gap: 10px; } .personal-actions { margin: 0; } .personal-actions button { min-height: 44px; } .personal-gate { margin: 16px 12px; padding: 18px; } .personal-notice, .personal-editor { margin: 12px; } }

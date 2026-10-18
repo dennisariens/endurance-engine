@@ -86,7 +86,7 @@ function downloadJson(name: string, payload: unknown) {
   URL.revokeObjectURL(url)
 }
 
-export function SettingsDataScreen({ stats, state, integrations, account, onUpdateAccount, onSyncIntervals, onImportGarminRecovery, onImportStravaActivities, onExportLocalData, onImportLocalData }: Props) {
+export function SettingsDataScreen({ hosted = false, stats, state, integrations, account, onUpdateAccount, onSyncIntervals, onImportGarminRecovery, onImportStravaActivities, onExportLocalData, onImportLocalData }: Props) {
   const [receipt, setReceipt] = useState<DataHubActionResult | null>(null)
   const connectedCount = integrations.filter((integration) => integration.state === 'connected' || integration.state === 'local').length
   const primaryRecovery = integrations.find((integration) => integration.id === 'garmin')
@@ -109,9 +109,9 @@ export function SettingsDataScreen({ stats, state, integrations, account, onUpda
 
       <div className="premium-training-grid paginated-grid">
         <PremiumKpi label="Sources online" value={`${connectedCount} / ${integrations.length}`} detail="Connected/local sources in AERION Core" tone={connectedCount >= 2 ? 'green' : 'yellow'} icon={ShieldCheck} />
-        <PremiumKpi label="Activities loaded" value={activitiesLoaded} detail="From local storage and opening sync" tone="blue" icon={Database} />
+        <PremiumKpi label="Activities loaded" value={activitiesLoaded} detail={hosted ? "Server-confirmed canonical activities" : "From local storage and opening sync"} tone="blue" icon={Database} />
         <PremiumKpi label="Recovery source" value={state.garmin_training_readiness != null ? 'Garmin-ready' : 'Pending'} detail={primaryRecovery?.detail ?? 'Garmin adapter not configured'} tone={state.garmin_training_readiness != null ? 'green' : 'slate'} icon={Watch} />
-        <PremiumKpi label="Account" value={account.status === 'signed-in' ? 'Signed in' : 'Local'} detail={account.localOnly ? 'Local-first profile' : account.email ?? 'Future cloud sync'} tone="slate" icon={UserRound} />
+        <PremiumKpi label="Account" value={account.status === 'signed-in' ? 'Signed in' : 'Local'} detail={account.localOnly ? 'Local-first profile' : hosted ? 'Private server session' : account.email ?? 'Future cloud sync'} tone="slate" icon={UserRound} />
       </div>
 
       {receipt && <article className="integration-receipt">
@@ -120,11 +120,11 @@ export function SettingsDataScreen({ stats, state, integrations, account, onUpda
         <p>{receipt.message}</p>
         <dl>
           <div><dt>Latest date</dt><dd>{receipt.latestDate ?? 'n/a'}</dd></div>
-          <div><dt>Boundary</dt><dd>local adapter / no browser secrets</dd></div>
+          <div><dt>Boundary</dt><dd>{hosted ? 'Canonical server / no browser secrets' : 'local adapter / no browser secrets'}</dd></div>
         </dl>
       </article>}
 
-      <article className="account-control-card">
+      {hosted ? <article className="account-control-card"><div><h3>Private owner session</h3><p>Sign out, backup and migration controls are above. Provider credentials stay on the server. File imports are available only through the protected migration flow when server state is empty.</p></div></article> : <article className="account-control-card">
         <div>
           <div className="chart-title"><UserRound size={15} strokeWidth={1.8} /><span>Account</span></div>
           <h3>{account.status === 'signed-in' ? `${account.displayName} / AERION local account` : 'Local-first profile'}</h3>
@@ -136,12 +136,12 @@ export function SettingsDataScreen({ stats, state, integrations, account, onUpda
           <button type="button" className="ghost" onClick={() => { onExportLocalData(); setReceipt({ source: 'Manual', records: activitiesLoaded, latestDate: new Date().toISOString().slice(0, 10), message: 'Exported local AERION backup.' }) }}><Database size={14} /> Export data</button>
           <label className="account-file-button"><Gauge size={14} /> Import data<input type="file" accept="application/json" onChange={(event) => { const file = event.target.files?.[0]; if (file) onImportLocalData(file).then(() => setReceipt({ source: 'AERION backup', records: 1, latestDate: new Date().toISOString().slice(0, 10), message: `Imported local backup from ${file.name}` })).catch((error) => window.alert(error instanceof Error ? error.message : 'Import failed')); event.currentTarget.value = '' }} /></label>
         </div>
-      </article>
+      </article>}
 
-      <div className="integration-template-row">
+      {!hosted && <div className="integration-template-row">
         <button type="button" className="ghost" onClick={() => downloadJson('aerion-garmin-recovery-template.json', garminTemplate)}><Download size={13} /> Garmin JSON template</button>
         <button type="button" className="ghost" onClick={() => downloadJson('aerion-strava-proof-template.json', stravaTemplate)}><Download size={13} /> Strava JSON template</button>
-      </div>
+      </div>}
 
       <div className="integration-hub-grid">
         {integrations.map((integration) => {
@@ -166,10 +166,10 @@ export function SettingsDataScreen({ stats, state, integrations, account, onUpda
                 <span>{integration.nextAction}</span>
                 <div className="integration-actions">
                   {integration.id === 'intervals' && <button type="button" onClick={() => runAction(onSyncIntervals)}><Plug size={13} /> Sync now</button>}
-                  {integration.id === 'garmin' && <label><Plug size={13} /> Import recovery<input type="file" accept="application/json" onChange={(event) => { importFile(event.target.files?.[0], onImportGarminRecovery); event.currentTarget.value = '' }} /></label>}
-                  {integration.id === 'strava' && <label><Plug size={13} /> Import proof<input type="file" accept="application/json" onChange={(event) => { importFile(event.target.files?.[0], onImportStravaActivities); event.currentTarget.value = '' }} /></label>}
-                  {integration.id === 'manual' && <button type="button" className="ghost" onClick={() => { onExportLocalData(); setReceipt({ source: 'Manual', records: activitiesLoaded, latestDate: new Date().toISOString().slice(0, 10), message: 'Exported local AERION backup.' }) }}>Export local</button>}
-                  <button type="button" className="ghost" onClick={() => setReceipt({ source: integration.name, records: integration.recordCount ?? 0, latestDate: integration.lastSyncedAt?.slice(0, 10), message: `${integration.name} options are local-first: role, trust boundary, import/export, and adapter contract.` })}>Options</button>
+                  {!hosted && integration.id === 'garmin' && <label><Plug size={13} /> Import recovery<input type="file" accept="application/json" onChange={(event) => { importFile(event.target.files?.[0], onImportGarminRecovery); event.currentTarget.value = '' }} /></label>}
+                  {!hosted && integration.id === 'strava' && <label><Plug size={13} /> Import proof<input type="file" accept="application/json" onChange={(event) => { importFile(event.target.files?.[0], onImportStravaActivities); event.currentTarget.value = '' }} /></label>}
+                  {!hosted && integration.id === 'manual' && <button type="button" className="ghost" onClick={() => { onExportLocalData(); setReceipt({ source: 'Manual', records: activitiesLoaded, latestDate: new Date().toISOString().slice(0, 10), message: 'Exported local AERION backup.' }) }}>Export local</button>}
+                  <button type="button" className="ghost" onClick={() => setReceipt({ source: integration.name, records: integration.recordCount ?? 0, latestDate: integration.lastSyncedAt?.slice(0, 10), message: hosted ? `${integration.name}: only server-confirmed evidence contributes to coaching.` : `${integration.name} options are local-first: role, trust boundary, import/export, and adapter contract.` })}>Options</button>
                 </div>
               </footer>
             </article>

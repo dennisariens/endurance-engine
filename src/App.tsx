@@ -31,7 +31,8 @@ import type { ScenarioOutcome } from './engine/scenarioSimulationEngine'
 import { getLocalIsoDate } from './engine/timelineEngine'
 import { useAerionDerivedState } from './hooks/useAerionDerivedState'
 import { useAerionImports } from './hooks/useAerionImports'
-import { useAerionState } from './hooks/useAerionState'
+import { useAerionState, type AerionStateSnapshot } from './hooks/useAerionState'
+import type { DataHubActionResult } from './components/premium/types'
 import { useOpeningSync } from './hooks/useOpeningSync'
 
 const today = getLocalIsoDate()
@@ -44,6 +45,17 @@ const yesterday = addDays(today, -1)
 const formatLabel = (value: string) => value.replace(/([A-Z])/g, ' $1').trim()
 
 export default function App() {
+  return <AerionInterface model={useAerionState()} />
+}
+
+type InterfaceProps = {
+  model: ReturnType<typeof useAerionState>
+  hosted?: boolean
+  confirmedSnapshot?: AerionStateSnapshot
+  onServerSync?: () => Promise<DataHubActionResult>
+}
+
+export function AerionInterface({ model, hosted = false, onServerSync, confirmedSnapshot }: InterfaceProps) {
   const {
     races,
     setRaces,
@@ -69,9 +81,10 @@ export default function App() {
     setState,
     importSnapshot,
     resetLocalData,
-  } = useAerionState()
-  const { syncStatus, runOpeningSync } = useOpeningSync({ setActivities, setRaces, setState })
+  } = model
+  const { syncStatus, runOpeningSync } = useOpeningSync({ setActivities, setRaces, setState, enabled: !hosted })
   const snapshot = { races, goals, activeGoalId, goalConversation, activities, blockedDates, decisionLog, currentState: state, theme, account, visualization }
+  const evidence = confirmedSnapshot ?? snapshot
   const { exportLocalData, importLocalData, importGarminRecovery, importStravaActivities } = useAerionImports({ snapshot, importSnapshot, setActivities, setState })
 
   useEffect(() => {
@@ -103,7 +116,11 @@ export default function App() {
     nextRace,
     nextRaceDetail,
     statusTone,
-  } = useAerionDerivedState({ today, yesterday, races, goals, activeGoalId, activities, decisionLog, state, syncStatus })
+  } = useAerionDerivedState({
+    today, yesterday, races: evidence.races, goals: evidence.goals,
+    activeGoalId: evidence.activeGoalId, activities: evidence.activities,
+    decisionLog: evidence.decisionLog, state: evidence.currentState, syncStatus,
+  })
   const latestDecisionAction = decisionLog.find((entry) => entry.date === today)?.action
   const logDecision = (action: DecisionLogAction, note?: string) => {
     const entry: DecisionLogEntry = {
@@ -150,11 +167,8 @@ export default function App() {
   }
 
   const deleteGoal = (goalId: string) => {
-    setGoals((items) => {
-      const nextGoals = items.filter((item) => item.id !== goalId)
-      setActiveGoalId((current) => current === goalId ? nextGoals[0]?.id : current)
-      return nextGoals
-    })
+    setGoals((items) => items.filter((item) => item.id !== goalId))
+    setActiveGoalId((current) => current === goalId ? goals.find(item => item.id !== goalId)?.id : current)
     setGoalConversation((items) => items.filter((entry) => entry.goalId !== goalId))
   }
 
@@ -180,6 +194,7 @@ export default function App() {
       </div>
 
       <PremiumCommandDeck
+        hosted={hosted}
         today={today}
         decision={decision}
         recommendation={recommendation}
@@ -189,12 +204,12 @@ export default function App() {
         next72Plan={next72Plan}
         stats={stats}
         activities={activities}
-        decisionLog={decisionLog}
-        races={races}
+        decisionLog={confirmedSnapshot?.decisionLog ?? decisionLog}
+        races={confirmedSnapshot?.races ?? races}
         goals={goals}
         activeGoal={activeGoal}
         goalConversation={goalConversation}
-        state={state}
+        state={confirmedSnapshot?.currentState ?? state}
         account={account}
         visualization={visualization}
         readiness={goalReadiness}
@@ -216,14 +231,14 @@ export default function App() {
         onDeleteGoalConversation={(entryId) => setGoalConversation((items) => items.filter((entry) => entry.id !== entryId))}
         onUpdateAccount={(value) => setAccount({ ...value, lastChangedAt: new Date().toISOString() })}
         onUpdateVisualization={setVisualization}
-        onSyncIntervals={runOpeningSync}
+        onSyncIntervals={onServerSync ?? runOpeningSync}
         onImportGarminRecovery={importGarminRecovery}
         onImportStravaActivities={importStravaActivities}
         onExportLocalData={exportLocalData}
         onImportLocalData={importLocalData}
         onAddActivities={(incoming) => setActivities((items) => dedupeSyncedActivities([...items, ...incoming]))}
       />
-      <details className="expert-layer">
+      {!hosted && <details className="expert-layer">
         <summary>Expert cockpit / debug layer</summary>
         <div className="expert-layer-content">
           <CoachBriefingPanel briefing={coachBriefing} />
@@ -281,7 +296,7 @@ export default function App() {
             </div>
           </div>
         </div>
-      </details>
+      </details>}
     </main>
   )
 }

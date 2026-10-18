@@ -1,0 +1,26 @@
+{
+  "browser": "145.0.7632.6",
+  "checks": [
+    "three owner sessions; first-load gate; no automatic upload",
+    "protected backup selection, validated preview and explicit empty-state import",
+    "two-session CAS conflict; pending edits preserved/exportable; explicit server resolution",
+    "mobile writes shared recovery; reload persists; desktop refresh sees mobile revision",
+    "lost commit response retries with same idempotency key; single commit",
+    "offline editing disabled; reconnect/refresh",
+    "session expiry hides athlete UI; edits survive real reauthentication and explicit review",
+    "repeated provider sync retains one confirmed activity/load in synthetic canonical ledger",
+    "hosted flow never writes independent browser state",
+    "anonymous HTTP reads and writes denied by synthetic auth boundary",
+    "canonical backup export includes confirmed revision contents",
+    "export → validated preview → explicit restore into empty state retains canonical records",
+    "goal edit on desktop is visible in mobile session after reload",
+    "Settings Sync now calls authenticated POST then reloads canonical ledger"
+  ],
+  "errors": [],
+  "stats": {
+    "writes": 7,
+    "syncs": 3,
+    "denied": 3
+  },
+  "limitation": "Synthetic HTTP contract fixture; not Hermes/PostgreSQL, physical devices, real Safari, HTTPS or live providers."
+}

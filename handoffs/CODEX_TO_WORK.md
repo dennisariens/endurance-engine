@@ -31,3 +31,35 @@ external briefing-client migration remain open. No deployment, merge, Mac app
 replacement or Electron packaging change. Next: isolated runtime visual QA and
 resolution of the listed provenance gaps before owner acceptance.
 
+
+## AERION Personal Beta client — Issue #13, 18 October 2026
+
+Isolated branch `codex/aerion-13-personal-beta`, exact parent PR #12 head
+`488062fb706235dd08f18ea4cac8912a01844a5b`. Implementation SHA and final evidence
+are recorded in `docs/personal-beta/VERIFICATION.md` and the separate draft PR.
+No Hermes server/schema files touched; no canonical promotion, deployment,
+provisioning, real migration, domain changes or active Mac replacement.
+
+Client: `src/personal/{api,state,PersonalBeta,personal.css}` adds real server
+session/login/logout calls, initial canonical-state gate, explicit CAS saves,
+repeatable uncertain-write retries, 409 comparison/export/manual resolution,
+reauthentication preserving edits, offline indication, validated empty-server
+migration preview and server/pending backups. Existing `App` accepts a state
+model; coaching uses server-confirmed evidence. Hosted mode bypasses localStorage,
+automatic provider merge, local account toggles, file adapter imports and reset.
+Existing AE layout/screens retained; recovery constraints and completed manual
+entries can be written from desktop/mobile. Production web defaults hosted;
+packaged Mac/local development stays local.
+
+Read `docs/personal-beta/CLIENT_CONTRACT.md` for the explicit API contract Hermes
+must reconcile. `scripts/fixtures/personal-api.cjs` is a synthetic test fixture,
+not backend delivery. `npm run qa:personal` exercises the client through real
+loopback HTTP with disposable browser sessions. Evidence includes migration,
+restore, goals/constraints across desktop/mobile sessions, CAS, auth expiry,
+offline, uncertain commits, unique ledger count/load and source sync control.
+
+Release gates remain: actual Hermes API integration, PG persistence/restart,
+server security and owner isolation, encrypted backup restore, live Intervals
+ledger/dedupe, HTTPS/Namecheap setup, physical iPhone Safari off home Wi-Fi and
+second real host. Original Mac checkout changes and case-colliding architecture
+files are excluded. No private athlete data, credentials or live screenshots.

@@ -5,13 +5,14 @@ import { fetchOpeningSync, type SyncStatus } from '../lib/dataSync'
 import { mergeRecoveryEvidence } from '../data/coachingProvenance'
 
 type UseOpeningSyncInput = {
+  enabled?: boolean
   setActivities: Dispatch<SetStateAction<Activity[]>>
   setRaces: Dispatch<SetStateAction<Race[]>>
   setState: Dispatch<SetStateAction<CurrentState>>
 }
 
-export function useOpeningSync({ setActivities, setRaces, setState }: UseOpeningSyncInput) {
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>({ state: 'idle', message: 'Opening sync not started yet.' })
+export function useOpeningSync({ setActivities, setRaces, setState, enabled = true }: UseOpeningSyncInput) {
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>({ state: 'idle', message: enabled ? 'Opening sync not started yet.' : 'Hosted mode: canonical server evidence only. Use Sync now to request a provider update.' })
 
   const applySyncPayload = (payload: Awaited<ReturnType<typeof fetchOpeningSync>>) => {
     if (payload.ok && payload.activities) {
@@ -26,6 +27,7 @@ export function useOpeningSync({ setActivities, setRaces, setState }: UseOpening
   }
 
   const runOpeningSync = async () => {
+    if (!enabled) throw new Error('Hosted sync must use the canonical server endpoint')
     setSyncStatus({ state: 'syncing', message: 'Connecting AERION Core and syncing Intervals.icu.' })
     try {
       return applySyncPayload(await fetchOpeningSync())
@@ -37,6 +39,7 @@ export function useOpeningSync({ setActivities, setRaces, setState }: UseOpening
   }
 
   useEffect(() => {
+    if (!enabled) return
     let cancelled = false
     fetchOpeningSync()
       .then((payload) => {
@@ -46,7 +49,7 @@ export function useOpeningSync({ setActivities, setRaces, setState }: UseOpening
         if (!cancelled) setSyncStatus({ state: 'offline', message: `No opening sync available: ${error instanceof Error ? error.message : 'unknown error'}` })
       })
     return () => { cancelled = true }
-  }, [])
+  }, [enabled])
 
   return { syncStatus, runOpeningSync }
 }
