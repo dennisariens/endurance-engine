@@ -776,7 +776,7 @@ function setGoal(key){const d=goals[key];if(!d)return;currentGoal=key;all('[data
  const rows=$('goal-focus-rows');rows.replaceChildren(...d.focus.map(([label,note,v])=>{const row=document.createElement('div');row.className='goal-focus-row';const head=document.createElement('div');const name=document.createElement('span');name.textContent=label;const detail=document.createElement('b');detail.textContent=note;head.append(name,detail);const bar=document.createElement('div');bar.className='goal-bar';const fill=document.createElement('i');if(v===null){bar.classList.add('missing')}else{fill.style.width=Math.round(v*100)+'%';bar.append(fill)}row.append(head,bar);return row}));
  $('goal-trend-label').textContent=d.trend;$('goal-trend-end').textContent=d.trendEnd;addChartLine($('goal-trend-line'),d.trendValues);
  $('week-mode-label').textContent=d.mode;$('week-session-count').textContent=d.count;
- $('finish-mode').textContent=d.label;$('longview-goal-title').textContent=d.label;$('finish-subtitle').textContent=d.date?('Demo target · '+new Date(d.date+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})):(key==='tri'?'Qualification pathway · 2027':'No single finish line');
+ $('finish-mode').textContent=d.label;const marker=$('longview-marker');if(marker)marker.textContent=key==='open'?'A CONTINUING HABIT':key==='tri'?'A QUALIFICATION PATH':'A CHECKPOINT';$('finish-subtitle').textContent=d.date?('Demo target · '+new Date(d.date+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})):(key==='tri'?'Qualification pathway · 2027':'No single finish line');
  setDay(Number(document.querySelector('[data-day].selected')?.dataset.day||0));setMetric(document.querySelector('[data-metric].active')?.dataset.metric||'volume');
 }
 all('[data-goal]').forEach(b=>b.addEventListener('click',()=>setGoal(b.dataset.goal)));
@@ -891,7 +891,9 @@ function routeLayout(){
 }
 function updateOnScroll(){
  if(!length||!samples.length||!stopArcs.length)return;
- const progressY=Math.max(0,Math.min(journey.offsetHeight,innerHeight*.50+scrollY-routeTop));
+ // One source of truth: the moving route head's actual arc position.
+ const rootTop=routeTop-scrollY;
+ const progressY=Math.max(0,Math.min(journey.offsetHeight,innerHeight*.50-rootTop));
  let lo=0,hi=samples.length-1;
  while(lo<hi){const mid=(lo+hi)>>1;if(samples[mid].y<progressY)lo=mid+1;else hi=mid}
  const after=samples[lo],before=samples[Math.max(0,lo-1)];
@@ -900,44 +902,69 @@ function updateOnScroll(){
  const x=before.x+(after.x-before.x)*t,y=before.y+(after.y-before.y)*t;
  ink.style.strokeDashoffset=String(reducedQuery.matches?0:length-arc);
  beacon.setAttribute('cx',x);beacon.setAttribute('cy',y);
- beacon.style.opacity=(reducedQuery.matches||progressY<=0||progressY>=journey.offsetHeight)?'0':'1';
- // Each arrival is defined by the route head crossing its real arc length.
- if(previousArc!==null && !reducedQuery.matches && Math.abs(arc-previousArc)>1){
-   const forward=arc>previousArc;
-   stopArcs.forEach((a,i)=>{
-     if((forward&&previousArc<a&&arc>=a)||(!forward&&previousArc>a&&arc<=a)){
-       const node=stopNodes[i];node.classList.remove('is-arriving');void node.offsetWidth;
-       node.classList.add('is-arriving');clearTimeout(node._arrivalTimer);
-       node._arrivalTimer=setTimeout(()=>node.classList.remove('is-arriving'),1050);
-       document.dispatchEvent(new CustomEvent('journey:arrival',{detail:{index:i,direction:forward?'forward':'backward'}}));
-     }
-   });
+ const visible=progressY>0&&progressY<journey.offsetHeight;
+ beacon.style.opacity=(reducedQuery.matches||!visible)?'0':'1';
+ if(previousArc!==null&&!reducedQuery.matches&&Math.abs(arc-previousArc)>1){
+  const forward=arc>previousArc;
+  stopArcs.forEach((a,i)=>{
+   if((forward&&previousArc<a&&arc>=a)||(!forward&&previousArc>a&&arc<=a)){
+    const node=stopNodes[i];clearTimeout(node._arrivalTimer);
+    node.classList.remove('is-arriving');
+    // Restart only at the actual crossing, NEVER just because the panel becomes active.
+    void node.offsetWidth;
+    node.classList.add('is-arriving');
+    node._arrivalTimer=setTimeout(()=>node.classList.remove('is-arriving'),1040);
+    document.dispatchEvent(new CustomEvent('journey:arrival',{detail:{index:i,direction:forward?'forward':'backward'}}));
+   }
+  });
  }
  previousArc=arc;
- let best=-1,distance=Infinity;
- stopArcs.forEach((a,i)=>{const d=Math.abs(arc-a);if(d<distance){best=i;distance=d}});
- // Selection and focus both derive from the same route position, not section centres.
- const withinJourney=progressY>0&&progressY<journey.offsetHeight;
- if(!withinJourney)best=-1;
- if(best!==activeIndex){activeIndex=best;stopNodes.forEach((node,i)=>{
-   const on=i===best;node.classList.toggle('is-active',on);
-   if(on)node.setAttribute('aria-current','step');else node.removeAttribute('aria-current');
- });}
+ let closest=0,min=Infinity;
+ stopArcs.forEach((a,i)=>{const d=Math.abs(arc-a);if(d<min){closest=i;min=d}});
+ const selected=visible?closest:-1;
+ if(selected!==activeIndex){
+  activeIndex=selected;
+  stopNodes.forEach((node,i)=>{
+   node.classList.toggle('is-active',selected===i);
+   if(selected===i)node.setAttribute('aria-current','step');
+   else node.removeAttribute('aria-current');
+  });
+ }
  sections.forEach((section,i)=>{
-   const left=stopArcs[Math.max(0,i-1)],right=stopArcs[Math.min(stopArcs.length-1,i+1)];
-   const radius=Math.max(220,Math.min(1050,(right-left)*.52));
-   const d=Math.abs(arc-stopArcs[i]);
-   const near=Math.max(0,1-d/radius),focus=near*near*(3-2*near);
-   section.style.setProperty('--chapter-focus',focus.toFixed(3));
-   section.classList.toggle('is-active',withinJourney&&i===best&&distance<radius*.65);
+  const prior=stopArcs[Math.max(0,i-1)],next=stopArcs[Math.min(stopArcs.length-1,i+1)];
+  const range=Math.max(410,Math.min(1150,Math.max(stopArcs[i]-prior,next-stopArcs[i])*.80));
+  const distance=Math.abs(arc-stopArcs[i]);
+  const proximity=visible?Math.max(0,1-distance/range):0;
+  const focus=proximity*proximity*(3-2*proximity);
+  section.style.setProperty('--chapter-focus',focus.toFixed(3));
+  section.classList.toggle('is-active',selected===i);
+  const panel=section.querySelector('.stage-demo'),copy=section.querySelector('.stage-copy');
+  if(!panel||!copy)return;
+  if(reducedQuery.matches){
+   panel.style.removeProperty('transform');panel.style.removeProperty('opacity');panel.style.removeProperty('filter');
+   copy.style.removeProperty('transform');copy.style.removeProperty('opacity');
+   return;
+  }
+  // Deliberately visible editorial focus: panel grows 9.3%, lifts 36px,
+  // brightens, and eases back as the route moves past. Works in Safari.
+  const mobile=innerWidth<=800;
+  const scale=(mobile?.965:.945)+focus*(mobile?.068:.093);
+  const lift=(mobile?13:24)-focus*(mobile?24:36);
+  panel.style.transform='translate3d(0,'+lift.toFixed(1)+'px,0) scale('+scale.toFixed(4)+')';
+  panel.style.opacity=(.84+.16*focus).toFixed(3);
+  panel.style.filter='brightness('+(.89+.11*focus).toFixed(3)+')';
+  copy.style.transform='translate3d(0,'+(9-15*focus).toFixed(1)+'px,0)';
+  copy.style.opacity=(.84+.16*focus).toFixed(3);
  });
 }
 function requestRouteUpdate(){if(raf)return;raf=requestAnimationFrame(()=>{raf=0;updateOnScroll()});}
 addEventListener('scroll',requestRouteUpdate,{passive:true});
-addEventListener('resize',()=>requestAnimationFrame(routeLayout),{passive:true});
-if('ResizeObserver' in window)new ResizeObserver(()=>requestAnimationFrame(routeLayout)).observe(journey);
-reducedQuery.addEventListener?.('change',()=>{requestAnimationFrame(routeLayout)});
-requestAnimationFrame(routeLayout);
+let layoutRaf=0;
+function scheduleRouteLayout(){if(layoutRaf)return;layoutRaf=requestAnimationFrame(()=>{layoutRaf=0;routeLayout()})}
+addEventListener('resize',scheduleRouteLayout,{passive:true});
+if('ResizeObserver' in window)new ResizeObserver(scheduleRouteLayout).observe(journey);
+reducedQuery.addEventListener?.('change',scheduleRouteLayout);
+scheduleRouteLayout();
 })();
 
 (() => {
