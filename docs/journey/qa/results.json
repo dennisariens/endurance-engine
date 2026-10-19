@@ -1,0 +1,209 @@
+{
+  "browser": "145.0.7632.6",
+  "goalScenarioDayCombinations": 140,
+  "goalScenarioMetricCombinations": 80,
+  "viewports": [
+    {
+      "width": 1440,
+      "noOverflow": true,
+      "noWaypointCollisions": true
+    },
+    {
+      "width": 1280,
+      "noOverflow": true,
+      "noWaypointCollisions": true
+    },
+    {
+      "width": 768,
+      "noOverflow": true,
+      "noWaypointCollisions": true
+    },
+    {
+      "width": 390,
+      "noOverflow": true,
+      "noWaypointCollisions": true
+    },
+    {
+      "width": 375,
+      "noOverflow": true,
+      "noWaypointCollisions": true
+    }
+  ],
+  "arrivals": [
+    {
+      "width": 1440,
+      "height": 1000,
+      "events": [
+        {
+          "index": 0,
+          "direction": "forward",
+          "arc": 70,
+          "time": 940
+        },
+        {
+          "index": 1,
+          "direction": "forward",
+          "arc": 2059.46533203125,
+          "time": 2255.89999999851
+        },
+        {
+          "index": 2,
+          "direction": "forward",
+          "arc": 3417.64208984375,
+          "time": 3556.2000000029802
+        },
+        {
+          "index": 3,
+          "direction": "forward",
+          "arc": 4753.767578125,
+          "time": 4828.30000000447
+        },
+        {
+          "index": 4,
+          "direction": "forward",
+          "arc": 6804.7802734375,
+          "time": 6175.30000000447
+        },
+        {
+          "index": 5,
+          "direction": "forward",
+          "arc": 8513.3173828125,
+          "time": 7443
+        },
+        {
+          "index": 5,
+          "direction": "backward",
+          "arc": 8513.3173828125,
+          "time": 8774.89999999851
+        },
+        {
+          "index": 4,
+          "direction": "backward",
+          "arc": 6804.7802734375,
+          "time": 10047.5
+        },
+        {
+          "index": 3,
+          "direction": "backward",
+          "arc": 4753.767578125,
+          "time": 11367.10000000149
+        },
+        {
+          "index": 2,
+          "direction": "backward",
+          "arc": 3417.64208984375,
+          "time": 12649.80000000447
+        },
+        {
+          "index": 1,
+          "direction": "backward",
+          "arc": 2059.46533203125,
+          "time": 13949
+        },
+        {
+          "index": 0,
+          "direction": "backward",
+          "arc": 70,
+          "time": 15267.60000000149
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "events": [
+        {
+          "index": 0,
+          "direction": "forward",
+          "arc": 70,
+          "time": 16922.20000000298
+        },
+        {
+          "index": 1,
+          "direction": "forward",
+          "arc": 1511.3560791015625,
+          "time": 18154.80000000447
+        },
+        {
+          "index": 2,
+          "direction": "forward",
+          "arc": 2697.3515625,
+          "time": 19388.60000000149
+        },
+        {
+          "index": 3,
+          "direction": "forward",
+          "arc": 3867.662841796875,
+          "time": 20624.10000000149
+        },
+        {
+          "index": 4,
+          "direction": "forward",
+          "arc": 5439.55078125,
+          "time": 21854.30000000447
+        },
+        {
+          "index": 5,
+          "direction": "forward",
+          "arc": 6922.609375,
+          "time": 23092.80000000447
+        },
+        {
+          "index": 5,
+          "direction": "backward",
+          "arc": 6922.609375,
+          "time": 24371.70000000298
+        },
+        {
+          "index": 4,
+          "direction": "backward",
+          "arc": 5439.55078125,
+          "time": 25605
+        },
+        {
+          "index": 3,
+          "direction": "backward",
+          "arc": 3867.662841796875,
+          "time": 26837.80000000447
+        },
+        {
+          "index": 2,
+          "direction": "backward",
+          "arc": 2697.3515625,
+          "time": 28070.89999999851
+        },
+        {
+          "index": 1,
+          "direction": "backward",
+          "arc": 1511.3560791015625,
+          "time": 29305
+        },
+        {
+          "index": 0,
+          "direction": "backward",
+          "arc": 70,
+          "time": 30537.30000000447
+        }
+      ]
+    }
+  ],
+  "motion": [
+    {
+      "durationMs": 6500,
+      "frames": 284,
+      "p50": 16.700000000004366,
+      "p95": 33.400000000001455,
+      "max": 50.10000000000582,
+      "longTasks": []
+    }
+  ],
+  "errors": [],
+  "publicApiRequests": [],
+  "unverified": [
+    "Physical iPhone Safari",
+    "VoiceOver on physical device",
+    "Physical browser UI 200% zoom (half CSS viewport equivalent tested)",
+    "Real-device frame performance",
+    "Production hosting"
+  ]
+}
