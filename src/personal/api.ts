@@ -4,8 +4,8 @@ import type { AerionStateSnapshot } from '../hooks/useAerionState'
 export type CanonicalState = { revision: number; snapshot: AerionStateSnapshot | null; updatedAt: string | null }
 export type OwnerSession = { authenticated: true; csrfToken: string; owner: { displayName: string } }
 export class ApiError extends Error {
-  constructor(public status: number) {
-    super(status === 401 ? 'Session expired. Sign in again; your pending edits are preserved.' : status === 409 ? 'Another device changed your state. Review both versions before saving.' : status === 0 ? 'No connection. Reconnect and retry; pending edits remain in this tab.' : 'The server could not complete this request. Retry when available.')
+  constructor(public status: number, public code = '') {
+    super(code === 'ACTIVITY_REVIEW_REQUIRED' ? 'Activity review required. Similar activities were rejected; your edits are preserved. Export pending edits or refresh and use the server version before correcting the backup.' : code === 'PROVIDER_UNAVAILABLE' ? 'Intervals.icu sync is unavailable. No activities were imported; canonical state is unchanged.' : status === 401 ? 'Session expired. Sign in again; your pending edits are preserved.' : status === 409 ? 'Another device changed your state. Review both versions before saving.' : status === 0 ? 'No connection. Reconnect and retry; pending edits remain in this tab.' : 'The server could not complete this request. Retry when available.')
   }
 }
 
@@ -27,7 +27,11 @@ export class PersonalApi {
         body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(15000),
       })
     } catch { throw new ApiError(0) }
-    if (!response.ok) throw new ApiError(response.status)
+    if (!response.ok) {
+      const body = await response.json().catch(() => null)
+      const code = ['ACTIVITY_REVIEW_REQUIRED', 'REVISION_CONFLICT', 'PROVIDER_UNAVAILABLE'].includes(body?.error) ? body.error : ''
+      throw new ApiError(response.status, code)
+    }
     if (response.status === 204) return null
     // Never render server error text or HTML in the UI.
     return response.json()

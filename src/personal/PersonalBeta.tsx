@@ -80,7 +80,8 @@ export function PersonalBeta() {
         if (next.revision <= canonical.revision || !next.snapshot) throw new Error('Unconfirmed commit')
         accept(next)
       } catch (cause) {
-        if (cause instanceof ApiError && cause.status === 409) setRemote(await api.read())
+        if (cause instanceof ApiError && cause.status === 409 && cause.code !== 'ACTIVITY_REVIEW_REQUIRED') setRemote(await api.read())
+        if (cause instanceof ApiError && cause.code === 'ACTIVITY_REVIEW_REQUIRED') pending.current = null
         throw cause
       }
     })

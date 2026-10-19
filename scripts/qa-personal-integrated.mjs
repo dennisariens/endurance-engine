@@ -1,0 +1,62 @@
+// Actual compiled Express + disposable PostgreSQL; synthetic data only.
+import { spawn, execFileSync } from 'node:child_process'
+import { mkdtemp, readFile, writeFile, mkdir, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
+import https from 'node:https'
+import http from 'node:http'
+import { randomUUID } from 'node:crypto'
+import assert from 'node:assert/strict'
+import pg from 'pg'
+import bcrypt from 'bcryptjs'
+import { chromium } from 'playwright'
+import { PgStore } from '../server/personal/store.mjs'
+const root = await mkdtemp(join(tmpdir(),'aerion-browser-pg-'))
+const bin = process.env.AERION_PG_BIN
+assert.ok(bin, 'AERION_PG_BIN required; no skipped database checks')
+const checks=[], errors=[]; let database, web, proxy, browser, pool
+const pause = ms => new Promise(r=>setTimeout(r,ms))
+const port = async () => { const s=http.createServer(); await new Promise(r=>s.listen(0,'127.0.0.1',r)); const n=s.address().port; await new Promise(r=>s.close(r)); return n }
+const dbPort=await port(), webPort=await port(), tlsPort=await port()
+const origin=`https://localhost:${tlsPort}`, url=`postgresql://aerion_test@127.0.0.1:${dbPort}/postgres`, owner=randomUUID()
+async function startPG(){ database=spawn(join(bin,'postgres'),['-D',join(root,'data'),'-h','127.0.0.1','-p',String(dbPort),'-k',root],{stdio:'ignore'}); for(let i=0;i<100;i++){const c=new pg.Client({connectionString:url});try{await c.connect();await c.end();return}catch{await c.end().catch(()=>{});await pause(100)}}throw Error('PG startup failed') }
+async function stop(child){if(child && child.exitCode===null)await new Promise(r=>{child.once('exit',r);child.kill('SIGINT')})}
+try {
+ execFileSync(join(bin,'initdb'),['-D',join(root,'data'),...(process.env.AERION_PG_SHARE?['-L',process.env.AERION_PG_SHARE]:[]),'--auth=trust','--username=aerion_test','--locale=C'],{stdio:'ignore'})
+ await startPG(); pool=new pg.Pool({connectionString:url}); const store=new PgStore(pool,owner); await store.initialize()
+ execFileSync('openssl',['req','-x509','-newkey','rsa:2048','-nodes','-keyout',join(root,'key'),'-out',join(root,'cert'),'-days','1','-subj','/CN=localhost'],{stdio:'ignore'})
+ web=spawn(process.execPath,['app.cjs'],{env:{...process.env,NODE_ENV:'production',DATABASE_URL:url,AERION_ORIGIN:origin,AERION_OWNER_ID:owner,AERION_OWNER_DISPLAY_NAME:'Synthetic owner',AERION_PASSWORD_HASH:await bcrypt.hash('synthetic-only',10),AERION_TRUST_PROXY:'loopback',AERION_STATIC_DIR:resolve('dist'),PORT:String(webPort)},stdio:['ignore','pipe','pipe']})
+ await new Promise((r,j)=>{const t=setTimeout(()=>j(Error('Express startup timeout')),10000);web.stdout.on('data',d=>{if(String(d).includes('backend listening')){clearTimeout(t);r()}});web.once('exit',()=>j(Error('Express refused startup')))})
+ let drop=false
+ proxy=https.createServer({key:await readFile(join(root,'key')),cert:await readFile(join(root,'cert'))},(req,res)=>{
+  const upstream=http.request({host:'127.0.0.1',port:webPort,path:req.url,method:req.method,headers:{...req.headers,'x-forwarded-proto':'https','x-forwarded-host':`localhost:${tlsPort}`}},reply=>{
+   if(drop && req.method==='PUT' && req.url==='/api/state' && reply.statusCode===200){drop=false;reply.resume();reply.on('end',()=>{res.writeHead(200,{'content-type':'application/json'});res.end('{')});return}
+   res.writeHead(reply.statusCode,reply.headers);reply.pipe(res)
+  });upstream.on('error',()=>{res.writeHead(503);res.end()});req.pipe(upstream)
+ });await new Promise(r=>proxy.listen(tlsPort,'127.0.0.1',r))
+ browser=await chromium.launch({headless:true, ...(process.env.AERION_CHROME?{executablePath:process.env.AERION_CHROME}:{})})
+ const contexts=await Promise.all([1440,1280,390].map(width=>browser.newContext({ignoreHTTPSErrors:true,viewport:{width,height:width===390?844:900},acceptDownloads:true})))
+ const pages=await Promise.all(contexts.map(c=>c.newPage())),[a,b,m]=pages
+ const rev=(p,n)=>p.getByText(`Owner session · revision ${n}`,{exact:true}).waitFor()
+ const login=async p=>{await p.getByLabel('Owner password').fill('synthetic-only');await p.getByRole('button',{name:'Sign in',exact:true}).click()}
+ for(const p of pages){p.on('pageerror',e=>errors.push(e.message));p.on('dialog',d=>d.accept());await p.goto(origin);await p.getByLabel('Owner password').waitFor();assert.equal(await p.locator('.premium-shell').count(),0);await login(p);await p.getByRole('heading',{name:'Shared state is empty'}).waitFor()}
+ assert.equal((await store.getState()).revision,0);checks.push('Secure cookie login in three isolated desktop/mobile sessions; load gate; no defaults upload')
+ const backup={version:2,exportedAt:new Date().toISOString(),races:[],goals:[],activities:[{id:'synthetic-ride',source:'manual',date:'2026-10-17',name:'Synthetic ride',type:'Ride',durationSec:1800,load:25}],blockedDates:[],decisionLog:[],currentState:{injury_present:false,illness_present:false,recovery_status:'unknown'},theme:'dark'}
+ await a.getByLabel('I have saved a separate backup').check();await a.getByLabel('Preview V3 backup').setInputFiles({name:'synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(backup))});await a.getByRole('button',{name:'Confirm import to empty server'}).waitFor();assert.equal((await store.getState()).revision,0);await a.getByRole('button',{name:'Confirm import to empty server'}).click();await rev(a,1);checks.push('Backup preview does not write; explicit import initializes empty canonical state')
+ for(const p of [b,m]){await p.getByRole('button',{name:'Refresh from server'}).click();await rev(p,1)}
+ await a.getByLabel('Injury present',{exact:true}).check();await a.getByRole('button',{name:'Save to server'}).click();await rev(a,2)
+ await b.getByLabel('Illness present',{exact:true}).check();await b.getByRole('button',{name:'Save to server'}).click();await b.getByRole('region',{name:'Resolve concurrent edits'}).waitFor();assert.ok(await b.getByLabel('Illness present',{exact:true}).isChecked());await b.getByRole('button',{name:'Use server version'}).click();checks.push('Real transactional 409 revision conflict preserves edits and explicit resolution')
+ await m.getByRole('button',{name:'Refresh from server'}).click();await rev(m,2);assert.ok(await m.getByLabel('Injury present',{exact:true}).isChecked());await m.getByLabel('Illness present',{exact:true}).check();await m.getByRole('button',{name:'Save to server'}).click();await rev(m,3);await m.reload();await rev(m,3);checks.push('Desktop→mobile recovery synchronization and mobile save/reload')
+ await a.getByRole('button',{name:'Refresh from server'}).click();await rev(a,3);await a.getByLabel('Injury present',{exact:true}).uncheck();drop=true;await a.getByRole('button',{name:'Save to server'}).click();await a.getByText('A save needs confirmation.',{exact:false}).waitFor();await a.getByRole('button',{name:'Save to server'}).click();await rev(a,4);assert.equal((await store.getState()).revision,4);checks.push('Dropped committed response retries identical durable idempotency request with one revision')
+ await a.getByRole('button',{name:'Goals',exact:true}).click();await a.getByLabel('Idea / race / goal').fill('Synthetic shared goal');await a.locator('.goal-intake-card button[type=submit]').click();await a.getByRole('button',{name:'Save to server'}).click();await rev(a,5);await m.reload();await rev(m,5);await m.getByRole('button',{name:'More navigation',exact:true}).click();await m.getByRole('button',{name:'Goals',exact:true}).click();await m.getByRole('button',{name:'Synthetic shared goal',exact:false}).waitFor();checks.push('Desktop goal save visible in mobile browser')
+ await a.getByRole('button',{name:'Settings & data',exact:true}).click();await a.getByRole('button',{name:'Sync now',exact:true}).click();await a.getByText('Intervals.icu sync is unavailable.',{exact:false}).waitFor();assert.equal((await store.getState()).revision,5);checks.push('Actual provider 503 accurately shown without mutation or fake freshness')
+ const downloadEvent=a.waitForEvent('download');await a.getByRole('button',{name:'Export server backup'}).click();const d=await downloadEvent;assert.equal(JSON.parse(await readFile(await d.path(),'utf8')).goals.length,1);checks.push('Canonical backup export')
+ await a.getByText('Log a completed activity',{exact:true}).click();await a.getByLabel('Activity name',{exact:true}).fill('Synthetic duplicate');await a.getByLabel('Date',{exact:true}).fill('2026-10-17');await a.getByLabel('Minutes',{exact:true}).fill('30');await a.getByRole('button',{name:'Add to pending edits'}).click();await a.getByRole('button',{name:'Save to server'}).click();await a.getByText('Activity review required.',{exact:false}).waitFor();assert.equal(await a.getByRole('region',{name:'Resolve concurrent edits'}).count(),0);const rejected=await store.getState();assert.equal(rejected.revision,5);assert.equal(rejected.snapshot.activities.length,1);assert.equal(rejected.snapshot.activities.reduce((n,x)=>n+(x.load||0),0),25);await a.getByRole('button',{name:'Refresh from server'}).click();await a.getByRole('button',{name:'Use server version'}).click();checks.push('Actual ACTIVITY_REVIEW_REQUIRED shows distinct review message; rejected duplicate never increases canonical count/load')
+ const cookie=(await contexts[0].cookies()).find(x=>x.name==='__Host-aerion');assert.ok(cookie.secure && cookie.httpOnly && cookie.sameSite==='Strict');assert.equal((await contexts[0].request.put(`${origin}/api/state`,{headers:{origin},data:{}})).status(),403);checks.push('Secure HttpOnly Strict cookie attributes and authenticated mutation CSRF rejection')
+ await pool.query('UPDATE aerion_sessions SET expires_at = NOW() - interval \'1 second\'');await a.getByLabel('Injury present',{exact:true}).check();await a.getByRole('button',{name:'Save to server'}).click();await a.getByLabel('Owner password').waitFor();await a.getByRole('button',{name:'Export preserved pending edits'}).waitFor();await login(a);await a.getByRole('region',{name:'Resolve concurrent edits'}).waitFor();await a.getByRole('button',{name:'Use server version'}).click();checks.push('PG session expiry hides athlete state; pending edits survive reauthentication')
+ await pool.end();await stop(database);await startPG();pool=new pg.Pool({connectionString:url});await a.reload();await rev(a,5);checks.push('Actual PostgreSQL process restart retains canonical state and authenticated browser session')
+ await mkdir('docs/personal-beta/integration',{recursive:true});await a.getByText('Loading AERION…',{exact:true}).waitFor({state:'hidden'});assert.ok(await a.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await a.screenshot({path:'docs/personal-beta/integration/desktop.png',fullPage:true});await m.reload();await login(m);await rev(m,5);await m.getByText('Loading AERION…',{exact:true}).waitFor({state:'hidden'});assert.ok(await m.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await m.screenshot({path:'docs/personal-beta/integration/mobile.png',fullPage:true})
+ await a.getByRole('button',{name:'Sign out',exact:true}).click();await a.getByLabel('Owner password').waitFor();assert.equal((await contexts[0].request.get(`${origin}/api/state`)).status(),401);checks.push('Logout invalidates database session and blocks canonical reads')
+ const anon=await browser.newContext({ignoreHTTPSErrors:true});for(const method of ['GET','PUT']){assert.equal((await anon.request.fetch(`${origin}/api/state`,{method,headers:{origin:'https://evil.example'}})).status(),403)}assert.equal((await anon.request.get(`${origin}/api/state`)).status(),401);checks.push('Cross-origin reads/writes denied; anonymous state denied')
+ assert.deepEqual(errors,[]);const results={browser:await browser.version(),checks,errors,limitations:['Synthetic data only','Local TLS certificate trusted only by disposable browser context','Physical Safari and hosting unverified']};await writeFile('docs/personal-beta/integration/results.json',JSON.stringify(results,null,2));console.log(JSON.stringify(results,null,2))
+}finally{await browser?.close();await new Promise(r=>proxy?proxy.close(r):r());await stop(web);await pool?.end().catch(()=>{});await stop(database);await rm(root,{recursive:true,force:true})}
