@@ -1,5 +1,7 @@
 # Codex to Work — Issue #17
 
+Verified implementation merge: `f9e0ee9f863d2ab4884470ba683731c4b81a9bca`.
+
 Combined client #15 c1c98ef974c0db9870c210fe50d146dcf0772164 and backend #16
 7a195b100cf12cbda3d481703c536aef874a2db2 in isolated branch
 `codex/aerion-17-integration`. Merge commit records both exact parents; integration
