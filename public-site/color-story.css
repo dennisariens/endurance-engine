@@ -1,0 +1,195 @@
+/* AERION / THE JOURNEY — COLOUR DIRECTION v1
+   Public-site only. Add AFTER site.css in the approved refined prototype.
+   Never import this into the authenticated athlete/coaching application.
+   Approved AE mark and its master SVG/gradient remain untouched.
+   Solid colour is the default; gradients are rare, purposeful accents. */
+:root {
+  --journey-ink: #07111e;
+  --journey-ink-deep: #060c15;
+  --journey-ink-raised: #102137;
+  --journey-paper: #f4f5f2;
+  --journey-text-muted: #c4d1dc;
+  --journey-electric: #58c6ff;
+  --journey-pink: #ff5fb8;
+  --journey-pink-soft: #ff9dcb;
+  --journey-lime: #f0ff6b;
+  --journey-mint: #a0e6d2;
+  --journey-goal: linear-gradient(110deg, #f0ff6b 0%, #ffe4a5 36%, #ff8fba 77%, #ff5fb8 100%);
+  --journey-human: linear-gradient(110deg, #ff9dcb 0%, #cda0ea 46%, #58c6ff 100%);
+  --journey-evidence: linear-gradient(110deg, #58c6ff 0%, #81dce4 60%, #c4ec9a 100%);
+  --journey-signature: linear-gradient(100deg, #f0ff6b 0%, #ff8fba 40%, #ff5fb8 55%, #58c6ff 100%);
+}
+
+/* 01 / HERO — confidently blue-led; no full-bleed rainbow background. */
+.hero {
+  background:
+    radial-gradient(ellipse 47% 65% at 79% 38%, rgba(64, 150, 225, .20), transparent 74%),
+    radial-gradient(ellipse 34% 35% at 96% 86%, rgba(255, 95, 184, .075), transparent 78%),
+    linear-gradient(122deg, #060d17 10%, #091b2b 72%, #07111e);
+}
+.hero h1 span {
+  background: linear-gradient(105deg, #f3f5f6 0%, #b9e6ff 21%, #58c6ff 53%, #efacd5 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hero-product-frame {
+  border-color: rgba(104, 178, 218, .52);
+  box-shadow: 0 36px 100px #020810de, 0 0 0 6px #07111bb8, 0 0 80px #58c6ff13;
+}
+.login-button {
+  background: #f4f5f2;
+  border-color: #f4f5f2;
+  color: #081522;
+  font-weight: 720;
+}
+.login-button span { color: #0b688f; }
+.login-button:hover { background: #dcefff; border-color: #dcefff; color: #07111e; }
+
+/* AERION's signature action can remain lime; avoid repeating it
+   across every demo tab, subheading and status. */
+.hero .button-primary { background: var(--journey-lime); color: #07121d; }
+.hero .button-primary:hover { background: #e8f999; }
+
+/* 02 / SECTION RHYTHM — use quiet colour-coded regions, not saturated slabs.
+   Keep waypoint/scroll DOM and stage layout completely untouched. */
+.journey {
+  background:
+    radial-gradient(ellipse 45% 18% at 7% 6%, #21516a21, transparent 86%),
+    radial-gradient(ellipse 38% 15% at 92% 45%, #59254119, transparent 88%),
+    #07111e;
+}
+.stage .stage-number { color: #b9d9eb; }
+.stage .stage-copy h2 em { color: #f4f5f2; }
+.stage.is-active .stage-number { color: #b9d9eb; }
+.stage.is-active .stage-copy h2 em { color: var(--chapter-accent, #f4f5f2); }
+.stage.is-active .stage-demo {
+  border-color: var(--chapter-border, #6486a0);
+  box-shadow: 0 32px 108px #02070ea5, 0 0 30px var(--chapter-glow, #58c6ff11);
+}
+.stage .stage-demo {
+  background: linear-gradient(145deg, #112237fa 0%, #0a1727fd 79%);
+}
+.stage .demo-pill { color: #d3e1eb; }
+
+/* UNDERSTAND / HEALTH: measured human warmth, blue trust, no generic
+   pink-tinted full panel. No change to meaningful red/green wellness states. */
+#understand {
+  --chapter-accent: #9edaff;
+  --chapter-border: #5685a4;
+  --chapter-glow: #58c6ff20;
+}
+#understand .metrics-demo { border-top: 2px solid #71b9e080; }
+#understand .signal { background: #142638; }
+#understand .signal:first-child { border-top: 2px solid #ff9dcb; }
+#understand .signal:nth-child(2) { border-top: 2px solid #cda0ea; }
+#understand .signal:nth-child(3) { border-top: 2px solid #58c6ff; }
+#understand .context-note { border-left: 2px solid #92cbea; }
+
+/* DIRECTION / GOAL SETTING: warm yellow -> pink belongs to the
+   aspiration/target itself, not entire backgrounds or paragraph text. */
+#direction {
+  --chapter-accent: #f9d4ac;
+  --chapter-border: #b18f8e;
+  --chapter-glow: #ff5fb81a;
+}
+#direction .stage-number { color: #f8d4a9; }
+#direction .goal-card {
+  border: 1px solid transparent;
+  background: linear-gradient(#122238, #122238) padding-box,
+              var(--journey-goal) border-box;
+}
+#direction .goal-card small { color: #f8d4a9; }
+#direction .goal-target b { color: #fff0d8; }
+#direction .tab.active {
+  background: #f4f5f2; color: #0b1927; box-shadow: none;
+}
+#direction .goal-demo .tabs .tab:focus-visible {
+  outline-color: var(--journey-lime);
+}
+
+/* BUILD THE PLAN / NEUTRAL: a disciplined dark panel is deliberate
+   negative space between two expressive chapters. */
+#plan {
+  --chapter-accent: #f4f5f2;
+  --chapter-border: #6d8394;
+  --chapter-glow: #58c6ff0f;
+}
+#plan .stage-demo { border-top: 2px solid #7a96ac; }
+
+/* ADAPT / LIFE HAPPENS: selective warm/pink-to-blue to show a new
+   direction. Semantic warning labels still retain their own colours. */
+#adapt {
+  --chapter-accent: #ffadcf;
+  --chapter-border: #947591;
+  --chapter-glow: #ff5fb818;
+}
+#adapt .stage-demo {
+  border-top: 2px solid #e1a3cb;
+}
+#adapt .scenario.active {
+  background: #b4dfff; border-color: #b4dfff; color: #092134;
+}
+#adapt .comp-new {
+  border-color: #6388a9;
+  background: linear-gradient(143deg, #18354b 0%, #17243a 72%);
+}
+#adapt .comp-new small { color: #b6e9ff; }
+/* The existing detour animation is the active coaching signal.
+   No additional flashing, pulsing or strobe effects. */
+.journey.is-detouring .journey-detour {
+  stroke: #ff9dcb;
+}
+
+/* PROGRESS / EVIDENCE: crisp data-blue accent, with mint/lime reserved
+   for directional focus. Never change chart-series colours if they
+   encode specific athlete metrics or health states. */
+#progress {
+  --chapter-accent: #9cd9e8;
+  --chapter-border: #508a9c;
+  --chapter-glow: #58c6ff1d;
+}
+#progress .stage-demo {
+  border-top: 2px solid #58c6ff;
+}
+#progress .progress-tabs .tab.active {
+  background: #b7eaf4; color: #08202d; box-shadow: none;
+}
+#progress .chart-summary b { color: #e5f7fb; }
+
+/* LAST STOP / THE NEXT CHAPTER: cool, quiet finish with a single
+   AERION signature accent; the route continues past the goal. */
+.stage-last {
+  --chapter-accent: #e5f1fa;
+  --chapter-border: #6589a0;
+  --chapter-glow: #58c6ff17;
+}
+.final-call {
+  background:
+    radial-gradient(ellipse 48% 65% at 82% 38%, #1748662a, transparent 74%),
+    #07111e;
+}
+.final-call h2 em { color: #dbefff; }
+.final-panel {
+  background: #0e2132;
+  border-color: #476478;
+}
+.final-panel .button-primary {
+  background: #f4f5f2; color: #07121d;
+}
+.final-panel .button-primary:hover {
+  background: #dbedfd; color: #07121d;
+}
+
+/* Motion, route focus and actual app login are handled by the
+   approved prototype / integration contract, not by this file.
+   Preserve touch, keyboard focus, semantic data and reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .login-button, .stage-demo, #adapt .comp-new { transition: none; }
+}
+
+@media (max-width: 520px) {
+  /* Do not let a full gradient rim become a dominant mobile visual. */
+  #direction .goal-card { border-width: 1px; }
+  #understand .signal:first-child,
+  #understand .signal:nth-child(2),
+  #understand .signal:nth-child(3) { border-top-width: 2px; }
+}

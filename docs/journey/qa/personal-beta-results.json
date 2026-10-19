@@ -1,0 +1,26 @@
+{
+  "browser": "145.0.7632.6",
+  "checks": [
+    "Secure cookie login in three isolated desktop/mobile sessions; load gate; no defaults upload",
+    "Backup preview does not write; explicit import initializes empty canonical state",
+    "Real transactional 409 revision conflict preserves edits and explicit resolution",
+    "Desktop→mobile recovery synchronization and mobile save/reload",
+    "Dropped committed response retries identical durable idempotency request with one revision",
+    "Desktop goal save visible in mobile browser",
+    "Actual provider 503 accurately shown without mutation or fake freshness",
+    "Canonical backup export",
+    "Actual ACTIVITY_REVIEW_REQUIRED shows distinct review message; rejected duplicate never increases canonical count/load",
+    "Secure HttpOnly Strict cookie attributes and authenticated mutation CSRF rejection",
+    "PG session expiry hides athlete state; pending edits survive reauthentication",
+    "Actual PostgreSQL process restart retains canonical state and authenticated browser session",
+    "Signed-in owner can visit public Journey without API/state requests or canonical mutation",
+    "Logout invalidates database session and blocks canonical reads",
+    "Cross-origin reads/writes denied; anonymous state denied"
+  ],
+  "errors": [],
+  "limitations": [
+    "Synthetic data only",
+    "Local TLS certificate trusted only by disposable browser context",
+    "Physical Safari and hosting unverified"
+  ]
+}

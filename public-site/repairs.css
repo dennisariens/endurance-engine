@@ -1,0 +1,79 @@
+/* Issue #20: bounded repairs to the approved source; brand artwork stays intact. */
+.journey{padding-top:48px}
+.journey-head{padding-bottom:32px}
+.journey-head h2{font-size:clamp(34px,4.5vw,62px);margin:16px 0}
+.journey-head p{font-size:15px;max-width:520px}
+.stage{padding-top:115px;padding-bottom:100px;scroll-margin-top:90px}
+.stage-layout{width:min(1140px,calc(100% - 192px));gap:9%}
+.stage.route-center .stage-layout{padding-top:30px}
+.stage-copy h2{transition:color .25s,transform .35s}
+.stage-copy .stage-index{opacity:calc(.75 + .25 * var(--chapter-focus));transition:opacity .4s .08s}
+.stage-demo{transform:translateY(calc(32px - 32px * var(--chapter-focus))) scale(calc(.96 + .04 * var(--chapter-focus)));filter:none;opacity:calc(.90 + .10 * var(--chapter-focus));transition:transform .4s ease-out,opacity .3s .08s,border-color .3s,box-shadow .4s;will-change:auto}
+.stage.is-active .stage-demo{box-shadow:0 24px 70px #02070ebb,0 0 0 1px var(--chapter-border,#5685a4)}
+.route-stop,.route-stop.is-active,.route-stop:hover{width:54px;height:54px;min-width:44px;min-height:44px}
+.route-stop.is-active .route-stop-ring{animation:none}
+.route-stop.is-arriving .route-stop-ring{animation:journeyArrival .85s ease-out both}
+.route-stop.is-arriving .route-stop-ring.second{animation:journeyArrival .85s .15s ease-out both}
+@keyframes journeyArrival{0%{opacity:.8;transform:scale(.65)}100%{opacity:0;transform:scale(1.35)}}
+.journey.is-detouring .journey-detour{animation:dashDetour 1s linear 1}
+.route-stop-label{background:#091522;border-radius:6px;padding:8px;max-width:220px;white-space:normal}
+.route-stop-label strong{line-height:1.4}
+.route-stop:focus-visible{outline:3px solid var(--lime);outline-offset:4px}
+.tab,.scenario,.day{min-height:44px}
+.proof-comparison{font-size:16px;color:#d7ecf7;margin:4px 0 20px;line-height:1.6}
+#progress .stage-demo{padding:30px}
+.progress-head{gap:14px;flex-wrap:wrap}
+.progress-head h3{font-size:27px;line-height:1.15}
+.chart-container{position:relative;padding-top:8px}
+#progress-chart{width:100%;min-height:220px}
+.chart-scale{display:flex;justify-content:space-between;gap:12px;color:#b6ccda;font-size:11px;margin:4px 0 12px}
+.proof-support{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:24px}
+.proof-support div{border-top:1px solid #4c6f89;padding-top:13px}
+.proof-support span{display:block;font-size:10px;color:#a9becd;line-height:1.5}
+.proof-support b{display:block;font-size:17px;font-weight:600;color:#e7f5fa;margin-top:5px}
+.long-view{list-style:none;margin:32px 0;padding:0 0 0 24px;border-left:1px solid #456a84;display:grid;gap:28px}
+.long-view li{position:relative}
+.long-view li::before{content:'';position:absolute;left:-29px;top:5px;width:9px;height:9px;border-radius:50%;background:#58c6ff;border:2px solid #142334;box-shadow:0 0 0 3px #58c6ff22}
+.long-view li:last-child::before{background:#f0ff6b}
+.long-view span{font-size:9px;letter-spacing:.15em;color:#8cccf1}
+.long-view b{display:block;font-size:23px;line-height:1.2;margin:8px 0}
+.long-view p{font-size:13px;color:#b7c9d6;line-height:1.6}
+#philosophy{--chapter-accent:#58c6ff}
+#philosophy .stage-copy h2 em,#philosophy.is-active .stage-copy h2 em{color:#58c6ff}
+.final-call{padding:110px 0}
+.final-call .final-contour{background-image:none;opacity:.15}
+.final-call .final-beacon{top:40px}
+.final-panel .button{min-height:48px}
+@media(max-width:1120px){.stage-layout{gap:7%;width:calc(100% - 160px)}.stage-copy h2{font-size:clamp(48px,6vw,70px)}}
+@media(max-width:800px){
+ .journey{padding-top:38px}.journey-head{padding-bottom:12px}.stage{padding-top:88px;padding-bottom:80px}
+ .stage-layout{width:calc(100% - 38px);gap:32px}
+ .stage.route-left .stage-layout,.stage.route-center .stage-layout{padding-left:44px;padding-right:6px;padding-top:24px}
+ .stage.route-right .stage-layout{padding-right:44px;padding-left:6px}
+ .stage-copy h2{font-size:clamp(40px,8.5vw,68px)}
+ .stage-demo{transform:translateY(calc(26px - 26px * var(--chapter-focus)));opacity:calc(.9 + .1 * var(--chapter-focus))}
+ .route-stop,.route-stop.is-active,.route-stop:hover{width:44px;height:44px}
+ .route-stop-ring{inset:-4px}.route-stop-ring.second{inset:-8px}
+ #progress .stage-demo{padding:22px 16px}.progress-head h3{font-size:23px}
+ .progress-tabs{flex-wrap:wrap}.progress-tabs .tab{flex:1 1 40%}
+ .proof-support{gap:8px}.proof-support b{font-size:14px}
+ .goal-card{align-items:flex-start;flex-direction:column}.goal-target{text-align:left}
+ .demo-top{flex-wrap:wrap;gap:8px}.signals{grid-template-columns:1fr}.signal>span{min-height:0}.signal svg{max-width:140px}
+ .comparison{grid-template-columns:1fr}.comp-arrow{transform:rotate(90deg);justify-self:center}
+ .week-days{gap:2px}.day{padding:8px 2px;min-width:0}.week-head{flex-wrap:wrap}
+ .route-stop-label{display:none}.stage-copy>p{font-size:15px}
+ .final-call{padding:95px 0}.long-view{padding-left:18px}.long-view li::before{left:-23px}
+}
+@media(prefers-reduced-motion:reduce){
+ html{scroll-behavior:auto}.stage-copy,.stage-demo{transform:none!important;opacity:1!important;filter:none!important;transition:none!important}
+ .route-stop-ring,.journey.is-detouring .journey-detour{animation:none!important}.route-stop{transition:none!important}
+}
+.sport.swim{background:#58c6ff}
+#understand .demo-foot,#direction .demo-foot,#plan .demo-foot,#adapt .demo-foot,#progress .demo-foot{color:#a9bdce}
+.menu-toggle{width:44px}
+.footer-links a{display:inline-flex;align-items:center;min-height:44px}
+@media(max-width:520px){.week-days{grid-template-columns:repeat(4,minmax(44px,1fr));gap:5px}}
+/* Same approved contour geometry, rasterized once to avoid vector repaint cost. */
+.journey-topography{background-image:url('/journey-assets/topography.png')}
+.journey-ink,#journey-beacon,.journey-detour{filter:none}
+.journey-topography{mask-image:none;will-change:transform;contain:strict}

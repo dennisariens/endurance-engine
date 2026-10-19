@@ -1,0 +1,38 @@
+{
+  "implementationSha": "1600c4e03fdd6966067f6b6289a00923b44f6e48",
+  "node": "24.13.1",
+  "postgresql": "18.1",
+  "chromium": "145.0.7632.6",
+  "npmCi": "PASS",
+  "tests": {
+    "passed": 392,
+    "files": 66,
+    "skipped": 0,
+    "command": "test:personal:pg"
+  },
+  "clientTypecheck": "PASS",
+  "serverTypecheck": "PASS",
+  "clientBuild": "PASS",
+  "serverBuild": "PASS",
+  "browser": "PASS",
+  "personalBetaScenarios": 15,
+  "frameTimingBefore": {
+    "medianMs": 50,
+    "p95Ms": 66.7
+  },
+  "frameTimingAfter": {
+    "durationMs": 6500,
+    "frames": 284,
+    "p50": 16.700000000004366,
+    "p95": 33.400000000001455,
+    "max": 50.10000000000582,
+    "longTasks": []
+  },
+  "unverified": [
+    "Physical iPhone Safari",
+    "VoiceOver on physical device",
+    "Physical browser UI 200% zoom (half CSS viewport equivalent tested)",
+    "Real-device frame performance",
+    "Production hosting"
+  ]
+}

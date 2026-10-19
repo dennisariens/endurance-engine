@@ -64,7 +64,8 @@ export function createApp({ config, store, loginLimit = 10 }: { config: Config; 
     res.set('Cache-Control', 'no-store')
     // Never construct a trusted origin from forwarded Host. The HTTPS proxy must
     // overwrite X-Forwarded-Proto; direct TLS also works without trusting proxies.
-    if (req.headers.host !== config.host || !req.secure || (req.headers['x-forwarded-proto'] !== undefined && req.headers['x-forwarded-proto'] !== 'https') || (req.headers['x-forwarded-host'] !== undefined && req.headers['x-forwarded-host'] !== config.host) || (req.headers.origin !== undefined && req.headers.origin !== config.origin) || req.headers['sec-fetch-site'] === 'cross-site') {
+    const publicNavigation = ['GET', 'HEAD'].includes(req.method) && (req.path === '/' || /^\/journey-assets\/(site\.css|color-story\.css|repairs\.css|journey\.js|topography\.png)$/.test(req.path))
+    if (req.headers.host !== config.host || !req.secure || (req.headers['x-forwarded-proto'] !== undefined && req.headers['x-forwarded-proto'] !== 'https') || (req.headers['x-forwarded-host'] !== undefined && req.headers['x-forwarded-host'] !== config.host) || (req.headers.origin !== undefined && req.headers.origin !== config.origin) || (req.headers['sec-fetch-site'] === 'cross-site' && !publicNavigation)) {
       res.status(403).json({ error: 'ORIGIN_REQUIRED' }); return
     }
     if (!['GET', 'HEAD'].includes(req.method) && req.headers.origin !== config.origin) { res.status(403).json({ error: 'ORIGIN_REQUIRED' }); return }
@@ -152,7 +153,26 @@ export function createApp({ config, store, loginLimit = 10 }: { config: Config; 
     // Only the reconciled, hosted-mode client build is allowed here. Never expose
     // the repo root, backup directories, source maps, dotfiles or credentials.
     app.use('/assets', (req, res, next) => { if (!/\.(js|css|woff2?|png|svg|webp|jpg)$/.test(req.path)) { res.sendStatus(404); return }; next() }, express.static(resolve(config.staticDir, 'assets'), { dotfiles: 'deny', index: false, redirect: false, fallthrough: false }))
-    app.get('/', (_req, res) => { res.sendFile(resolve(config.staticDir!, 'index.html')) })
+    // Public preview has a separate, finite asset surface. No repo/doc/backup serving.
+    const publicDir = resolve(config.staticDir, 'journey')
+    const publicPolicy = helmet.contentSecurityPolicy({ directives: {
+      defaultSrc: ["'self'"], scriptSrc: ["'self'"], scriptSrcAttr: ["'none'"],
+      styleSrc: ["'self'"], styleSrcAttr: ["'none'"], imgSrc: ["'self'", 'data:'],
+      connectSrc: ["'none'"], objectSrc: ["'none'"], frameAncestors: ["'none'"],
+      formAction: ["'none'"], baseUri: ["'none'"],
+    } })
+    app.get('/journey-assets/:file', publicPolicy, (req, res) => {
+      if (!['site.css', 'color-story.css', 'repairs.css', 'journey.js', 'topography.png'].includes(req.params.file)) { res.sendStatus(404); return }
+      res.sendFile(resolve(publicDir, req.params.file))
+    })
+    app.get('/', publicPolicy, (_req, res) => {
+      if (!existsSync(resolve(publicDir, 'index.html'))) { res.status(503).json({ error: 'PUBLIC_SITE_REQUIRED' }); return }
+      res.sendFile(resolve(publicDir, 'index.html'))
+    })
+    app.get(['/app', '/app/{*path}'], (_req, res) => {
+      if (!existsSync(resolve(config.staticDir!, 'app.html'))) { res.status(503).json({ error: 'HOSTED_CLIENT_REQUIRED' }); return }
+      res.sendFile(resolve(config.staticDir!, 'app.html'))
+    })
   }
   app.use((_req, res) => { res.status(config.staticDir ? 404 : 503).json({ error: config.staticDir ? 'NOT_FOUND' : 'HOSTED_CLIENT_REQUIRED' }) })
   app.use((error: any, _req: Request, res: Response, _next: NextFunction) => {

@@ -23,7 +23,8 @@
     "start:server": "node app.cjs",
     "admin:server": "node dist-server/admin.mjs",
     "test:personal:pg": "node scripts/test-personal-pg.mjs",
-    "qa:personal:integrated": "node scripts/qa-personal-integrated.mjs"
+    "qa:personal:integrated": "node scripts/qa-personal-integrated.mjs",
+    "qa:journey": "AERION_QA_JOURNEY=1 node scripts/qa-personal-integrated.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
