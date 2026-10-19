@@ -27,6 +27,12 @@ describe('Personal Beta transport safety', () => {
     await expect(new PersonalApi().read()).rejects.toThrow('The server could not complete')
     expect(new ApiError(500).message).not.toContain('sensitive')
   })
+  it('distinguishes rejected activities and unavailable ingestion without rendering server text', async () => {
+    for (const [status, code, message] of [[409, 'ACTIVITY_REVIEW_REQUIRED', 'Activity review required'], [409, 'REVISION_CONFLICT', 'Another device'], [503, 'PROVIDER_UNAVAILABLE', 'Intervals.icu sync is unavailable']] as const) {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ error: code, detail: 'private' }, { status })))
+      await expect(new PersonalApi().read()).rejects.toMatchObject({ status, code, message: expect.stringContaining(message) })
+    }
+  })
   it('preserves an uncertain write request; changed revisions need a new request', () => {
     const snapshot = emptySnapshot()
     const first = pendingWrite(null, snapshot, 1)

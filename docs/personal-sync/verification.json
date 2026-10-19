@@ -1,0 +1,38 @@
+{
+  "scope": "Synthetic local Personal Sync backend verification; not deployment acceptance",
+  "base": "488062fb706235dd08f18ea4cac8912a01844a5b",
+  "clientContractHead": "c1c98ef974c0db9870c210fe50d146dcf0772164",
+  "runtime": { "node": "24.13.1", "postgresql": "18.4" },
+  "tests": {
+    "command": "AERION_PG_BIN=<local PostgreSQL binary directory> npm run test:personal:pg",
+    "filesPassed": 65,
+    "testsPassed": 386,
+    "testsSkipped": 0,
+    "exitCode": 0
+  },
+  "additionalExecutableChecks": {
+    "actualPostgresStopStartStateSessionIdempotency": "pass",
+    "compiledAppHttpLoginAndCanonicalReadAgainstPostgres": "pass",
+    "compiledAdminExplicitSchemaEncryptedBackupRestore": "pass",
+    "restoreMandatoryBeforeImageAndMonotonicRevision": "pass",
+    "missingConfigurationRefusesStartup": "pass",
+    "typecheck": "pass",
+    "typecheckServer": "pass",
+    "build": "pass",
+    "buildServer": "pass"
+  },
+  "notPerformed": [
+    "combined Codex PR15 client and backend browser integration",
+    "Namecheap Passenger and HTTPS acceptance",
+    "physical iPhone Safari off home Wi-Fi",
+    "live Intervals provider sync",
+    "personal-data import or migration",
+    "deployment or merge"
+  ],
+  "limitations": [
+    "Provider sync deliberately returns authenticated 503 PROVIDER_UNAVAILABLE",
+    "The baseline local-mode frontend must not be served as the hosted client",
+    "Proxy-wide rate limits and precise proxy trust require hosting verification",
+    "Four inherited high npm audit findings remain in Vite/build dependencies"
+  ]
+}

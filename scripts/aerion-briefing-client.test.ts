@@ -88,7 +88,7 @@ describe('explicit snapshot briefing clients', () => {
   it('accepts an explicit browser backup file without forwarding account/UI settings', async () => {
     const { baseUrl, calls } = await service()
     const { state, ...rest } = synthetic
-    const result = await fetchBriefing({ baseUrl, snapshotPath: await file(JSON.stringify({ ...rest, currentState: state, theme: 'dark', account: { email: 'private@example.invalid' } })) })
+    const result = await fetchBriefing({ baseUrl, date: '2026-10-17', snapshotPath: await file(JSON.stringify({ ...rest, currentState: state, theme: 'dark', account: { email: 'private@example.invalid' } })) })
     expect(result.ok).toBe(true)
     expect(calls[0].body).not.toContain('private@example.invalid')
   })
