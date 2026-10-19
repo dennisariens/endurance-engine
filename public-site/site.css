@@ -32,14 +32,12 @@
 .route-stop-ring{border:1px solid #8dbfdeaa;position:absolute;inset:-9px;border-radius:50%;opacity:0;transform:scale(.55);pointer-events:none}
 .route-stop-ring.second{inset:-19px;border-color:#f0ff6b77}
 .route-stop.is-active,.route-stop:hover{width:64px;height:64px;border-color:#f0ff6b;box-shadow:0 0 0 4px #071321dd,0 0 0 11px #f0ff6b15,0 0 30px #f0ff6b38;background:#14283a}
-.route-stop.is-active .route-stop-ring{animation:routePing 2.7s cubic-bezier(.2,.64,.4,1) infinite}
-.route-stop.is-active .route-stop-ring.second{animation:routePing 2.7s cubic-bezier(.2,.64,.4,1) 1s infinite}
 .route-stop-label{position:absolute;left:calc(100% + 20px);top:50%;transform:translateY(-50%) translateX(-6px);white-space:nowrap;display:flex;flex-direction:column;gap:3px;font-size:9px;letter-spacing:.15em;color:#a4bbd1;font-weight:700;opacity:.35;transition:opacity .25s,transform .3s;text-shadow:0 1px 7px #06111c}
 .route-stop-label strong{font-size:10px;color:#eaf5ff;letter-spacing:.1em}
 .route-stop[data-side="right"] .route-stop-label{left:auto;right:calc(100% + 20px);text-align:right;align-items:flex-end;transform:translateY(-50%) translateX(6px)}
 .route-stop.is-active .route-stop-label{opacity:1;transform:translateY(-50%) translateX(0)}
 .route-stop-label em{font-style:normal;color:#8db8d8}
-@keyframes routePing{0%{opacity:.7;transform:scale(.55)}100%{opacity:0;transform:scale(1.7)}}
+
 /* Dim the previously visited and approaching chapters; make the current chapter feel closer. */
 .stage{--chapter-focus:0;isolation:isolate}
 .stage::after{content:'';position:absolute;z-index:-1;inset:15% 0;background:radial-gradient(ellipse at 50% 50%,#20435d12,transparent 65%);pointer-events:none;opacity:var(--chapter-focus)}
@@ -107,7 +105,7 @@
 .journey-ink{stroke-width:3.3;filter:drop-shadow(0 0 4px #ff5fb84a)}
 .journey-track{stroke:#6e8c9e3c;stroke-width:3;stroke-dasharray:2 13}
 .journey-detour{stroke:#a5c4d3a0;stroke-width:2.3;transition:stroke .2s,stroke-width .2s,filter .2s}
-.journey.is-detouring .journey-detour{stroke:#ff8fba;stroke-width:3.6;stroke-dasharray:8 10;filter:drop-shadow(0 0 5px #ff5fb8aa);animation:dashDetour 1.1s linear infinite}
+.journey.is-detouring .journey-detour{stroke:#ff8fba;stroke-width:3.6;stroke-dasharray:8 10;filter:drop-shadow(0 0 5px #ff5fb8aa);animation:dashDetour 1s linear 1}
 @keyframes dashDetour{to{stroke-dashoffset:-36}}
 .stage{min-height:700px}
 .stage-demo{box-shadow:0 24px 65px #02070e85}

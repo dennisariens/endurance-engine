@@ -30,7 +30,7 @@ REN's hero/product imagery uses confident large-area saturated gradients and imm
 ## Integration
 `public-site/color-story.css` is an **optional additive, reversible layer** for the refined standalone `AERION_THE_JOURNEY_REFINED.html`. Include after extracted `site.css`, not before, or integrate selectors into the final public-site bundle. Do NOT apply to the private React app CSS.
 
-**Blocked:** The full refined source bundle has not yet been transferred into the implementation checkout. The existing `public-site/site.css` is a partial approved asset, not a finished route; do not publish/deploy until original HTML/JS, strict CSP-compatible external assets and `/` → `/app` separation are verified.
+**Historical source status (superseded by Main’s final Issue #20 comment and committed source):** The full refined source bundle has not yet been transferred into the implementation checkout. The existing `public-site/site.css` is a partial approved asset, not a finished route; do not publish/deploy until original HTML/JS, strict CSP-compatible external assets and `/` → `/app` separation are verified.
 
 **Required final QA:** screenshots at 1440, 768, 390, 375; working demo controls; contrast/focus, VoiceOver/keyboard, real iPhone Safari reduced motion/performance, responsive route alignment, authenticated login with no private-data leakage. Physical Safari may remain an explicit release gate. No production release/merge without owner approval.
 
