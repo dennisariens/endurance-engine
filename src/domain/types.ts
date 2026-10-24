@@ -97,6 +97,9 @@ export type BlockedDate = {
 export type RaceCostBand = 'Low' | 'Medium' | 'High' | 'Extreme'
 
 export type CurrentState = {
+  /** Observation time is independent of import time and of unrelated fields. */
+  field_evidence?: Partial<Record<CurrentStateField, StateFieldEvidence>>
+  data_conflicts?: string[]
   last_updated?: string
   injury_present: boolean
   illness_present: boolean
@@ -128,6 +131,13 @@ export type CurrentState = {
   cycle_lthr?: number | null
   run_aet?: number | null
   cycle_aet?: number | null
+}
+
+export type CurrentStateField = Exclude<keyof CurrentState, 'field_evidence' | 'data_conflicts' | 'last_updated'>
+export type StateFieldEvidence = {
+  observedAt?: string
+  source: ActivitySource | 'apple-health' | 'google-fit' | 'legacy-local' | 'derived'
+  quality: 'reported' | 'derived' | 'legacy'
 }
 
 export type WorkoutOption = {

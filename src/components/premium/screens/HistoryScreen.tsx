@@ -99,7 +99,7 @@ export function HistoryScreen({ today, activities, races, decisionLog, state, vi
       <div className="history-snapshot-strip" aria-label="One-glance history overview">
         <article><span>Next agenda</span><strong>{nextRace?.name ?? 'None'}</strong><em>{nextRace ? `${nextRace.date} · ${nextRace.distanceKm ?? 'TBD'} km` : 'No fixed pressure'}</em></article>
         <article><span>Activities</span><strong>{activities.length}</strong><em>{hardActivities} high-load / race-like</em></article>
-        <article><span>Readiness</span><strong>{state.garmin_training_readiness ?? state.recovery_score ?? 'n/a'}</strong><em>recovery time {state.recovery_time_hours ?? 'est. 24–72'}h</em></article>
+        <article><span>Readiness</span><strong>{state.garmin_training_readiness ?? state.recovery_score ?? 'n/a'}</strong><em>recovery time {state.recovery_time_hours ?? 'unavailable'}h</em></article>
         <article><span>Body</span><strong>{state.hrv_14d_avg ?? 'n/a'} HRV</strong><em>sleep {state.sleep_hours_14d_avg ?? 'n/a'}h · VO2 {state.vo2max ?? 'n/a'}</em></article>
       </div>
 
@@ -126,7 +126,7 @@ export function HistoryScreen({ today, activities, races, decisionLog, state, vi
         </div>
 
         <div className="history-chart-stack">
-          <ChartShell title="Activity split metrics" icon={Route} description="Load, duration, distance, HR, and estimated recovery time by completed activity." fields={historyFields} actions={['load', 'distanceKm', 'durationMin', 'avgHr', 'recoveryTime'].map((field) => <button key={field} type="button" className={historyFields.includes(field) ? 'active' : ''} onClick={() => toggleField('history', field)}>{field}</button>)}>
+          <ChartShell title="Activity split metrics" unavailable={!activitySeries.length} icon={Route} description="Recorded load, duration, distance and HR by completed activity. Missing measurements remain gaps." fields={historyFields} actions={['load', 'distanceKm', 'durationMin', 'avgHr', 'recoveryTime'].map((field) => <button key={field} type="button" className={historyFields.includes(field) ? 'active' : ''} onClick={() => toggleField('history', field)}>{field}</button>)}>
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={activitySeries} margin={{ top: 10, right: 12, bottom: 0, left: -18 }}>
                 <CartesianGrid stroke={aerionChartTheme.grid} vertical={false} />
@@ -143,7 +143,7 @@ export function HistoryScreen({ today, activities, races, decisionLog, state, vi
             </ResponsiveContainer>
           </ChartShell>
 
-          <ChartShell title="Health and readiness history" icon={Moon} description="HR, HRV, sleep, steps, VO2max, training readiness, and recovery time from normalized health state." fields={healthFields} actions={['hr', 'hrv', 'sleep', 'vo2max', 'steps', 'readiness', 'recoveryTime'].map((field) => <button key={field} type="button" className={healthFields.includes(field) ? 'active' : ''} onClick={() => toggleField('health-history', field)}>{field}</button>)}>
+          <ChartShell title="Health and readiness history" unavailable={!healthSeries.length} icon={Moon} description="HR, HRV, sleep, steps, VO2max, training readiness, and recovery time from normalized health state." fields={healthFields} actions={['hr', 'hrv', 'sleep', 'vo2max', 'steps', 'readiness', 'recoveryTime'].map((field) => <button key={field} type="button" className={healthFields.includes(field) ? 'active' : ''} onClick={() => toggleField('health-history', field)}>{field}</button>)}>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={healthSeries} margin={{ top: 10, right: 12, bottom: 0, left: -18 }}>
                 <CartesianGrid stroke={aerionChartTheme.grid} vertical={false} />

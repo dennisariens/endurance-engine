@@ -26,10 +26,10 @@ export function RecoveryScreen({ state, morningReadiness, next72Plan, visualizat
         {['signals', 'lag', 'risk'].map((field) => <button key={field} type="button" className={(field === 'signals' ? fieldsFor('recovery-signals', ['signals']) : lagFields).includes(field) ? 'active' : ''} onClick={() => field === 'signals' ? toggleField('recovery-signals', field) : toggleField('recovery-lag', field)}>{field}</button>)}
       </div>
       <div className="chart-grid two">
-        <ChartShell title="Readiness signals" icon={ShieldCheck} fields={fieldsFor('recovery-signals', ['signals'])}>
+        <ChartShell title="Readiness signals" unavailable={!recoveryData.length} icon={ShieldCheck} fields={fieldsFor('recovery-signals', ['signals'])}>
           <ResponsiveContainer width="100%" height={240}><BarChart data={recoveryData} margin={{ top: 10, right: 10, bottom: 0, left: -18 }}><CartesianGrid stroke={aerionChartTheme.grid} vertical={false} /><XAxis dataKey="label" {...chartAxis} /><YAxis {...chartAxis} /><Tooltip {...chartTooltip} />{fieldsFor('recovery-signals', ['signals']).includes('signals') && <Bar dataKey="value" fill={aerionChartTheme.series.stage} radius={[8, 8, 0, 0]} />}</BarChart></ResponsiveContainer>
         </ChartShell>
-        <ChartShell title="Recovery lag projection" icon={TimerReset} fields={lagFields}>
+        <ChartShell title="Recovery lag projection" unavailable={!lagData.length} icon={TimerReset} fields={lagFields}>
           <ResponsiveContainer width="100%" height={240}><AreaChart data={lagData} margin={{ top: 10, right: 10, bottom: 0, left: -18 }}><CartesianGrid stroke={aerionChartTheme.grid} vertical={false} /><XAxis dataKey="label" {...chartAxis} /><YAxis {...chartAxis} /><Tooltip {...chartTooltip} />{lagFields.includes('lag') && <Area dataKey="lag" stroke={aerionChartTheme.series.drift} fill={aerionChartTheme.area.lag} strokeWidth={2} />}{lagFields.includes('risk') && <Line dataKey="risk" stroke={aerionChartTheme.series.risk} strokeWidth={2} dot={false} />}</AreaChart></ResponsiveContainer>
         </ChartShell>
       </div>

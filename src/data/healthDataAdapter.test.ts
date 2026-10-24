@@ -58,4 +58,32 @@ describe('healthDataAdapter', () => {
     })
     expect(merged.recovery_score).toBeGreaterThan(70)
   })
+
+  it('retains per-field observation dates when preferred sources supply different metrics', () => {
+    const metrics = normalizeHealthData([
+      { source: 'garmin', date: '2026-10-10', trainingReadiness: 80 },
+      { source: 'intervals', date: '2026-10-17', restingHr: 50 },
+    ])
+    const merged = mergeHealthIntoCurrentState(current, metrics)
+    expect(merged.field_evidence?.garmin_training_readiness).toMatchObject({ observedAt: '2026-10-10', source: 'garmin' })
+    expect(merged.field_evidence?.resting_hr_14d_avg).toMatchObject({ observedAt: '2026-10-17', source: 'intervals' })
+    expect(merged.field_evidence?.recovery_score?.quality).toBe('derived')
+    expect(merged.field_evidence?.recovery_score?.observedAt).toBe('2026-10-10')
+  })
+
+  it('chooses the latest observed sample per metric before source priority', () => {
+    const metrics = normalizeHealthData([
+      { source: 'garmin', date: '2026-10-10', restingHr: 45 },
+      { source: 'garmin', date: '2026-10-16', sleepHours: 8 },
+      { source: 'intervals', date: '2026-10-17', restingHr: 50 },
+    ])
+    expect(metrics.restingHr).toBe(50)
+    expect(metrics.sleepHours).toBe(8)
+  })
+
+  it('does not overwrite newer local recovery through the general health merge path', () => {
+    const merged = mergeHealthIntoCurrentState({ ...current, recovery_score: 0, last_updated: '2026-10-17' }, normalizeHealthData([{ source: 'garmin', date: '2026-10-10', recoveryScore: 80 }]))
+    expect(merged.recovery_score).toBe(0)
+    expect(merged.data_conflicts?.length).toBeGreaterThan(0)
+  })
 })

@@ -1,171 +1,34 @@
-import { useMemo, useState } from 'react'
-import { Activity, Brain, CalendarClock, Database, Flag, Gauge, LineChart as LineIcon, Plug, Settings2, ShieldCheck, Target, TimerReset, TrendingUp } from 'lucide-react'
-import type { Race } from '../../../domain/types'
-import { CommandPanel, EvidenceStrip, MetricTile, MiniTimeline, RouteRail, formatLabel, riskTone, toneFromStatus } from '../ui'
+import { ArrowUpRight, ArrowRight, Clock3 } from 'lucide-react'
 import type { PremiumCommandDeckProps, ScreenId } from '../types'
+import { buildCoachingProvenance } from '../../../data/coachingProvenance'
 
-type Props = PremiumCommandDeckProps
-type HomeLayout = 'coach-first' | 'mission-first' | 'data-first'
-
-const quickLinks: Array<{ id: ScreenId; label: string; detail: string }> = [
-  { id: 'training', label: 'Training', detail: 'do the work' },
-  { id: 'goals', label: 'Goal Path', detail: 'mission setup' },
-  { id: 'history', label: 'History', detail: 'proof log' },
-  { id: 'recovery', label: 'Recovery', detail: 'risk controls' },
-  { id: 'performance', label: 'Performance', detail: 'graphs' },
-  { id: 'settings', label: 'Connect', detail: 'sources' },
-]
-
-function layoutLabel(layout: HomeLayout): string {
-  if (layout === 'mission-first') return 'Mission'
-  if (layout === 'data-first') return 'Data'
-  return 'Coach'
+export function HomeScreen(props: PremiumCommandDeckProps & { onNavigate?: (screen: ScreenId) => void }) {
+  const { recommendation, decision, next72Plan, activeGoal, readiness, state, activities, races, today, onNavigate } = props
+  const session = recommendation.primary
+  const provenance = buildCoachingProvenance({ today, state, activities, goals: props.goals, activeGoalId: activeGoal?.id })
+  const hasEvidence = provenance.status === 'current'
+  const safetyRestriction = state.injury_present || state.illness_present
+  const showSession = hasEvidence || safetyRestriction
+  const latest = [...activities].sort((a, b) => b.date.localeCompare(a.date))[0]
+  const nextRace = [...races].filter(r => r.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0]
+  const observed = state.last_updated?.slice(0, 10)
+  const stale = provenance.status === 'stale'
+  return <section className="v3-home" aria-label="Today’s coaching">
+    <div className="v3-page-heading"><div><p className="v3-kicker">YOUR DAILY BRIEF</p><h1>Today</h1></div><span className="v3-muted">A little clarity. A better next step.</span></div>
+    <article className="v3-decision">
+      <div className="v3-decision-top"><span className="v3-kicker">WHAT DO I DO TODAY?</span><span className="v3-tag">{hasEvidence ? 'Recommended · advisory' : 'Evidence ' + provenance.status}</span></div>
+      <h2>{showSession ? session.title : provenance.status === 'conflicting' ? 'Resolve conflicting evidence.' : provenance.status === 'stale' ? 'Refresh your recovery evidence.' : 'Establish your starting point.'}</h2>
+      <p className="v3-decision-copy">{showSession ? session.purpose : 'Connect or import your recent training and recovery data before relying on a personalised training recommendation.'}</p>
+      {showSession && <div className="v3-session-meta"><span><Clock3 size={16} />{session.durationMin} min</span><span>{session.intensity}</span>{session.hrCap != null && <span>HR ≤ {session.hrCap} bpm</span>}</div>}
+      {!hasEvidence && <p className="v3-provenance-warning" role="status">{provenance.issues.join(" ")}</p>}
+      <div className="v3-actions"><button className="v3-primary" onClick={() => onNavigate?.(showSession ? 'training' : 'settings')}>{showSession ? 'View session' : 'Connect your data'}<ArrowRight size={17} /></button><button className="v3-text-button" onClick={() => onNavigate?.('coach')}>Ask coach <ArrowUpRight size={16} /></button></div>
+      <details className="v3-why"><summary>Why this recommendation?</summary>{showSession ? <><p>Generated from the same browser-local state used by your coaching engine. This is advice, not a scheduled or completed session.</p><ul>{decision.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul></> : <p>Current coaching evidence is incomplete, stale, or conflicting. Retained observations are shown below for review; they do not establish current readiness.</p>}<p>Recovery observation: {observed ?? 'date unavailable'}{stale ? ' · stale — update before relying on this advice' : ''}. Activity evidence: {latest?.date ?? 'unavailable'}.</p></details>
+    </article>
+    <section className="v3-outlook" aria-labelledby="outlook-title"><div className="v3-section-heading"><h2 id="outlook-title">The next 72 hours</h2><span className="v3-muted">Adaptive, not fixed</span></div>{hasEvidence ? <div className="v3-timeline">{next72Plan.blocks.filter(block => block.horizon !== 'Today').map(block => <article key={block.horizon}><p className="v3-kicker">{block.horizon} <span>{block.date}</span></p><h3>{block.action}</h3><p>{block.allowedWork.join(' · ')}</p><details><summary>Why / limits</summary><p>{block.why}</p><ul>{block.hardLimits.map(limit => <li key={limit}>{limit}</li>)}</ul></details></article>)}</div> : <p className="v3-empty">Your outlook will appear when training evidence is available. No sessions have been invented.</p>}</section>
+    <div className="v3-lower-grid">
+      <section className="v3-goal"><div className="v3-section-heading"><h2>Your direction</h2><button className="v3-icon-button" aria-label="Open goals" onClick={() => onNavigate?.('goals')}><ArrowUpRight size={20} /></button></div><p className="v3-kicker">CURRENT GOAL</p><h3>{activeGoal?.name ?? 'A goal to work towards'}</h3><p>{activeGoal ? (activeGoal.targetDate ?? 'No target date set') : 'Set a goal so your training has a clear purpose.'}</p><div className="v3-goal-estimate"><span>Goal readiness · model estimate</span><strong>{activeGoal && hasEvidence && readiness ? readiness.overallReadiness + ' / 100' : 'Unavailable'}</strong></div><p className="v3-muted">{nextRace ? 'Next race: ' + nextRace.name + ' · ' + nextRace.date : 'No upcoming race recorded.'}</p></section>
+      <section className="v3-evidence"><div className="v3-section-heading"><h2>The evidence behind today</h2><button className="v3-text-button" onClick={() => onNavigate?.('settings')}>Sources <ArrowUpRight size={15} /></button></div><dl><div><dt>Recovery score<small>Local recovery record · {observed ?? 'observation date unknown'}{stale ? ' · stale' : ''}</small></dt><dd>{state.recovery_score == null ? 'Unavailable' : state.recovery_score + ' / 100'}</dd></div><div><dt>Recent activity<small>{latest ? (latest.source ?? 'Local record') + ' · ' + latest.date : 'No completed activity available'}</small></dt><dd>{latest?.durationSec != null ? Math.round(latest.durationSec / 60) + ' min' : 'Unavailable'}</dd></div><div><dt>Resting heart rate<small>14-day average · local recovery record</small></dt><dd>{state.resting_hr_14d_avg == null ? 'Unavailable' : state.resting_hr_14d_avg + ' bpm'}</dd></div></dl><p className="v3-muted">Missing data stays missing. Sync receipt is not a measurement timestamp.</p></section>
+    </div>
+  </section>
 }
 
-export function HomeScreen(props: Props & { readyScore: number; nextRace?: Race; onNavigate?: (screen: ScreenId) => void }) {
-  const { today, decision, recommendation, briefing, morningReadiness, next72Plan, stats, readyScore, nextRace, readiness, trajectory, learning, dailyRecommendation, marathonBlock, onNavigate } = props
-  const [homeLayout, setHomeLayout] = useState<HomeLayout>('coach-first')
-  const keySignal = readiness?.mainLimiter ?? `${stats.avgRaceCost} avg race cost · ${stats.highCostActivities} high-cost sessions`
-  const safeNext = briefing.readinessAdjustment?.safeNextAction ?? briefing.nextAction
-  const nextRaceText = nextRace ? `${nextRace.name} · ${nextRace.date}` : 'No fixed race loaded'
-  const trajectoryConfidence = `${Math.round(trajectory.confidence * 100)}%`
-  const learningSignal = learning.signals[0]
-  const currentStance = useMemo(() => {
-    if (decision.status === 'Red') return 'Hold the line. Recovery controls the day.'
-    if (decision.status === 'Yellow') return 'Train, but keep the ceiling honest.'
-    if (decision.status === 'InjuryIllness') return 'Health block. Fitness can wait, regrettably.'
-    return 'Green enough to execute the recommendation.'
-  }, [decision.status])
-  const miniBars = trajectory.scenarios.slice(0, 4).map((scenario) => {
-    const low = Math.abs(scenario.readinessDeltaRange.low)
-    const high = Math.abs(scenario.readinessDeltaRange.high)
-    const magnitude = Math.min(100, Math.max(12, (low + high) * 4))
-    return { ...scenario, magnitude }
-  })
-
-  return (
-    <section className={`premium-screen active home-screen ios-endurance-home layout-${homeLayout}`} aria-label="Home Mission Control">
-      <div className="ios-home-topbar" aria-label="Home customization and status">
-        <div>
-          <p className="eyebrow">AERION / Home</p>
-          <h2>Today at a glance</h2>
-        </div>
-        <div className="home-layout-switch" aria-label="Customize Home layout">
-          <span><Settings2 size={13} strokeWidth={1.8} /> Customize</span>
-          {(['coach-first', 'mission-first', 'data-first'] as HomeLayout[]).map((layout) => (
-            <button key={layout} type="button" className={homeLayout === layout ? 'active' : ''} onClick={() => setHomeLayout(layout)}>{layoutLabel(layout)}</button>
-          ))}
-        </div>
-      </div>
-
-      <div className="ios-glance-grid">
-        <CommandPanel
-          eyebrow="How are we doing?"
-          title={currentStance}
-          summary={`Do now: ${dailyRecommendation.today.safeNext}. Goal: ${dailyRecommendation.goal.name}. Risk: ${next72Plan.risk}.`}
-          aside={(
-            <div className={`readiness-orb tone-${morningReadiness.tone}`} style={{ ['--score' as string]: `${readyScore * 3.6}deg` }}>
-              <strong>{readyScore}</strong>
-              <span>{morningReadiness.verdict}</span>
-            </div>
-          )}
-        >
-          <RouteRail labels={['state', 'action', 'next']} />
-          <EvidenceStrip items={[
-            { label: 'Status', value: decision.status, detail: decision.reasons[0] ?? 'No dominant constraint.', tone: toneFromStatus(decision) },
-            { label: 'Today', value: dailyRecommendation.today.durationMin || 'Off', detail: dailyRecommendation.today.action, tone: morningReadiness.tone },
-            { label: '72h risk', value: next72Plan.risk, detail: next72Plan.summary, tone: riskTone(next72Plan.risk) },
-          ]} />
-        </CommandPanel>
-
-        <article className="ios-action-card">
-          <span>What must we do?</span>
-          <strong>{dailyRecommendation.today.action}</strong>
-          <p>{safeNext}</p>
-          <div className="ios-action-meta">
-            <em>{recommendation.primary.durationMin || 'Off'} min</em>
-            <em>{recommendation.primary.intensity}</em>
-            <em>{formatLabel(decision.mode)}</em>
-          </div>
-          <button type="button" onClick={() => onNavigate?.('training')}>Open training plan</button>
-        </article>
-      </div>
-
-      <div className="ios-home-links" aria-label="Quick navigation links">
-        {quickLinks.map((link) => (
-          <button key={link.id} type="button" onClick={() => onNavigate?.(link.id)}>
-            <strong>{link.label}</strong>
-            <span>{link.detail}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="ios-home-board" aria-label="Adjustable one-glance dashboard">
-        <article className="ios-home-panel panel-mission">
-          <div className="chart-title"><Target size={15} strokeWidth={1.8} /><span>Mission</span></div>
-          <h3>{marathonBlock.active ? marathonBlock.mission : dailyRecommendation.goal.name}</h3>
-          <p>{marathonBlock.active ? `${marathonBlock.daysToRace ?? 'TBD'} days · ${marathonBlock.phase} · long run ${marathonBlock.longRunPlacement.recommendation}` : dailyRecommendation.goal.nextFocus}</p>
-          <div className="mission-stat-row">
-            <span><strong>{dailyRecommendation.goal.readiness ?? readyScore}</strong><em>readiness</em></span>
-            <span><strong>{trajectory.readinessRange.low}–{trajectory.readinessRange.high}</strong><em>21d range</em></span>
-            <span><strong>{trajectory.direction}</strong><em>trajectory</em></span>
-          </div>
-        </article>
-
-        <article className="ios-home-panel panel-week">
-          <div className="chart-title"><CalendarClock size={15} strokeWidth={1.8} /><span>This week</span></div>
-          <h3>{dailyRecommendation.week.focus}</h3>
-          <ul>{dailyRecommendation.week.structure.slice(0, 3).map((item) => <li key={item}>{item}</li>)}</ul>
-        </article>
-
-        <article className="ios-home-panel panel-graphs">
-          <div className="chart-title"><TrendingUp size={15} strokeWidth={1.8} /><span>Useful signals</span></div>
-          <div className="ios-mini-bars" aria-label="Trajectory scenario chart">
-            {miniBars.map((scenario) => (
-              <span key={scenario.id} style={{ ['--bar' as string]: `${scenario.magnitude}%` }}>
-                <em>{scenario.label}</em>
-                <i />
-                <strong>{scenario.readinessDeltaRange.low > 0 ? '+' : ''}{scenario.readinessDeltaRange.low}–{scenario.readinessDeltaRange.high}</strong>
-              </span>
-            ))}
-          </div>
-          <p>{trajectory.dominantConstraint} · {trajectoryConfidence} confidence</p>
-        </article>
-
-        <article className="ios-home-panel panel-next72">
-          <div className="chart-title"><TimerReset size={15} strokeWidth={1.8} /><span>Next 72h</span></div>
-          <MiniTimeline plan={next72Plan} />
-        </article>
-
-        <article className="ios-home-panel panel-data">
-          <div className="chart-title"><Database size={15} strokeWidth={1.8} /><span>Evidence</span></div>
-          <h3>{learningSignal?.label ?? 'Pattern density low'}</h3>
-          <p>{learningSignal?.observation ?? 'AERION is collecting actual-completed evidence before adapting harder.'}</p>
-          <div className="learning-ledger-row">
-            <span>{learning.sampleSize.activities} activities</span>
-            <span>{learning.sampleSize.decisions} decisions</span>
-            <span>{learning.sampleSize.evidence} evidence</span>
-          </div>
-        </article>
-
-        <article className="ios-home-panel panel-connect">
-          <div className="chart-title"><Plug size={15} strokeWidth={1.8} /><span>Connect next</span></div>
-          <h3>{dailyRecommendation.connect.primary}</h3>
-          <p>{dailyRecommendation.connect.action}</p>
-          <button type="button" onClick={() => onNavigate?.('settings')}>Open Connect</button>
-        </article>
-      </div>
-
-      <div className="home-priority-grid compact-system-grid ios-stat-strip">
-        <MetricTile icon={Gauge} label="Today’s recommendation" value={formatLabel(decision.mode)} detail={`${recommendation.primary.title} · ${recommendation.primary.durationMin || 'Off'} min`} tone={toneFromStatus(decision)} />
-        <MetricTile icon={ShieldCheck} label="Morning readiness" value={morningReadiness.verdict} detail={morningReadiness.primaryAction} tone={morningReadiness.tone} />
-        <MetricTile icon={Flag} label="Next fixed race" value={nextRace?.name ?? 'None'} detail={nextRaceText} tone="blue" />
-        <MetricTile icon={Activity} label="History load" value={stats.avgRaceCost || readyScore} detail={`${stats.highCostActivities} high-cost sessions · ${keySignal}`} tone="slate" />
-        <MetricTile icon={LineIcon} label="Long-term" value={trajectory.direction} detail={dailyRecommendation.longTerm.stance} tone="blue" />
-        <MetricTile icon={Brain} label="Coach" value={briefing.headline} detail={briefing.status} tone={morningReadiness.tone} />
-      </div>
-
-      <p className="premium-footnote">Home answers in one glance: how it stands, what to do now, why, where to go next, and which panel to adjust.</p>
-    </section>
-  )
-}
